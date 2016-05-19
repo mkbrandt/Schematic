@@ -8,20 +8,72 @@
 
 /* Begin PBXBuildFile section */
 		7A5FBE061CE66FF80031ED77 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE051CE66FF80031ED77 /* AppDelegate.swift */; };
-		7A5FBE081CE66FF80031ED77 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE071CE66FF80031ED77 /* Document.swift */; };
-		7A5FBE0B1CE66FF80031ED77 /* Document.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A5FBE091CE66FF80031ED77 /* Document.xib */; };
+		7A5FBE081CE66FF80031ED77 /* SchematicDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE071CE66FF80031ED77 /* SchematicDocument.swift */; };
+		7A5FBE0B1CE66FF80031ED77 /* SchematicDocument.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A5FBE091CE66FF80031ED77 /* SchematicDocument.xib */; };
 		7A5FBE0D1CE66FF80031ED77 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A5FBE0C1CE66FF80031ED77 /* Assets.xcassets */; };
 		7A5FBE101CE66FF80031ED77 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7A5FBE0E1CE66FF80031ED77 /* MainMenu.xib */; };
+		7A5FBE1B1CE67BF10031ED77 /* SCHElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE1A1CE67BF10031ED77 /* SCHElement.swift */; };
+		7A5FBE1D1CE67C110031ED77 /* SCHAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE1C1CE67C110031ED77 /* SCHAttribute.swift */; };
+		7A5FBE1F1CE67C1F0031ED77 /* SCHPackage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE1E1CE67C1F0031ED77 /* SCHPackage.swift */; };
+		7A5FBE211CE67C290031ED77 /* SCHComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE201CE67C290031ED77 /* SCHComponent.swift */; };
+		7A5FBE231CE67C320031ED77 /* SCHPin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE221CE67C320031ED77 /* SCHPin.swift */; };
+		7A5FBE251CE67C450031ED77 /* SCHNet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE241CE67C450031ED77 /* SCHNet.swift */; };
+		7A5FBE271CE67C5E0031ED77 /* SCHGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE261CE67C5E0031ED77 /* SCHGraphic.swift */; };
+		7A5FBE291CE67F6C0031ED77 /* GraphicMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE281CE67F6C0031ED77 /* GraphicMath.swift */; };
+		7A5FBE2B1CE696610031ED77 /* SchematicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE2A1CE696610031ED77 /* SchematicView.swift */; };
+		7A5FBE2D1CE69EB50031ED77 /* RegularExpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE2C1CE69EB50031ED77 /* RegularExpression.swift */; };
+		7A5FBE2F1CE910800031ED77 /* ZoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE2E1CE910800031ED77 /* ZoomView.swift */; };
+		7A5FBE4E1CE93F0D0031ED77 /* SchematicPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE4D1CE93F0D0031ED77 /* SchematicPage.swift */; };
+		7A5FBE511CEA16F70031ED77 /* LineTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE501CEA16F70031ED77 /* LineTool.swift */; };
+		7A5FBE531CEA1AF80031ED77 /* RectGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE521CEA1AF80031ED77 /* RectGraphic.swift */; };
+		7A5FBE551CEA1B0F0031ED77 /* LineGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE541CEA1B0F0031ED77 /* LineGraphic.swift */; };
+		7A5FBE581CEA1F030031ED77 /* RectTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE571CEA1F030031ED77 /* RectTool.swift */; };
+		7A5FBE5E1CEA30890031ED77 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A5FBE5D1CEA30890031ED77 /* InspectorView.swift */; };
+		7A74973E1CEA427000C6AAFB /* SelectTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A74973D1CEA427000C6AAFB /* SelectTool.swift */; };
+		7A8C9BBB1CEA694D000B79BE /* ArcGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BBA1CEA694D000B79BE /* ArcGraphic.swift */; };
+		7A8C9BBD1CEA6D7A000B79BE /* ArcTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BBC1CEA6D7A000B79BE /* ArcTool.swift */; };
+		7A8C9BBF1CEA85AD000B79BE /* GroupGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BBE1CEA85AD000B79BE /* GroupGraphic.swift */; };
+		7A8C9BC11CEAA815000B79BE /* CircleGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BC01CEAA815000B79BE /* CircleGraphic.swift */; };
+		7A8C9BC31CEAADD1000B79BE /* CircleTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BC21CEAADD1000B79BE /* CircleTool.swift */; };
+		7AE437A81CEB75440010C087 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE437A71CEB75440010C087 /* LibraryView.swift */; };
+		7AE437AA1CEBAE460010C087 /* PinInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE437A91CEBAE460010C087 /* PinInspectorView.swift */; };
+		7AE437AE1CEE15490010C087 /* GraphicInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE437AD1CEE15490010C087 /* GraphicInspector.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		7A5FBE021CE66FF80031ED77 /* Schematic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Schematic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A5FBE051CE66FF80031ED77 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		7A5FBE071CE66FF80031ED77 /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
-		7A5FBE0A1CE66FF80031ED77 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Document.xib; sourceTree = "<group>"; };
+		7A5FBE071CE66FF80031ED77 /* SchematicDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchematicDocument.swift; sourceTree = "<group>"; };
+		7A5FBE0A1CE66FF80031ED77 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/SchematicDocument.xib; sourceTree = "<group>"; };
 		7A5FBE0C1CE66FF80031ED77 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7A5FBE0F1CE66FF80031ED77 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		7A5FBE111CE66FF80031ED77 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A5FBE1A1CE67BF10031ED77 /* SCHElement.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCHElement.swift; sourceTree = "<group>"; };
+		7A5FBE1C1CE67C110031ED77 /* SCHAttribute.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCHAttribute.swift; sourceTree = "<group>"; };
+		7A5FBE1E1CE67C1F0031ED77 /* SCHPackage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCHPackage.swift; sourceTree = "<group>"; };
+		7A5FBE201CE67C290031ED77 /* SCHComponent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCHComponent.swift; sourceTree = "<group>"; };
+		7A5FBE221CE67C320031ED77 /* SCHPin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCHPin.swift; sourceTree = "<group>"; };
+		7A5FBE241CE67C450031ED77 /* SCHNet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCHNet.swift; sourceTree = "<group>"; };
+		7A5FBE261CE67C5E0031ED77 /* SCHGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SCHGraphic.swift; sourceTree = "<group>"; };
+		7A5FBE281CE67F6C0031ED77 /* GraphicMath.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphicMath.swift; sourceTree = "<group>"; };
+		7A5FBE2A1CE696610031ED77 /* SchematicView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SchematicView.swift; sourceTree = "<group>"; };
+		7A5FBE2C1CE69EB50031ED77 /* RegularExpression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegularExpression.swift; sourceTree = "<group>"; };
+		7A5FBE2E1CE910800031ED77 /* ZoomView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZoomView.swift; sourceTree = "<group>"; };
+		7A5FBE4D1CE93F0D0031ED77 /* SchematicPage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SchematicPage.swift; sourceTree = "<group>"; };
+		7A5FBE501CEA16F70031ED77 /* LineTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LineTool.swift; sourceTree = "<group>"; };
+		7A5FBE521CEA1AF80031ED77 /* RectGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RectGraphic.swift; sourceTree = "<group>"; };
+		7A5FBE541CEA1B0F0031ED77 /* LineGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LineGraphic.swift; sourceTree = "<group>"; };
+		7A5FBE571CEA1F030031ED77 /* RectTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RectTool.swift; sourceTree = "<group>"; };
+		7A5FBE5D1CEA30890031ED77 /* InspectorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
+		7A74973D1CEA427000C6AAFB /* SelectTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SelectTool.swift; sourceTree = "<group>"; };
+		7A8C9BBA1CEA694D000B79BE /* ArcGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ArcGraphic.swift; sourceTree = "<group>"; };
+		7A8C9BBC1CEA6D7A000B79BE /* ArcTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ArcTool.swift; sourceTree = "<group>"; };
+		7A8C9BBE1CEA85AD000B79BE /* GroupGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroupGraphic.swift; sourceTree = "<group>"; };
+		7A8C9BC01CEAA815000B79BE /* CircleGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleGraphic.swift; sourceTree = "<group>"; };
+		7A8C9BC21CEAADD1000B79BE /* CircleTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleTool.swift; sourceTree = "<group>"; };
+		7AE437A71CEB75440010C087 /* LibraryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		7AE437A91CEBAE460010C087 /* PinInspectorView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PinInspectorView.swift; sourceTree = "<group>"; };
+		7AE437AD1CEE15490010C087 /* GraphicInspector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GraphicInspector.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,13 +107,63 @@
 			isa = PBXGroup;
 			children = (
 				7A5FBE051CE66FF80031ED77 /* AppDelegate.swift */,
-				7A5FBE071CE66FF80031ED77 /* Document.swift */,
-				7A5FBE091CE66FF80031ED77 /* Document.xib */,
+				7A5FBE191CE67BCF0031ED77 /* Model */,
+				7A5FBE071CE66FF80031ED77 /* SchematicDocument.swift */,
+				7A5FBE4D1CE93F0D0031ED77 /* SchematicPage.swift */,
+				7A5FBE2A1CE696610031ED77 /* SchematicView.swift */,
+				7A5FBE5D1CEA30890031ED77 /* InspectorView.swift */,
+				7AE437AD1CEE15490010C087 /* GraphicInspector.swift */,
+				7AE437A91CEBAE460010C087 /* PinInspectorView.swift */,
+				7AE437A71CEB75440010C087 /* LibraryView.swift */,
+				7A5FBE4F1CEA16DD0031ED77 /* Tools */,
+				7A5FBE2E1CE910800031ED77 /* ZoomView.swift */,
+				7A5FBE091CE66FF80031ED77 /* SchematicDocument.xib */,
+				7A5FBE2C1CE69EB50031ED77 /* RegularExpression.swift */,
+				7A5FBE281CE67F6C0031ED77 /* GraphicMath.swift */,
 				7A5FBE0C1CE66FF80031ED77 /* Assets.xcassets */,
 				7A5FBE0E1CE66FF80031ED77 /* MainMenu.xib */,
 				7A5FBE111CE66FF80031ED77 /* Info.plist */,
 			);
 			path = Schematic;
+			sourceTree = "<group>";
+		};
+		7A5FBE191CE67BCF0031ED77 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				7A5FBE261CE67C5E0031ED77 /* SCHGraphic.swift */,
+				7A5FBE561CEA1CF10031ED77 /* Primitves */,
+				7A5FBE1A1CE67BF10031ED77 /* SCHElement.swift */,
+				7A5FBE1E1CE67C1F0031ED77 /* SCHPackage.swift */,
+				7A5FBE201CE67C290031ED77 /* SCHComponent.swift */,
+				7A5FBE221CE67C320031ED77 /* SCHPin.swift */,
+				7A5FBE241CE67C450031ED77 /* SCHNet.swift */,
+			);
+			name = Model;
+			sourceTree = "<group>";
+		};
+		7A5FBE4F1CEA16DD0031ED77 /* Tools */ = {
+			isa = PBXGroup;
+			children = (
+				7A5FBE501CEA16F70031ED77 /* LineTool.swift */,
+				7A5FBE571CEA1F030031ED77 /* RectTool.swift */,
+				7A8C9BBC1CEA6D7A000B79BE /* ArcTool.swift */,
+				7A8C9BC21CEAADD1000B79BE /* CircleTool.swift */,
+				7A74973D1CEA427000C6AAFB /* SelectTool.swift */,
+			);
+			name = Tools;
+			sourceTree = "<group>";
+		};
+		7A5FBE561CEA1CF10031ED77 /* Primitves */ = {
+			isa = PBXGroup;
+			children = (
+				7A5FBE541CEA1B0F0031ED77 /* LineGraphic.swift */,
+				7A5FBE521CEA1AF80031ED77 /* RectGraphic.swift */,
+				7A8C9BBA1CEA694D000B79BE /* ArcGraphic.swift */,
+				7A8C9BBE1CEA85AD000B79BE /* GroupGraphic.swift */,
+				7A8C9BC01CEAA815000B79BE /* CircleGraphic.swift */,
+				7A5FBE1C1CE67C110031ED77 /* SCHAttribute.swift */,
+			);
+			name = Primitves;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -123,7 +225,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7A5FBE0D1CE66FF80031ED77 /* Assets.xcassets in Resources */,
-				7A5FBE0B1CE66FF80031ED77 /* Document.xib in Resources */,
+				7A5FBE0B1CE66FF80031ED77 /* SchematicDocument.xib in Resources */,
 				7A5FBE101CE66FF80031ED77 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -135,20 +237,46 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7A5FBE081CE66FF80031ED77 /* Document.swift in Sources */,
+				7A8C9BC31CEAADD1000B79BE /* CircleTool.swift in Sources */,
+				7A5FBE211CE67C290031ED77 /* SCHComponent.swift in Sources */,
+				7A5FBE291CE67F6C0031ED77 /* GraphicMath.swift in Sources */,
+				7A5FBE2F1CE910800031ED77 /* ZoomView.swift in Sources */,
+				7A5FBE081CE66FF80031ED77 /* SchematicDocument.swift in Sources */,
+				7A5FBE511CEA16F70031ED77 /* LineTool.swift in Sources */,
+				7A5FBE1D1CE67C110031ED77 /* SCHAttribute.swift in Sources */,
+				7A8C9BBB1CEA694D000B79BE /* ArcGraphic.swift in Sources */,
+				7A5FBE251CE67C450031ED77 /* SCHNet.swift in Sources */,
+				7A5FBE551CEA1B0F0031ED77 /* LineGraphic.swift in Sources */,
+				7A5FBE2B1CE696610031ED77 /* SchematicView.swift in Sources */,
+				7AE437AA1CEBAE460010C087 /* PinInspectorView.swift in Sources */,
+				7A74973E1CEA427000C6AAFB /* SelectTool.swift in Sources */,
+				7A5FBE531CEA1AF80031ED77 /* RectGraphic.swift in Sources */,
+				7A5FBE271CE67C5E0031ED77 /* SCHGraphic.swift in Sources */,
+				7A5FBE4E1CE93F0D0031ED77 /* SchematicPage.swift in Sources */,
+				7A8C9BC11CEAA815000B79BE /* CircleGraphic.swift in Sources */,
+				7A8C9BBD1CEA6D7A000B79BE /* ArcTool.swift in Sources */,
+				7AE437AE1CEE15490010C087 /* GraphicInspector.swift in Sources */,
+				7A5FBE5E1CEA30890031ED77 /* InspectorView.swift in Sources */,
+				7AE437A81CEB75440010C087 /* LibraryView.swift in Sources */,
+				7A5FBE231CE67C320031ED77 /* SCHPin.swift in Sources */,
+				7A5FBE2D1CE69EB50031ED77 /* RegularExpression.swift in Sources */,
+				7A5FBE1F1CE67C1F0031ED77 /* SCHPackage.swift in Sources */,
+				7A5FBE581CEA1F030031ED77 /* RectTool.swift in Sources */,
 				7A5FBE061CE66FF80031ED77 /* AppDelegate.swift in Sources */,
+				7A8C9BBF1CEA85AD000B79BE /* GroupGraphic.swift in Sources */,
+				7A5FBE1B1CE67BF10031ED77 /* SCHElement.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		7A5FBE091CE66FF80031ED77 /* Document.xib */ = {
+		7A5FBE091CE66FF80031ED77 /* SchematicDocument.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
 				7A5FBE0A1CE66FF80031ED77 /* Base */,
 			);
-			name = Document.xib;
+			name = SchematicDocument.xib;
 			sourceTree = "<group>";
 		};
 		7A5FBE0E1CE66FF80031ED77 /* MainMenu.xib */ = {
@@ -287,6 +415,7 @@
 				7A5FBE161CE66FF80031ED77 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
