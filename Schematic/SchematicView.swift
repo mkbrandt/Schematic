@@ -16,14 +16,14 @@ class SchematicView: ZoomView
 {
     @IBOutlet var document: SchematicDocument!
     
-    var displayList: [SCHGraphic] {
+    var displayList: [Graphic] {
         get { return document.page.displayList }
         set { document.page.displayList = newValue }
     }
     
-    var construction: SCHGraphic?
+    var construction: Graphic?
     
-    var selection: [SCHGraphic] = [] {
+    var selection: [Graphic] = [] {
         willSet {
             willChangeValueForKey("selection")
             for g in selection {
@@ -206,23 +206,23 @@ class SchematicView: ZoomView
 
 // MARK: Adding and Deleting elements
     
-    func addGraphics(graphics: [SCHGraphic]) {
+    func addGraphics(graphics: [Graphic]) {
         displayList.appendContentsOf(graphics)
         undoManager?.prepareWithInvocationTarget(self).deleteGraphics(graphics)
         needsDisplay = true
     }
     
-    func addGraphic(graphic: SCHGraphic) {
+    func addGraphic(graphic: Graphic) {
         addGraphics([graphic])
     }
     
-    func deleteGraphics(graphics: [SCHGraphic]) {
+    func deleteGraphics(graphics: [Graphic]) {
         displayList = displayList.filter { !graphics.contains($0) }
         undoManager?.prepareWithInvocationTarget(self).addGraphics(graphics)
         needsDisplay = true
     }
     
-    func deleteGraphic(graphic: SCHGraphic) {
+    func deleteGraphic(graphic: Graphic) {
         deleteGraphics([graphic])
     }
     
@@ -240,7 +240,7 @@ class SchematicView: ZoomView
         return CGRect(x: point.x - SelectRadius, y: point.y - SelectRadius, width: SelectRadius * 2, height: SelectRadius * 2)
     }
     
-    func findGraphicAtPoint(location: CGPoint) -> SCHGraphic? {
+    func findGraphicAtPoint(location: CGPoint) -> Graphic? {
         let srect = selectionRectAtPoint(location)
         for g in selection {
             if g.intersectsRect(srect) {
@@ -256,7 +256,7 @@ class SchematicView: ZoomView
         return nil
     }
     
-    func findElementAtPoint(location: CGPoint) -> SCHGraphic? {
+    func findElementAtPoint(location: CGPoint) -> Graphic? {
         if let g = findGraphicAtPoint(location) {
             return g.elementAtPoint(location)
         }
@@ -335,8 +335,8 @@ class SchematicView: ZoomView
             needsDisplay = true
         }
         // Why doesn't this work?
-        sender.enumerateDraggingItemsWithOptions(.ClearNonenumeratedImages, forView: self, classes: [SCHGraphic.self], searchOptions: [:]) { (item, n, stop) in
-            if let g = item.item as? SCHGraphic {
+        sender.enumerateDraggingItemsWithOptions(.ClearNonenumeratedImages, forView: self, classes: [Graphic.self], searchOptions: [:]) { (item, n, stop) in
+            if let g = item.item as? Graphic {
                 let fr = item.draggingFrame
                 let image = NSImage(size: CGSize(width: 1, height: 1))
                 item.setDraggingFrame(fr, contents: image)
@@ -403,9 +403,9 @@ class SchematicView: ZoomView
     
     @IBAction func paste(sender: AnyObject) {
         let pasteBoard = NSPasteboard.generalPasteboard()
-        let classes = [SCHGraphic.self]
+        let classes = [Graphic.self]
         if pasteBoard.canReadObjectForClasses(classes, options: [:]) {
-            if let graphics = pasteBoard.readObjectsForClasses([SCHGraphic.self], options:[:]) as? [SCHGraphic] {
+            if let graphics = pasteBoard.readObjectsForClasses([Graphic.self], options:[:]) as? [Graphic] {
                 addGraphics(graphics)
                 selection = graphics
             }
@@ -426,7 +426,7 @@ class SchematicView: ZoomView
     }
     
     @IBAction func ungroup(sender: AnyObject) {
-        var newSelection: [SCHGraphic] = []
+        var newSelection: [Graphic] = []
         for g in selection {
             if let g = g as? GroupGraphic {
                 newSelection.appendContentsOf(g.contents)
@@ -452,5 +452,23 @@ class SchematicView: ZoomView
         let g = GroupGraphic(contents: selection)
         g.flipVerticalAroundPoint(g.centerPoint)
         needsDisplay = true
+    }
+    
+    @IBAction func createComponent(sender: AnyObject) {
+        guard selection.count > 0 else { return }
+        let outline = GroupGraphic(contents: selection.filter { !($0 is AttributedGraphic) })
+        let component = Component(origin: outline.origin)
+        component.pins = selection.filter { $0 is Pin } as! [Pin]
+        component.outline = outline
+        component.refDesText = AttributeText(origin: outline.bounds.topLeft, format: "=RefDes", angle: 0, owner: component)
+        deleteGraphics(outline.contents)
+        deleteGraphics(component.pins)
+        addGraphic(component)
+        selection = [component]
+        needsDisplay = true
+    }
+    
+    @IBAction func createPackage(sender: AnyObject) {
+        
     }
 }

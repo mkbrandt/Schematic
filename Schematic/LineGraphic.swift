@@ -8,14 +8,34 @@
 
 import Cocoa
 
-class LineGraphic: SCHGraphic
+class LineGraphic: Graphic
 {
-    var endPoint: CGPoint
+    var endPoint: CGPoint {
+        willSet {
+            willChangeValueForKey("angle")
+            willChangeValueForKey("length")
+        }
+        didSet {
+            didChangeValueForKey("angle")
+            didChangeValueForKey("length")
+        }
+    }
+    
     var vector: CGPoint     { return endPoint - origin }
-    var angle: CGFloat      { return vector.angle }
-    var length: CGFloat     { return vector.length }
+    
+    var angle: CGFloat      {
+        get { return vector.angle }
+        set { endPoint = origin + CGPoint(length: length, angle: newValue) }
+    }
+    
+    var length: CGFloat     {
+        get { return vector.length }
+        set { endPoint = origin + CGPoint(length: newValue, angle: angle) }
+    }
     
     override var bounds: CGRect  { return rectContainingPoints(points) }
+    
+    var line: Line { return Line(origin: origin, endPoint: endPoint) }
     
     override var points: [CGPoint] {
         get { return [origin, endPoint] }
@@ -30,6 +50,8 @@ class LineGraphic: SCHGraphic
         }
         set {}
     }
+    
+    override var inspectionName: String     { return "Line" }
     
     init(origin: CGPoint, endPoint: CGPoint) {
         self.endPoint = endPoint
@@ -66,56 +88,15 @@ class LineGraphic: SCHGraphic
     }
     
     func isParallelWith(line: LineGraphic) -> Bool {
-        return abs(line.angle - angle) < 0.00001
-            || abs(line.angle + angle) < 0.00001
+        return self.line.isParallelWith(line.line)
     }
     
     func intersectionWithLine(line: LineGraphic, extendSelf: Bool, extendOther: Bool) -> CGPoint? {
-        if isParallelWith(line) {
-            return nil
-        }
-        
-        let p = origin
-        let q = line.origin
-        let r = vector
-        let s = line.vector
-        let rxs = crossProduct(r, s)
-        if rxs == 0 {
-            return nil
-        }
-        let t = crossProduct((q - p), s) / rxs
-        let u = crossProduct((q - p), r) / rxs
-        
-        if !extendSelf && (t < 0 || t > 1.0) || !extendOther && (u < 0 || u > 1.0) {
-            return nil
-        }
-        
-        return p + t * r
+        return self.line.intersectionWithLine(line.line, extendSelf: extendSelf, extendOther: extendOther)
     }
     
     func closestPointToPoint(point: CGPoint, extended: Bool = false) -> CGPoint {
-        let v2 = point - origin;
-        
-        let len = dotProduct(vector, v2) / vector.length
-        let plen = vector.length
-        if( !extended && len > plen )
-        {
-            return origin + vector
-        }
-        else if( !extended && len < 0 )
-        {
-            return origin;
-        }
-        
-        let angle = vector.angle;
-        var v = CGPoint(length: len, angle: angle)
-        
-        if vector.x == 0 {              // force vertical
-            v.x = 0
-        } else if vector.y == 0 {       // force horizontal
-            v.y = 0
-        }
-        return origin + v;
+        return line.closestPointToPoint(point, extended: extended)
     }
     
     func distanceToPoint(p: CGPoint, extended: Bool = false) -> CGFloat {
@@ -133,8 +114,7 @@ class LineGraphic: SCHGraphic
     }
     
     override func intersectsRect(rect: CGRect) -> Bool {
-        let r = RectGraphic(origin: rect.origin, size: rect.size)
-        return rect.contains(origin) || rect.contains(endPoint) || r.lines.reduce(false, combine: { $0 || $1.intersectsLine(self) })
+        return rect.contains(origin) || rect.contains(endPoint) || rect.lines.reduce(false, combine: { $0 || $1.intersectsLine(line) })
     }
     
     override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
@@ -145,7 +125,7 @@ class LineGraphic: SCHGraphic
         let v2 = point - origin
         v.length = v2.length
         if v.distanceToPoint(v2) < threshold {
-            return .HitsOn
+            return .HitsOn(self)
         }
         return nil
     }

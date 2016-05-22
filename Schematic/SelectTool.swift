@@ -37,7 +37,7 @@ class Tool
 }
 
 enum SelectMode {
-    case MoveHandle(SCHGraphic, Int), MoveGraphic(SCHGraphic), MoveGroup([SCHGraphic]), SelectRect, Select
+    case MoveHandle(Graphic, Int), MoveGraphic(Graphic), MoveGroup([Graphic]), SelectRect, Select
 }
 
 class SelectTool: Tool
@@ -54,7 +54,7 @@ class SelectTool: Tool
             for g in view.selection {
                 if let ht = g.hitTest(location, threshold: SelectRadius) {
                     switch ht {
-                    case .HitsOn:
+                    case .HitsOn(_):
                         mode = .MoveGroup(view.selection)
                         view.selection.forEach {
                             let p = $0.origin
@@ -63,13 +63,13 @@ class SelectTool: Tool
                                 view.needsDisplay = true
                             }
                         }
-                    case .HitsPoint(let h):
-                        let p = g.points[h]
-                        view.undoManager?.registerUndoWithTarget(g, handler: { (gg) in
+                    case .HitsPoint(let gr, let h):
+                        let p = gr.points[h]
+                        view.undoManager?.registerUndoWithTarget(gr, handler: { (gg) in
                             gg.setPoint(p, index: h, view: view)
                             view.needsDisplay = true
                         })
-                        mode = .MoveHandle(g, h)
+                        mode = .MoveHandle(gr, h)
                     }
                     return
                 }

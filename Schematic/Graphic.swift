@@ -1,5 +1,5 @@
 //
-//  SCHGraphic.swift
+//  Graphic.swift
 //  Schematic
 //
 //  Created by Matt Brandt on 5/13/16.
@@ -11,8 +11,8 @@ import Cocoa
 let SchematicElementUTI = "net.walkingdog.schematic"
 
 enum HitTestResult {
-    case HitsPoint(Int)
-    case HitsOn
+    case HitsPoint(Graphic, Int)
+    case HitsOn(Graphic)
 }
 
 enum InspectionType {
@@ -21,16 +21,18 @@ enum InspectionType {
 
 class Inspectable: NSObject {
     var name: String
+    var displayName: String
     var type: InspectionType
     
-    init(name: String, type: InspectionType) {
+    init(name: String, type: InspectionType, displayName: String? = nil) {
         self.name = name
+        self.displayName = displayName ?? name
         self.type = type
         super.init()
     }
 }
 
-class SCHGraphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
+class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
 {
     var origin: CGPoint
     var color: NSColor = NSColor.blackColor()
@@ -56,6 +58,10 @@ class SCHGraphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
         set { }
     }
+    
+    var elements: [Graphic] { return [] }
+    
+    var inspectionName: String      { return "Graphic" }
     
     init(origin: CGPoint) {
         self.origin = origin
@@ -176,18 +182,27 @@ class SCHGraphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
-    func elementAtPoint(point: CGPoint) -> SCHGraphic? {
+    func elementAtPoint(point: CGPoint) -> Graphic? {
+        for el in elements {
+            if el.bounds.contains(point - origin) {
+                return el.elementAtPoint(point - origin)
+            }
+        }
         if bounds.contains(point) {
             return self
         }
         return nil
     }
     
+    func closestPointToPoint(point: CGPoint) -> CGPoint {
+        return origin
+    }
+    
     func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         for index in 0 ..< points.count {
             let p = points[index]
             if p.distanceToPoint(point) < threshold {
-                return .HitsPoint(index)
+                return .HitsPoint(self, index)
             }
         }
         return nil

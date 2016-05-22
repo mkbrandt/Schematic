@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15E65" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15F34" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
@@ -112,7 +112,7 @@ Gw
                                         </customView>
                                     </subviews>
                                 </clipView>
-                                <scroller key="horizontalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="dLg-0Z-30V">
+                                <scroller key="horizontalScroller" verticalHuggingPriority="750" horizontal="YES" id="dLg-0Z-30V">
                                     <rect key="frame" x="1" y="702" width="820" height="16"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                 </scroller>
@@ -157,6 +157,7 @@ Gw
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="takeInspectorFrom:" target="bzy-RN-ip0" id="2HL-Qq-WLY"/>
+                                                    <outlet property="auxView" destination="6mI-jf-HIQ" id="WMG-dH-aj6"/>
                                                 </connections>
                                             </button>
                                             <button translatesAutoresizingMaskIntoConstraints="NO" id="P5h-9b-wco" customClass="InspectorSelectorButton" customModule="Schematic" customModuleProvider="target">
@@ -216,7 +217,7 @@ Gw
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
                                                         <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnSelection="YES" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" rowHeight="69" rowSizeStyle="automatic" viewBased="YES" id="ZLw-4x-Twj">
-                                                            <rect key="frame" x="0.0" y="0.0" width="199" height="297"/>
+                                                            <rect key="frame" x="0.0" y="0.0" width="199" height="0.0"/>
                                                             <autoresizingMask key="autoresizingMask"/>
                                                             <size key="intercellSpacing" width="3" height="2"/>
                                                             <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -347,7 +348,7 @@ Part Description</string>
                         </subviews>
                         <holdingPriorities>
                             <real value="250"/>
-                            <real value="250"/>
+                            <real value="372"/>
                         </holdingPriorities>
                     </splitView>
                 </subviews>
@@ -659,9 +660,11 @@ Part Description</string>
             </constraints>
             <point key="canvasLocation" x="1008" y="118.5"/>
         </customView>
-        <customView id="6mI-jf-HIQ">
+        <customView translatesAutoresizingMaskIntoConstraints="NO" id="6mI-jf-HIQ" customClass="GraphicInspector" customModule="Schematic" customModuleProvider="target">
             <rect key="frame" x="0.0" y="0.0" width="185" height="303"/>
-            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <connections>
+                <outlet property="drawingView" destination="Vze-9M-f7e" id="AKb-Gy-RwR"/>
+            </connections>
             <point key="canvasLocation" x="1257.5" y="119.5"/>
         </customView>
         <userDefaultsController representsSharedInstance="YES" id="N4C-zN-tew"/>

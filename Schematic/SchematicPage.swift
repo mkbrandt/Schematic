@@ -14,7 +14,7 @@ class SchematicPage: NSObject, NSCoding
 {
     var name: String
     var pageSize: CGSize = CGSize(width: 100 * 17, height: 100 * 11)            // B Size by default
-    var displayList: [SCHGraphic] = []
+    var displayList: [Graphic] = []
     
     var pageRect: CGRect    { return CGRect(origin: CGPoint(x: 0, y: 0), size: pageSize) }
     
@@ -26,7 +26,7 @@ class SchematicPage: NSObject, NSCoding
     required init?(coder decoder: NSCoder) {
         name = decoder.decodeObjectForKey("name") as? String ?? "unnamed"
         pageSize = decoder.decodeSizeForKey("pageSize")
-        displayList = decoder.decodeObjectForKey("displayList") as? [SCHGraphic] ?? []
+        displayList = decoder.decodeObjectForKey("displayList") as? [Graphic] ?? []
     }
     
     func encodeWithCoder(encoder: NSCoder) {

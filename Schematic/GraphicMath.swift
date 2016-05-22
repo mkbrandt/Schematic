@@ -37,6 +37,10 @@ func crossProduct(a: CGPoint, _ b: CGPoint) -> CGFloat {
     return a.x * b.y - a.y * b.x
 }
 
+prefix func -(a:CGPoint) -> CGPoint {
+    return CGPoint(x: -a.x, y: -a.y)
+}
+
 func dotProduct(a: CGPoint, _ b: CGPoint) -> CGFloat {
     return a.x * b.x + a.y * b.y
 }

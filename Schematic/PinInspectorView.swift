@@ -30,15 +30,15 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     @IBOutlet var clockCheckBox: NSButton!
     @IBOutlet var orientationButton: NSPopUpButton!
     
-    var pin: SCHPin! = SCHPin(origin: CGPoint(), component: nil, name: "Pin", number: "1", orientation: .Right) {
+    var pin: Pin! = Pin(origin: CGPoint(), component: nil, name: "Pin", number: "1", orientation: .Right) {
         didSet {
             loadPinValues()
             bounds = CGRect(x: pin.origin.x - frame.size.width / 4, y: pin.origin.y - frame.size.height / 4, width: frame.size.width / 2, height: frame.size.height / 2)
         }
     }
     
-    var pinCopy: SCHPin {
-        let copiedPin = SCHPin(copy: pin)
+    var pinCopy: Pin {
+        let copiedPin = Pin(copy: pin)
         
         pinNameField.stringValue = updateTrailingDigits(pinNameField.stringValue)
         pinNumberField.stringValue = updateTrailingDigits(pinNumberField.stringValue)
@@ -49,20 +49,20 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     
     override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         if drawingView.selection.count == 1 {
-            if let pin = drawingView.selection[0] as? SCHPin {
+            if let pin = drawingView.selection[0] as? Pin {
                 self.pin = pin
                 needsDisplay = true
             }
         } else {
-            pin = SCHPin(origin: CGPoint(), component: nil, name: "PIN", number: "1", orientation: .Right)
+            pin = Pin(origin: CGPoint(), component: nil, name: "PIN", number: "1", orientation: .Right)
         }
     }
     
     func loadPinValues() {
-        pinNameField.stringValue = pin.pinNameAttribute.string as String
-        pinNumberField.stringValue = pin.pinNumberAttribute.string as String
+        pinNameField.stringValue = pin.pinName
+        pinNumberField.stringValue = pin.pinNumber
         bubbleCheckBox.state = pin.hasBubble ? NSOnState : NSOffState
-        overbarCheckBox.state = pin.pinNameAttribute.overbar ? NSOnState : NSOffState
+        overbarCheckBox.state = pin.pinNameText.overbar ? NSOnState : NSOffState
         clockCheckBox.state = pin.hasClockFlag ? NSOnState : NSOffState
         switch pin.orientation {
         case .Right: orientationButton.selectItemAtIndex(0)
@@ -105,9 +105,9 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         }
         
         pin?.orientation = orientation
-        pin?.pinNameAttribute.string = pinNameField.stringValue
-        pin?.pinNumberAttribute.string = pinNumberField.stringValue
-        pin?.pinNameAttribute.overbar = overbarCheckBox.state == NSOnState
+        pin?.pinName = pinNameField.stringValue
+        pin?.pinNumber = pinNumberField.stringValue
+        pin?.pinNameText.overbar = overbarCheckBox.state == NSOnState
         pin?.hasBubble = bubbleCheckBox.state == NSOnState
         pin?.hasClockFlag = clockCheckBox.state == NSOnState
         pin?.placeAttributes()

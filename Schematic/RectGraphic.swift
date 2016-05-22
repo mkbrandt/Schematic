@@ -8,22 +8,32 @@
 
 import Cocoa
 
-class RectGraphic: SCHGraphic
+class RectGraphic: Graphic
 {
-    var size: CGSize
+    var size: CGSize {
+        willSet {
+            willChangeValueForKey("width")
+            willChangeValueForKey("height")
+        }
+        didSet {
+            didChangeValueForKey("width")
+            didChangeValueForKey("height")
+        }
+    }
     
     var rect: CGRect {
         get { return CGRect(origin: origin, size: size) }
         set { origin = newValue.origin; size = newValue.size }
     }
     
-    var lines: [LineGraphic] {
-        return [
-            LineGraphic(origin: origin, endPoint: rect.topLeft),
-            LineGraphic(origin: rect.topLeft, endPoint: rect.topRight),
-            LineGraphic(origin: rect.topRight, endPoint: rect.bottomRight),
-            LineGraphic(origin: origin, endPoint: rect.bottomRight)
-        ]
+    var width: CGFloat {
+        get { return size.width }
+        set { size.width = newValue }
+    }
+    
+    var height: CGFloat {
+        get { return size.height }
+        set { size.height = newValue }
     }
     
     override var bounds: CGRect  { return rect + super.bounds }
@@ -40,6 +50,8 @@ class RectGraphic: SCHGraphic
         }
         set {}
     }
+    
+    override var inspectionName: String     { return "Rectangle" }
 
     init(origin: CGPoint, size: CGSize) {
         self.size = size
@@ -79,6 +91,16 @@ class RectGraphic: SCHGraphic
         }
     }
     
+    override func moveBy(offset: CGPoint) {
+        origin = origin + offset
+    }
+    
+    override func scaleFromRect(fromRect: CGRect, toRect: CGRect) {
+        let origin = scalePoint(self.origin, fromRect: fromRect, toRect: toRect)
+        let topRight = scalePoint(rect.topRight, fromRect: fromRect, toRect: toRect)
+        rect = rectContainingPoints([origin, topRight])
+    }
+    
     override func intersectsRect(rect: CGRect) -> Bool {
         return self.rect.intersects(rect) && !self.rect.contains(rect)
     }
@@ -89,7 +111,7 @@ class RectGraphic: SCHGraphic
         }
         if ((abs(point.x - rect.left) < threshold || abs(point.x - rect.right) < threshold)) && rect.bottom <= point.y && point.y <= rect.top
         || ((abs(point.y - rect.top) < threshold || abs(point.y - rect.bottom) < threshold)) && rect.left <= point.x && point.x <= rect.right {
-            return .HitsOn
+            return .HitsOn(self)
         }
         return nil
     }

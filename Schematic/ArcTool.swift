@@ -14,7 +14,7 @@ class ArcTool: Tool
     var startPoint = CGPoint()
     var endPoint = CGPoint()
     
-    func arcFromStartPoint(startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) -> SCHGraphic {
+    func arcFromStartPoint(startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) -> Graphic {
         let mp1 = (startPoint + midPoint) / 2
         let mp2 = (endPoint + midPoint) / 2
         let ang1 = (midPoint - startPoint).angle + PI / 2

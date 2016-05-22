@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class SCHNetSegment: NSObject, NSCoding
+class NetSegment: NSObject, NSCoding
 {
     var origin: CGPoint
     var endPoint: CGPoint
@@ -37,18 +37,12 @@ class SCHNetSegment: NSObject, NSCoding
     }
 }
 
-class SCHNet: SCHElement
+class Net: AttributedGraphic
 {
-    var pins: [SCHPin] = []
-    var segments: [SCHNetSegment] = []
+    var pins: [Pin] = []
+    var segments: [NetSegment] = []
+    var name: String?
     
-    var nameAttribute: SCHAttribute {
-        get { return attributes["name"] ?? SCHAttribute(string: "unnamed") }
-        set { attributes["name"] = newValue }
-    }
+    override var inspectionName: String     { return "Net" }
     
-    var name: String {
-        get { return nameAttribute.string as String }
-        set { nameAttribute.string = newValue }
-    }
 }

@@ -8,9 +8,8 @@
 
 import Cocoa
 
-class ArcGraphic: SCHGraphic
+class ArcGraphic: CircleGraphic
 {
-    var radius: CGFloat
     var startAngle: CGFloat
     var endAngle: CGFloat
     var clockwise: Bool
@@ -44,35 +43,21 @@ class ArcGraphic: SCHGraphic
         return rectContainingPoints(points)
     }
     
+    override var inspectionName: String     { return "Arc" }
+    
     init(origin: CGPoint, radius: CGFloat, startAngle: CGFloat, endAngle: CGFloat, clockwise: Bool) {
-        self.radius = radius
         self.startAngle = startAngle
         self.endAngle = endAngle
         self.clockwise = clockwise
-        super.init(origin: origin)
+        super.init(origin: origin, radius: radius)
     }
     
-    convenience init?(startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) {
-        let mp1 = (startPoint + midPoint) / 2
-        let mp2 = (endPoint + midPoint) / 2
-        let ang1 = (midPoint - startPoint).angle + PI / 2
-        let ang2 = (midPoint - endPoint).angle + PI / 2
-        let bisector1 = LineGraphic(origin: mp1, vector: CGPoint(length: 100, angle: ang1))
-        let bisector2 = LineGraphic(origin: mp2, vector: CGPoint(length: 100, angle: ang2))
-        if let origin = bisector1.intersectionWithLine(bisector2, extendSelf: true, extendOther: true) {
-            let radius = (startPoint - origin).length
-            let startAngle = (startPoint - origin).angle
-            let endAngle = (endPoint - origin).angle
-            let clockwise = true
-            self.init(origin: origin, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: clockwise)
-            self.clockwise = pointOnArc(midPoint)
-        } else {
-            return nil
-        }
+    convenience init(startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) {
+        self.init(origin: startPoint, radius: 1, startAngle: 0, endAngle: 0, clockwise: false)
+        setParametersFromStartPoint(startPoint, endPoint: endPoint, midPoint: midPoint)
     }
 
     required init?(coder decoder: NSCoder) {
-        radius = decoder.decodeCGFloatForKey("radius")
         startAngle = decoder.decodeCGFloatForKey("startAngle")
         endAngle = decoder.decodeCGFloatForKey("endAngle")
         clockwise = decoder.decodeBoolForKey("clockwise")
@@ -84,32 +69,43 @@ class ArcGraphic: SCHGraphic
     }
     
     override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeCGFloat(radius, forKey: "radius")
         coder.encodeCGFloat(startAngle, forKey: "startAngle")
         coder.encodeCGFloat(endAngle, forKey: "endAngle")
         coder.encodeBool(clockwise, forKey: "clockwise")
         super.encodeWithCoder(coder)
     }
     
+    func setParametersFromStartPoint(startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) {
+        let mp1 = (startPoint + midPoint) / 2
+        let mp2 = (endPoint + midPoint) / 2
+        let ang1 = (midPoint - startPoint).angle + PI / 2
+        let ang2 = (midPoint - endPoint).angle + PI / 2
+        let bisector1 = LineGraphic(origin: mp1, vector: CGPoint(length: 100, angle: ang1))
+        let bisector2 = LineGraphic(origin: mp2, vector: CGPoint(length: 100, angle: ang2))
+        if let origin = bisector1.intersectionWithLine(bisector2, extendSelf: true, extendOther: true) {
+            let radius = (startPoint - origin).length
+            let startAngle = (startPoint - origin).angle
+            let endAngle = (endPoint - origin).angle
+            self.origin = origin
+            self.radius = radius
+            self.startAngle = startAngle
+            self.endAngle = endAngle
+            self.clockwise = true
+            self.clockwise = pointOnArc(midPoint)
+        }
+    }
+    
     override func setPoint(point: CGPoint, index: Int) {
-        var ag: ArcGraphic?
+        var startPoint = self.startPoint
+        var endPoint = self.endPoint
+        var midPoint = self.midPoint
         switch index {
-        case 0:
-            ag = ArcGraphic(startPoint: point, endPoint: endPoint, midPoint: midPoint)
-        case 1:
-            ag = ArcGraphic(startPoint: startPoint, endPoint: point, midPoint: midPoint)
-        case 2:
-            ag = ArcGraphic(startPoint: startPoint, endPoint: endPoint, midPoint: point)
-        default:
-            break
+        case 0: startPoint = point
+        case 1: endPoint = point
+        case 2: midPoint = point
+        default: break
         }
-        if let ag = ag {
-            origin = ag.origin
-            radius = ag.radius
-            startAngle = ag.startAngle
-            endAngle = ag.endAngle
-            clockwise = ag.clockwise
-        }
+        setParametersFromStartPoint(startPoint, endPoint: endPoint, midPoint: midPoint)
     }
     
     override func draw() {
@@ -141,4 +137,18 @@ class ArcGraphic: SCHGraphic
         }
     }
 
+    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+        let scp = super.closestPointToPoint(point)
+        let v = point - origin
+        let cp = CGPoint(length: radius, angle: v.angle)
+        if pointOnArc(cp) && cp.distanceToPoint(point) < scp.distanceToPoint(point) {
+            return cp
+        } else {
+            return scp
+        }
+    }
+    
+    override func intersectionsWithLine(line: Line) -> [CGPoint] {
+        return super.intersectionsWithLine(line).filter { pointOnArc($0) }
+    }
 }

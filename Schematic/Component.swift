@@ -1,5 +1,5 @@
 //
-//  SCHComponent.swift
+//  Component.swift
 //  Schematic
 //
 //  Created by Matt Brandt on 5/13/16.
@@ -8,32 +8,62 @@
 
 import Cocoa
 
-class SCHComponent: SCHElement
+class Component: AttributedGraphic
 {
-    var refDes: SCHAttribute {
-        get { return attributes["refDes"] ?? SCHAttribute(string: "RefDes") }
-        set { attributes["refDes"] = newValue }
+    var refDes: String?
+    var refDesText: AttributeText?
+    
+    var pins: [Pin] = [] {
+        willSet {
+            pins.forEach {
+                $0.moveBy(origin)
+                $0.component = nil
+            }
+        }
+        didSet {
+            pins.forEach {
+                $0.origin = $0.origin - origin
+                $0.component = self
+            }
+        }
     }
     
-    var pins: [SCHPin] = []
-    var package: SCHPackage?
-    var outline: SCHGraphic?
+    var package: Package?
+    var outline: Graphic? {
+        willSet {
+            if let g = outline {
+                g.moveBy(CGPoint(x: origin.x, y: origin.y))
+            }
+        }
+        didSet {
+            if let g = outline {
+                g.moveBy(CGPoint(x: -origin.x, y: -origin.y))
+            }
+        }
+    }
     
     override var bounds: CGRect {
-        var pinBounds = pins.reduce(CGRect(), combine: {$0 + $1.bounds})
-        pinBounds.origin = origin + pinBounds.origin
-        let ob = outline?.bounds ?? CGRect()
-        return pinBounds + ob
+        let pinBounds = pins.reduce(CGRect(), combine: {$0 + $1.bounds})
+        var b = outline?.bounds ?? CGRect()
+        b = pinBounds + b
+        b.origin = b.origin + origin
+        return b
     }
     
+    override var elements: [Graphic]    { return pins + [refDesText, outline].flatMap({$0}) }
+
+    override var inspectionName: String     { return "Component" }
+
     override init(origin: CGPoint) {
         super.init(origin: origin)
     }
     
     required init?(coder decoder: NSCoder) {
-        pins = decoder.decodeObjectForKey("pins") as? [SCHPin] ?? []
-        package = decoder.decodeObjectForKey("package") as? SCHPackage
-        outline = decoder.decodeObjectForKey("outline") as? SCHGraphic
+        pins = decoder.decodeObjectForKey("pins") as? [Pin] ?? []
+        package = decoder.decodeObjectForKey("package") as? Package
+        outline = decoder.decodeObjectForKey("outline") as? Graphic
+        refDes = decoder.decodeObjectForKey("refDes") as? String
+        refDesText = decoder.decodeObjectForKey("refDesText") as? AttributeText
         super.init(coder: decoder)
     }
     
@@ -44,34 +74,46 @@ class SCHComponent: SCHElement
     override func encodeWithCoder(coder: NSCoder) {
         coder.encodeObject(pins, forKey: "pins")
         coder.encodeObject(package, forKey: "package")
+        coder.encodeObject(refDes, forKey: "refDes")
+        coder.encodeObject(refDesText, forKey: "refDesText")
+        coder.encodeObject(outline, forKey: "outline")
         super.encodeWithCoder(coder)
     }
     
-    override func elementAtPoint(point: CGPoint) -> SCHGraphic? {
-        let relativePoint = point - origin
-        for pin in pins {
-            if let el = pin.elementAtPoint(relativePoint) {
-                return el
-            }
+    override func attributeValue(name: String) -> String {
+        switch name.lowercaseString {
+        case "=refdes": return refDes ?? "U?"
+        default: return name
         }
-        return super.elementAtPoint(point)
     }
     
-    override func draw() {
+    override func showHandlesInView(view: SchematicView) {
+        let r = CGRect(origin: bounds.origin - origin, size: bounds.size)
+        
+        drawPoint(r.origin, color: NSColor.blackColor(), view: view)
+        drawPoint(r.topLeft, color: NSColor.blackColor(), view: view)
+        drawPoint(r.topRight, color: NSColor.blackColor(), view: view)
+        drawPoint(r.bottomRight, color: NSColor.blackColor(), view: view)
+    }
+    
+    override func drawInRect(rect: CGRect, view: SchematicView) {
         let context = NSGraphicsContext.currentContext()?.CGContext
         
         CGContextSaveGState(context)
         
+        let rect = rect.translateBy(-origin)
+        
         CGContextTranslateCTM(context, origin.x, origin.y)
-        outline?.draw()
-        pins.forEach { $0.draw() }
-        super.draw()            // draws all of the attributes
+        outline?.drawInRect(rect, view: view)
+        pins.forEach { $0.drawInRect(rect, view: view) }
+        refDesText?.drawInRect(rect, view: view)
+        super.drawInRect(rect, view: view)            // draws all of the attributes
         
         CGContextRestoreGState(context)
     }
 }
 
-class AutoComponent: SCHComponent
+class AutoComponent: Component
 {
     var text: String {
         didSet { rejigger() }
@@ -97,6 +139,13 @@ class AutoComponent: SCHComponent
         super.encodeWithCoder(coder)
     }
     
+    override func attributeValue(format: String) -> String {
+        switch format {
+        case "=RefDes": return refDes ?? "?"
+        default: return format
+        }
+    }
+    
     func pinInfo(name: String, text: String) -> [(String, String)] {
         let re = RegularExpression(pattern: name + "[[:space:]]*\\{([^}]*)\\}")
         if re.matchesWithString(text) {
@@ -116,7 +165,7 @@ class AutoComponent: SCHComponent
         return []
     }
     
-    func distributePins(pins: [SCHPin], start: CGPoint, offset: CGPoint) {
+    func distributePins(pins: [Pin], start: CGPoint, offset: CGPoint) {
         var org = start
         pins.forEach {
             $0.origin = org
@@ -132,15 +181,15 @@ class AutoComponent: SCHComponent
         let topPinInfo = pinInfo("top", text: text)
         let bottomPinInfo = pinInfo("bottom", text: text)
         
-        let leftPins = leftPinInfo.map { SCHPin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Left) }
-        let rightPins = rightPinInfo.map { SCHPin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Right) }
-        let topPins = topPinInfo.map { SCHPin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Top) }
-        let bottomPins = bottomPinInfo.map { SCHPin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Bottom) }
+        let leftPins = leftPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Left) }
+        let rightPins = rightPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Right) }
+        let topPins = topPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Top) }
+        let bottomPins = bottomPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Bottom) }
         
-        let leftWidth = ceil(leftPins.reduce(0.0, combine: { max($0, $1.pinNameAttribute.size.width)}) / GridSize) * GridSize
-        let rightWidth = ceil(rightPins.reduce(0.0, combine: { max($0, $1.pinNameAttribute.size.width)}) / GridSize) * GridSize
-        let topWidth = ceil(topPins.reduce(0.0, combine: { max($0, $1.pinNameAttribute.size.width)}) / GridSize) * GridSize
-        let bottomWidth = ceil(bottomPins.reduce(0.0, combine: { max($0, $1.pinNameAttribute.size.width)}) / GridSize) * GridSize
+        let leftWidth = ceil(leftPins.reduce(0.0, combine: { max($0, $1.pinNameText.size.width)}) / GridSize) * GridSize
+        let rightWidth = ceil(rightPins.reduce(0.0, combine: { max($0, $1.pinNameText.size.width)}) / GridSize) * GridSize
+        let topWidth = ceil(topPins.reduce(0.0, combine: { max($0, $1.pinNameText.size.width)}) / GridSize) * GridSize
+        let bottomWidth = ceil(bottomPins.reduce(0.0, combine: { max($0, $1.pinNameText.size.width)}) / GridSize) * GridSize
         
         let vertCount = max(leftPinInfo.count, rightPinInfo.count)
         let horizCount = max(topPinInfo.count, bottomPinInfo.count)
@@ -162,8 +211,8 @@ class AutoComponent: SCHComponent
         
         outline = RectGraphic(origin: CGPoint(x: 0, y: 0), size: CGSize(width: rectWidth, height: rectHeight))
         pins = leftPins + rightPins + topPins + bottomPins
-        pins = pins.filter { $0.pinNameAttribute.string != "" }
+        pins = pins.filter { $0.pinName != "" }
         
-        refDes = SCHAttribute(origin: CGPoint(x: 0, y: -GridSize), string: "U?")
+        refDesText = AttributeText(origin: CGPoint(x: 0, y: -GridSize), format: "=RefDes", angle: 0, owner: self)
     }
 }

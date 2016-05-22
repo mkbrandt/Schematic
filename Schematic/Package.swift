@@ -1,5 +1,5 @@
 //
-//  SCHPackage.swift
+//  Package.swift
 //  Schematic
 //
 //  Created by Matt Brandt on 5/13/16.
@@ -8,12 +8,14 @@
 
 import Foundation
 
-class SCHPackage: SCHElement
+class Package: AttributedGraphic
 {
-    var components: [SCHComponent] = []
+    var components: [Component] = []
     
+    override var inspectionName: String     { return "Package" }
+
     required init?(coder decoder: NSCoder) {
-        components = decoder.decodeObjectForKey("components") as? [SCHComponent] ?? []
+        components = decoder.decodeObjectForKey("components") as? [Component] ?? []
         super.init(coder: decoder)
     }
     

@@ -8,13 +8,13 @@
 
 import Cocoa
 
-class GroupGraphic: SCHGraphic
+class GroupGraphic: Graphic
 {
     override var origin: CGPoint {
         get { return bounds.origin }
         set { moveTo(origin) }
     }
-    var contents: [SCHGraphic]
+    var contents: [Graphic]
     
     var boundingRect: RectGraphic       { return RectGraphic(rect: bounds) }
     var allPoints: [CGPoint]            { return contents.reduce([], combine: { $0 + $1.points }) }
@@ -28,7 +28,9 @@ class GroupGraphic: SCHGraphic
         set {}
     }
 
-    init(contents: [SCHGraphic]) {
+    override var inspectionName: String     { return "Group" }
+
+    init(contents: [Graphic]) {
         self.contents = contents
         super.init(origin: CGPoint(x: 0, y: 0))
     }
@@ -38,7 +40,7 @@ class GroupGraphic: SCHGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        contents = decoder.decodeObjectForKey("contents") as? [SCHGraphic] ?? []
+        contents = decoder.decodeObjectForKey("contents") as? [Graphic] ?? []
         super.init(coder: decoder)
     }
     

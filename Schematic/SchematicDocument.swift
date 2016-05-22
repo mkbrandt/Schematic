@@ -55,7 +55,7 @@ class SchematicDocument: NSDocument {
         return pages[currentPage]
     }
     
-    var displayList: [SCHGraphic] {
+    var displayList: [Graphic] {
         get { return page.displayList }
         set { page.displayList = newValue }
     }
