@@ -37,7 +37,7 @@ class Tool
 }
 
 enum SelectMode {
-    case MoveHandle(Graphic, Int), MoveGraphic(Graphic), MoveGroup([Graphic]), SelectRect, Select
+    case MoveHandle(Graphic, Int), MoveGraphic(Graphic), MoveGroup(Set<Graphic>), SelectRect, Select
 }
 
 class SelectTool: Tool
@@ -47,9 +47,14 @@ class SelectTool: Tool
     
     override var cursor: NSCursor { return NSCursor.arrowCursor() }
     
+    func redrawSelection(view: SchematicView) {
+        let rect = view.selection.reduce(CGRect()) { $0 + $1.bounds.insetBy(dx: -SelectRadius, dy: -SelectRadius) }
+        view.setNeedsDisplayInRect(rect)
+    }
+    
     override func mouseDown(location: CGPoint, view: SchematicView) {
         startPoint = location
-        view.needsDisplay = true
+        redrawSelection(view)
         if view.selection.count > 0 {
             for g in view.selection {
                 if let ht = g.hitTest(location, threshold: SelectRadius) {
@@ -77,20 +82,21 @@ class SelectTool: Tool
         }
         let rect = CGRect(x: location.x - SelectRadius / 2, y: location.y - SelectRadius / 2, width: SelectRadius, height: SelectRadius)
         view.selectInRect(rect)
-        if view.selection.count == 1 {
-            let g = view.selection[0]
+        if let g = view.selection.first {
             mode = .MoveGraphic(g)
             let p = g.origin
             view.undoManager?.registerUndoWithTarget(g, handler: { (g) in
                 g.moveTo(p, view: view)
                 view.needsDisplay = true
             })
+            redrawSelection(view)
             return
         }
         mode = .SelectRect
     }
     
     override func mouseDragged(location: CGPoint, view: SchematicView) {
+        redrawSelection(view)
         switch mode {
         case .SelectRect:
             let rect = rectContainingPoints([location, startPoint])
@@ -99,6 +105,7 @@ class SelectTool: Tool
             rg.lineWeight = 0.5
             view.construction = rg
             view.selectInRect(rect)
+            view.setNeedsDisplayInRect(rect.insetBy(dx: -SelectRadius, dy: -SelectRadius))
         case .MoveGraphic(let g):
             let offset = view.snapToGrid(location) - view.snapToGrid(startPoint)
             startPoint = location
@@ -112,7 +119,8 @@ class SelectTool: Tool
         default:
             break
         }
-        view.needsDisplay = true
+        //view.needsDisplay = true
+        redrawSelection(view)
     }
     
     override func mouseUp(location: CGPoint, view: SchematicView) {

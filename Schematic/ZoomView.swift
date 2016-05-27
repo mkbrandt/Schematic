@@ -163,7 +163,7 @@ class ZoomView: NSView
                         let sf = min(sx, sy)
                         newFrame.size = newFrame.size * sf
                         scale = newFrame.size.width / newBounds.size.width
-                        Swift.print("scale sticks at \(scale)")
+                        //Swift.print("scale sticks at \(scale)")
                     }
                 }
                 fixedSize = newFrame.size

@@ -14,7 +14,7 @@ class GroupGraphic: Graphic
         get { return bounds.origin }
         set { moveTo(origin) }
     }
-    var contents: [Graphic]
+    var contents: Set<Graphic>
     
     var boundingRect: RectGraphic       { return RectGraphic(rect: bounds) }
     var allPoints: [CGPoint]            { return contents.reduce([], combine: { $0 + $1.points }) }
@@ -23,14 +23,11 @@ class GroupGraphic: Graphic
     override var centerPoint: CGPoint   { return contents.reduce(CGPoint(), combine: { $0 + $1.centerPoint }) / CGFloat(contents.count) }
     override var points: [CGPoint]      { return boundingRect.points }
 
-    override var inspectables: [Inspectable] {
-        get { return [] }
-        set {}
-    }
+    override var inspectionName: String         { return "Group" }
+    override var inspectables: [Inspectable]    { return [] }
+    
 
-    override var inspectionName: String     { return "Group" }
-
-    init(contents: [Graphic]) {
+    init(contents: Set<Graphic>) {
         self.contents = contents
         super.init(origin: CGPoint(x: 0, y: 0))
     }
@@ -40,7 +37,7 @@ class GroupGraphic: Graphic
     }
     
     required init?(coder decoder: NSCoder) {
-        contents = decoder.decodeObjectForKey("contents") as? [Graphic] ?? []
+        contents = decoder.decodeObjectForKey("contents") as? Set<Graphic> ?? []
         super.init(coder: decoder)
     }
     
@@ -52,6 +49,12 @@ class GroupGraphic: Graphic
         let destRect = boundingRect
         destRect.setPoint(point, index: index)
         scaleFromRect(bounds, toRect: destRect.rect)
+    }
+    
+    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+        for g in contents {
+            g.rotateByAngle(angle, center: center)
+        }
     }
     
     override func intersectsRect(rect: CGRect) -> Bool {
@@ -99,12 +102,12 @@ class GroupGraphic: Graphic
         }
     }
         
-    override func drawInRect(rect: CGRect, view: SchematicView) {
+    override func drawInRect(rect: CGRect) {
         for g in contents {
-            g.drawInRect(rect, view: view)
+            g.drawInRect(rect)
         }
         if selected {
-            showHandlesInView(view)
+            showHandles()
         }
     }
 }

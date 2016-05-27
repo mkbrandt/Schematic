@@ -10,42 +10,79 @@ import Cocoa
 
 class AttributedGraphic: Graphic
 {
-    var attributes: [AttributeText] = []
+    var attributeTexts: Set<AttributeText> = []
+    var boundAttributes: Set<AttributeText>         { return attributeTexts }
     
-    override var elements: [Graphic]     { return attributes }
+    var freeAttributes: [String: String] = [:]
+    
+    override var elements: Set<Graphic>     { return attributeTexts }
     
     override var bounds: CGRect {
-        return attributes.reduce(super.bounds, combine: { $0 + $1.bounds })
+        return boundAttributes.reduce(CGRect(), combine: { $0 + $1.bounds })
     }
+    
+    var graphicBounds: CGRect { return bounds }
     
     override init(origin: CGPoint) {
         super.init(origin: origin)
     }
     
     required init?(coder decoder: NSCoder) {
-        attributes = decoder.decodeObjectForKey("attributes") as? [AttributeText] ?? []
+        attributeTexts = decoder.decodeObjectForKey("attributes") as? Set<AttributeText> ?? []
+        freeAttributes = decoder.decodeObjectForKey("freeAttributes") as? [String: String] ?? [:]
         super.init(coder: decoder)
     }
     
     override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(attributes, forKey: "attributes")
+        coder.encodeObject(attributeTexts, forKey: "attributeTexts")
+        coder.encodeObject(freeAttributes, forKey: "freeAttributes")
         super.encodeWithCoder(coder)
     }
 
-    override var inspectionName: String     { return "AttributedGraphic" }
+    override var inspectionName: String         { return "AttributedGraphic" }
+    override var inspectables: [Inspectable]    { return [] }
 
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
         return nil
     }
     
+    func stripPrefix(name: String) -> String {
+        return name.stringByReplacingCharactersInRange(name.startIndex...name.startIndex, withString: "")
+    }
+    
+    var attributeNames: [String] {
+        return Array(freeAttributes.keys)
+    }
+    
     func attributeValue(name: String) -> String {
+        if name.hasPrefix("=") {
+            if let value = freeAttributes[stripPrefix(name)] {
+                return value
+            } else {
+                return name
+            }
+        }
         return name
     }
+    
+    func setAttribute(value: String, name: String) {
+        freeAttributes[name] = value
+    }
+    
+    override func moveBy(offset: CGPoint) {
+        attributeTexts.forEach({ $0.moveBy(offset) })
+        super.moveBy(offset)
+    }
+    
+    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+        attributeTexts.forEach({ $0.rotateByAngle(angle, center: center) })
+    }
+    
     
 // MARK: Drawing
     
     override func draw() {
-        for attr in attributes {
+        for attr in attributeTexts {
             attr.draw();
         }
     }

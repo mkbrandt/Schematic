@@ -16,6 +16,10 @@ class SchematicView: ZoomView
 {
     @IBOutlet var document: SchematicDocument!
     
+    @IBOutlet var componentSheet: ComponentSheet!
+    @IBOutlet var packagingSheet: PackagingSheet!
+    @IBOutlet var libraryManager: LibraryManager!
+    
     var displayList: [Graphic] {
         get { return document.page.displayList }
         set { document.page.displayList = newValue }
@@ -23,7 +27,7 @@ class SchematicView: ZoomView
     
     var construction: Graphic?
     
-    var selection: [Graphic] = [] {
+    var selection: Set<Graphic> = [] {
         willSet {
             willChangeValueForKey("selection")
             for g in selection {
@@ -178,16 +182,20 @@ class SchematicView: ZoomView
     }
 
     override func drawRect(dirtyRect: NSRect) {
+        let context = NSGraphicsContext.currentContext()?.CGContext
+        
+        CGContextSetLineJoin(context, .Round)
+        CGContextSetLineCap(context, .Round)
         NSEraseRect(dirtyRect)
         drawBorder(dirtyRect)
         drawGridInRect(dirtyRect)
         
         for g in displayList {
-            g.drawInRect(dirtyRect, view: self)
+            g.drawInRect(dirtyRect)
         }
         
         if let g = construction {
-            g.drawInRect(dirtyRect, view: self)
+            g.drawInRect(dirtyRect)
         }
     }
     
@@ -206,8 +214,10 @@ class SchematicView: ZoomView
 
 // MARK: Adding and Deleting elements
     
-    func addGraphics(graphics: [Graphic]) {
+    func addGraphics(graphics: Set<Graphic>) {
+        document.willChangeValueForKey("unplacedComponents")
         displayList.appendContentsOf(graphics)
+        document.didChangeValueForKey("unplacedComponents")
         undoManager?.prepareWithInvocationTarget(self).deleteGraphics(graphics)
         needsDisplay = true
     }
@@ -216,8 +226,10 @@ class SchematicView: ZoomView
         addGraphics([graphic])
     }
     
-    func deleteGraphics(graphics: [Graphic]) {
+    func deleteGraphics(graphics: Set<Graphic>) {
+        document.willChangeValueForKey("unplacedComponents")
         displayList = displayList.filter { !graphics.contains($0) }
+        document.didChangeValueForKey("unplacedComponents")
         undoManager?.prepareWithInvocationTarget(self).addGraphics(graphics)
         needsDisplay = true
     }
@@ -264,7 +276,7 @@ class SchematicView: ZoomView
     }
     
     func selectInRect(rect: CGRect) {
-        selection = displayList.filter { $0.intersectsRect(rect) }
+        selection = Set(displayList.filter { $0.intersectsRect(rect) })
     }
     
 // MARK: Mouse Handling
@@ -275,9 +287,15 @@ class SchematicView: ZoomView
         if theEvent.clickCount > 1 {
             let el = findElementAtPoint(location)
             
-            Swift.print("element is \(el?.description)")
+            if let el = el {
+                selection = [el]
+            } else {
+                selection = []
+            }
+            needsDisplay = true
+        } else {
+            tool.mouseDown(location, view: self)
         }
-        tool.mouseDown(location, view: self)
         redrawConstruction()
     }
     
@@ -324,6 +342,15 @@ class SchematicView: ZoomView
 
 // MARK: Drag and Drop
     
+    func adjustPosition(g: Graphic) {
+        if let comp = g as? Component {
+            if let p1 = comp.pins.first?.origin {
+                let p2 = self.snapToGrid(p1)
+                g.moveBy(p2 - p1)
+            }
+        }
+    }
+    
     override func draggingEntered(sender: NSDraggingInfo) -> NSDragOperation {
         // this is a kludge because enumerateDraggingItems doesn't seem to find anything
         if let source = sender.draggingSource() as? PinInspectorPreview {
@@ -333,8 +360,18 @@ class SchematicView: ZoomView
             pin.moveTo(location)
             construction = pin
             needsDisplay = true
+            return .Copy
+        } else if let table = sender.draggingSource() as? NSTableView, let source = table.dataSource() as? UnplacedcomponentsTableViewDataSource {
+            if let g = source.draggedComponent {
+                Swift.print("Got graphic: \(g)")
+                construction = g
+                let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
+                construction?.moveTo(location)
+                needsDisplay = true
+                sender.enumerateDraggingItemsWithOptions(.ClearNonenumeratedImages, forView: self, classes: [], searchOptions: [:]) { _ in }
+                return .Move
+            }
         }
-        // Why doesn't this work?
         sender.enumerateDraggingItemsWithOptions(.ClearNonenumeratedImages, forView: self, classes: [Graphic.self], searchOptions: [:]) { (item, n, stop) in
             if let g = item.item as? Graphic {
                 let fr = item.draggingFrame
@@ -342,8 +379,10 @@ class SchematicView: ZoomView
                 item.setDraggingFrame(fr, contents: image)
                 self.construction = g
                 let location = self.snapToGrid(self.convertPoint(sender.draggingLocation(), fromView: nil))
-                self.construction?.moveTo(location)
+                g.moveTo(location)
+                self.adjustPosition(g)
                 self.needsDisplay = true
+                return
             }
         }
         return .None
@@ -351,7 +390,10 @@ class SchematicView: ZoomView
     
     override func draggingUpdated(sender: NSDraggingInfo) -> NSDragOperation {
         let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
-        construction?.moveTo(location)
+        if let g = construction {
+            g.moveTo(location)
+            adjustPosition(g)
+        }
         needsDisplay = true
         return .Copy
     }
@@ -366,7 +408,7 @@ class SchematicView: ZoomView
         needsDisplay = true
         return true
     }
-
+    
 // MARK: Actions
     
     @IBAction func selectLineTool(sender: AnyObject) {
@@ -398,7 +440,7 @@ class SchematicView: ZoomView
         let pasteBoard = NSPasteboard.generalPasteboard()
         
         pasteBoard.clearContents()
-        pasteBoard.writeObjects(selection)
+        pasteBoard.writeObjects(Array(selection))
     }
     
     @IBAction func paste(sender: AnyObject) {
@@ -406,8 +448,8 @@ class SchematicView: ZoomView
         let classes = [Graphic.self]
         if pasteBoard.canReadObjectForClasses(classes, options: [:]) {
             if let graphics = pasteBoard.readObjectsForClasses([Graphic.self], options:[:]) as? [Graphic] {
-                addGraphics(graphics)
-                selection = graphics
+                addGraphics(Set(graphics))
+                selection = Set(graphics)
             }
         }
     }
@@ -426,14 +468,14 @@ class SchematicView: ZoomView
     }
     
     @IBAction func ungroup(sender: AnyObject) {
-        var newSelection: [Graphic] = []
+        var newSelection: Set<Graphic> = []
         for g in selection {
             if let g = g as? GroupGraphic {
-                newSelection.appendContentsOf(g.contents)
+                newSelection.unionInPlace(g.contents)
                 deleteGraphic(g)
                 addGraphics(g.contents)
             } else {
-                newSelection.append(g)
+                newSelection.insert(g)
             }
         }
         selection = newSelection
@@ -454,21 +496,95 @@ class SchematicView: ZoomView
         needsDisplay = true
     }
     
+    @IBAction func rotateSelection(sender: AnyObject) {
+        guard selection.count > 0 else { return }
+        let g = GroupGraphic(contents: selection)
+        g.rotateByAngle(PI / 2, center: g.centerPoint)
+        selection.forEach { adjustPosition($0) }
+        needsDisplay = true
+    }
+    
     @IBAction func createComponent(sender: AnyObject) {
         guard selection.count > 0 else { return }
-        let outline = GroupGraphic(contents: selection.filter { !($0 is AttributedGraphic) })
-        let component = Component(origin: outline.origin)
-        component.pins = selection.filter { $0 is Pin } as! [Pin]
-        component.outline = outline
-        component.refDesText = AttributeText(origin: outline.bounds.topLeft, format: "=RefDes", angle: 0, owner: component)
+        window?.beginSheet(componentSheet) { response in
+            self.componentSheet.orderOut(self)
+            if response == NSModalResponseOK {
+                self.performCreateComponent()
+            }
+        }
+    }
+    
+    func performCreateComponent() {
+        let outline = GroupGraphic(contents: Set(selection.filter { !($0 is AttributedGraphic) }))
+        let pins = Set(selection.filter { $0 is Pin } as! [Pin])
+        let component = Component(origin: outline.origin, pins: pins, outline: outline)
+        let refDesText = AttributeText(origin: outline.bounds.topLeft, format: "=RefDes", owner: component)
+        let partNumberText = AttributeText(origin: refDesText.bounds.topLeft, format: "=PartNumber", owner: component)
+        component.nameText = AttributeText(origin: partNumberText.bounds.topLeft, format: "=Name", owner: component)
+        component.refDesText = refDesText
+        component.partNumberText = partNumberText
+        component.name = componentSheet.nameField.stringValue
         deleteGraphics(outline.contents)
         deleteGraphics(component.pins)
         addGraphic(component)
         selection = [component]
         needsDisplay = true
+        if componentSheet.packageSingleCheckbox.state == NSOnState {
+            createPackage(self)
+        }
+    }
+    
+    @IBAction func ungroupComponents(sender: AnyObject) {
+        var newSelection: Set<Graphic> = []
+        for g in selection {
+            if let comp = g as? Component {
+                if let group = comp.outline as? GroupGraphic {
+                    comp.outline = nil
+                    newSelection.unionInPlace(group.contents)
+                }
+                let pins: Set<Graphic> = comp.pins
+                comp.pins = []
+                newSelection.unionInPlace(pins)
+                addGraphics(Set(newSelection))
+                deleteGraphic(comp)
+            } else {
+                newSelection.insert(g)
+            }
+        }
+        selection = newSelection
+        needsDisplay = true
     }
     
     @IBAction func createPackage(sender: AnyObject) {
+        let components = selection.filter { $0 is Component } as! [Component]
+        if components.count > 0 {
+            window?.beginSheet(packagingSheet) { response in
+                self.packagingSheet.orderOut(self)
+                if response == NSModalResponseOK {
+                    self.packagingSheet.orderOut(self)
+                    self.performPackaging(Set(components))
+                }
+            }
+        }
+    }
+    
+    func performPackaging(components: Set<Component>) {
+        let package = Package(components: components)
+        package.prefix = packagingSheet.prefixField.stringValue
+        package.partNumber = packagingSheet.partNumberField.stringValue
+        package.footprint = packagingSheet.footprintField.stringValue
+        package.assignReference(document.state)
+    }
+    
+    @IBAction func ungroupPackages(sender: AnyObject) {
         
+    }
+    
+    @IBAction func ripLib(sender: AnyObject) {
+        runRipper(document)
+    }
+    
+    @IBAction func openLibrary(sender: AnyObject) {
+        libraryManager.openLibrary(self)
     }
 }

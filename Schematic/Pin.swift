@@ -14,7 +14,16 @@ enum PinOrientation: Int {
 
 class Pin: AttributedGraphic
 {
-    var component: Component?
+    weak var component: Component? {
+        didSet {
+            if let component = component {
+                if !component.pins.contains(self) {
+                    component.pins.insert(self)
+                }
+            }
+        }
+    }
+
     var orientation: PinOrientation     { didSet { placeAttributes() }}
     var hasBubble: Bool = false
     var hasClockFlag: Bool = false
@@ -25,7 +34,7 @@ class Pin: AttributedGraphic
     var pinNameText: AttributeText
     var pinNumberText: AttributeText
     
-    override var attributes: [AttributeText] {
+    override var attributeTexts: Set<AttributeText> {
         get { return [pinNameText, pinNumberText] }
         set {}
     }
@@ -33,7 +42,7 @@ class Pin: AttributedGraphic
     override var origin: CGPoint        { didSet { placeAttributes() }}
     override var description: String    { return "Pin(\(pinName):\(pinNumber)" }
     
-    let pinLength = GridSize * 2
+    let pinLength = GridSize * 1
     
     override var bounds: CGRect {
         return rectContainingPoints([origin, endPoint]) + pinNameText.bounds + pinNumberText.bounds
@@ -72,10 +81,9 @@ class Pin: AttributedGraphic
 }
     
     required init?(coder decoder: NSCoder) {
-        if let component = decoder.decodeObjectForKey("component") as? Component,
-        let pinNameText = decoder.decodeObjectForKey("pinNameText") as? AttributeText,
+        if let pinNameText = decoder.decodeObjectForKey("pinNameText") as? AttributeText,
         let pinNumberText = decoder.decodeObjectForKey("pinNumberText") as? AttributeText {
-            self.component = component
+            self.component = decoder.decodeObjectForKey("component") as? Component
             orientation = PinOrientation(rawValue: decoder.decodeIntegerForKey("orientation")) ?? .Right
             hasBubble = decoder.decodeBoolForKey("bubble")
             hasClockFlag = decoder.decodeBoolForKey("clock")
@@ -126,6 +134,19 @@ class Pin: AttributedGraphic
         }
     }
     
+    override func setAttribute(value: String, name: String) {
+        switch name {
+        case "name":
+            pinName = value
+            placeAttributes()
+        case "number":
+            pinNumber = value
+            placeAttributes()
+        default:
+            super.setAttribute(value, name: name)
+        }
+    }
+    
     func placeAttributes() {
         let nameSize = pinNameText.size
         let numberSize = pinNumberText.size
@@ -163,9 +184,26 @@ class Pin: AttributedGraphic
         return self
     }
     
+    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+        origin = rotatePoint(origin, angle: angle, center: center)
+        let angle = normalizeAngle((endPoint - origin).angle + angle)
+        var orient = Int(round(angle / (PI / 2)))
+        while orient < 0 { orient += 4 }
+        while orient >= 4 { orient -= 4 }
+        switch orient {
+        case 0: orientation = .Right
+        case 1: orientation = .Top
+        case 2: orientation = .Left
+        case 3: orientation = .Bottom
+        default: break
+        }
+        placeAttributes()
+    }
+    
     override func draw() {
         let context = NSGraphicsContext.currentContext()?.CGContext
 
+        NSColor.blackColor().set()
         CGContextBeginPath(context)
         CGContextMoveToPoint(context, origin.x, origin.y)
         if hasBubble {
@@ -178,7 +216,7 @@ class Pin: AttributedGraphic
             case .Bottom:   bubbleRect = CGRect(x: origin.x - bsize / 2, y: origin.y - bsize, width: bsize, height: bsize)
             }
             CGContextStrokeEllipseInRect(context, bubbleRect)
-            CGContextMoveToPoint(context, (3 * origin.x + endPoint.x) / 4, (3 * origin.y + endPoint.y) / 4)
+            CGContextMoveToPoint(context, (origin.x + endPoint.x) / 2, (origin.y + endPoint.y) / 2)
         }
         CGContextAddLineToPoint(context, endPoint.x, endPoint.y)
         CGContextStrokePath(context)

@@ -27,7 +27,11 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
-                            <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW"/>
+                            <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
+                                <connections>
+                                    <action selector="orderFront:" target="gkN-4S-rdk" id="Hrk-vV-XwF"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="wFC-TO-SCJ"/>
                             <menuItem title="Services" id="NMo-om-nkz">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -91,6 +95,11 @@
                                         </menuItem>
                                     </items>
                                 </menu>
+                            </menuItem>
+                            <menuItem title="Open Library" keyEquivalent="l" id="GAb-Qb-NeH">
+                                <connections>
+                                    <action selector="openLibrary:" target="-1" id="foS-zi-NMW"/>
+                                </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="m54-Is-iLE"/>
                             <menuItem title="Close" keyEquivalent="w" id="DVo-aG-piG">
@@ -222,10 +231,25 @@
                                     <action selector="createComponent:" target="-1" id="gy5-SO-LwU"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Ungroup Selected Components" id="qcV-zg-ZnO">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="ungroupComponents:" target="-1" id="0G2-ls-oYs"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Create Package From Selection" id="E3c-0C-Of9">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="createPackage:" target="-1" id="Cwi-hb-YnA"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Ungroup Selected Package" id="nOw-Le-xsB">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                            </menuItem>
+                            <menuItem title="Rip Library" id="RWc-lR-xWW">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="ripLib:" target="-1" id="2j4-r9-v2I"/>
                                 </connections>
                             </menuItem>
                         </items>
@@ -289,5 +313,194 @@
                 </menuItem>
             </items>
         </menu>
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="gkN-4S-rdk" customClass="SchematicPreferenceWindow" customModule="Schematic" customModuleProvider="target">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="272" y="172" width="577" height="325"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
+            <view key="contentView" id="C5i-F2-7iw">
+                <rect key="frame" x="0.0" y="0.0" width="577" height="325"/>
+                <autoresizingMask key="autoresizingMask"/>
+            </view>
+            <toolbar key="toolbar" implicitIdentifier="CF157185-965D-4C8F-B8F0-2A3E44946716" autosavesConfiguration="NO" displayMode="iconAndLabel" sizeMode="regular" id="58M-I8-85T">
+                <allowedToolbarItems>
+                    <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="WqI-HQ-EVL"/>
+                    <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="vki-BJ-zfk"/>
+                    <toolbarItem implicitItemIdentifier="F7C4DA9F-91B2-47DF-891E-71573AEFB759" label="Colors" paletteLabel="Colors" image="NSColorPanel" id="pce-n7-Gw5">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="32" height="32"/>
+                        <size key="maxSize" width="48" height="48"/>
+                        <button key="view" id="Efg-mH-JdY" customClass="PrefToolBarButton" customModule="Schematic" customModuleProvider="target">
+                            <rect key="frame" x="0.0" y="14" width="45" height="38"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSColorPanel" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="i81-GL-xWl">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="setPrefViewFrom:" target="gkN-4S-rdk" id="yfX-RQ-aVy"/>
+                                <outlet property="preferenceView" destination="Xm4-OA-EhV" id="wuJ-s9-hZ7"/>
+                            </connections>
+                        </button>
+                    </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="47B0FC25-05E3-4672-B499-33EFCF8F01C0" label="Network" paletteLabel="Network" image="NSNetwork" id="0hF-Ee-H8K">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="32" height="32"/>
+                        <size key="maxSize" width="48" height="48"/>
+                        <button key="view" id="qcB-qG-g74" customClass="PrefToolBarButton" customModule="Schematic" customModuleProvider="target">
+                            <rect key="frame" x="3" y="14" width="45" height="38"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSNetwork" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="lTm-Zi-uCE">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="setPrefViewFrom:" target="gkN-4S-rdk" id="PAd-4d-x5V"/>
+                                <outlet property="preferenceView" destination="bsc-hC-3eS" id="xIu-LX-6VC"/>
+                            </connections>
+                        </button>
+                    </toolbarItem>
+                </allowedToolbarItems>
+                <defaultToolbarItems>
+                    <toolbarItem reference="pce-n7-Gw5"/>
+                    <toolbarItem reference="0hF-Ee-H8K"/>
+                </defaultToolbarItems>
+            </toolbar>
+            <point key="canvasLocation" x="378.5" y="353.5"/>
+        </window>
+        <customView id="Xm4-OA-EhV">
+            <rect key="frame" x="0.0" y="0.0" width="405" height="201"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wat-VV-w1y">
+                    <rect key="frame" x="103" y="158" width="44" height="23"/>
+                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <connections>
+                        <binding destination="KgX-8f-Iiq" name="value" keyPath="values.pinNameColor" id="4Rx-JY-o50">
+                            <dictionary key="options">
+                                <string key="NSValueTransformerName">NSUnarchiveFromData</string>
+                            </dictionary>
+                        </binding>
+                    </connections>
+                </colorWell>
+                <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JDV-qo-8Lb">
+                    <rect key="frame" x="103" y="130" width="44" height="23"/>
+                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <connections>
+                        <binding destination="KgX-8f-Iiq" name="value" keyPath="values.pinNumberColor" id="gKz-VU-eu1">
+                            <dictionary key="options">
+                                <string key="NSValueTransformerName">NSUnarchiveFromData</string>
+                            </dictionary>
+                        </binding>
+                    </connections>
+                </colorWell>
+                <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9ST-jK-Yh7">
+                    <rect key="frame" x="103" y="102" width="44" height="23"/>
+                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <connections>
+                        <binding destination="KgX-8f-Iiq" name="value" keyPath="values.pinColor" id="QgR-Di-T4d">
+                            <dictionary key="options">
+                                <string key="NSValueTransformerName">NSUnarchiveFromData</string>
+                            </dictionary>
+                        </binding>
+                    </connections>
+                </colorWell>
+                <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CaO-1d-eht">
+                    <rect key="frame" x="103" y="76" width="44" height="23"/>
+                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <connections>
+                        <binding destination="KgX-8f-Iiq" name="value" keyPath="values.graphicColor" id="m1M-ND-exO">
+                            <dictionary key="options">
+                                <string key="NSValueTransformerName">NSUnarchiveFromData</string>
+                            </dictionary>
+                        </binding>
+                    </connections>
+                </colorWell>
+                <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="J8J-a6-Ypi">
+                    <rect key="frame" x="103" y="48" width="44" height="23"/>
+                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <connections>
+                        <binding destination="KgX-8f-Iiq" name="value" keyPath="values.attributeColor" id="eQ5-Kz-O45">
+                            <dictionary key="options">
+                                <string key="NSValueTransformerName">NSUnarchiveFromData</string>
+                            </dictionary>
+                        </binding>
+                    </connections>
+                </colorWell>
+                <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XXU-Oz-lof">
+                    <rect key="frame" x="103" y="20" width="44" height="23"/>
+                    <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                    <connections>
+                        <binding destination="KgX-8f-Iiq" name="value" keyPath="values.wireColor" id="HUl-4h-yyC">
+                            <dictionary key="options">
+                                <string key="NSValueTransformerName">NSUnarchiveFromData</string>
+                            </dictionary>
+                        </binding>
+                    </connections>
+                </colorWell>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9CB-RM-GqS">
+                    <rect key="frame" x="28" y="158" width="69" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Pin Names" id="Km7-r9-BYv">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KPn-Be-AGE">
+                    <rect key="frame" x="15" y="130" width="82" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Pin Numbers" id="gKk-GB-ORk">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Qn-os-msF">
+                    <rect key="frame" x="67" y="102" width="30" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Pins" id="QZn-5g-eud">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2kX-10-LC4">
+                    <rect key="frame" x="38" y="76" width="59" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Graphics" id="Fw5-ak-fS8">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Fx-fA-dQu">
+                    <rect key="frame" x="33" y="48" width="64" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Attributes" id="kHI-4K-o3I">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zuj-IT-Woe">
+                    <rect key="frame" x="33" y="20" width="64" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Net Wires" id="Nj7-Ww-ALW">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <point key="canvasLocation" x="373.5" y="692.5"/>
+        </customView>
+        <userDefaultsController representsSharedInstance="YES" id="KgX-8f-Iiq"/>
+        <customView id="bsc-hC-3eS">
+            <rect key="frame" x="0.0" y="0.0" width="393" height="312"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <point key="canvasLocation" x="930.5" y="749"/>
+        </customView>
+        <menuItem title="Item" id="1D7-iB-kRt">
+            <modifierMask key="keyEquivalentModifierMask"/>
+        </menuItem>
     </objects>
+    <resources>
+        <image name="NSColorPanel" width="32" height="32"/>
+        <image name="NSNetwork" width="32" height="32"/>
+    </resources>
 </document>

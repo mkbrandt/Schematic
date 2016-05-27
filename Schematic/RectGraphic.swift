@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class RectGraphic: Graphic
+class RectGraphic: PrimitiveGraphic
 {
     var size: CGSize {
         willSet {
@@ -41,14 +41,13 @@ class RectGraphic: Graphic
         get { return [rect.origin, rect.topLeft, rect.topRight, rect.bottomRight] }
     }
     
+    override var centerPoint: CGPoint { return rect.center }
+    
     override var inspectables: [Inspectable] {
-        get {
-            return super.inspectables + [
-                Inspectable(name: "width", type: .Float),
-                Inspectable(name: "height", type: .Float)
-            ]
-        }
-        set {}
+        return super.inspectables + [
+            Inspectable(name: "width", type: .Float),
+            Inspectable(name: "height", type: .Float)
+        ]
     }
     
     override var inspectionName: String     { return "Rectangle" }
@@ -89,6 +88,10 @@ class RectGraphic: Graphic
         default:
             break
         }
+    }
+    
+    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+        rect = rect.rotatedAroundPoint(center, angle: angle)
     }
     
     override func moveBy(offset: CGPoint) {

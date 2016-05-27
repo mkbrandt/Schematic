@@ -43,6 +43,19 @@ class ArcGraphic: CircleGraphic
         return rectContainingPoints(points)
     }
     
+    var sweep: CGFloat {
+        var sa = startAngle
+        var ea = endAngle
+        if clockwise {
+            sa = endAngle
+            ea = startAngle
+        }
+        if ea < sa {
+            ea += 2 * PI
+        }
+        return ea - sa
+    }
+    
     override var inspectionName: String     { return "Arc" }
     
     init(origin: CGPoint, radius: CGFloat, startAngle: CGFloat, endAngle: CGFloat, clockwise: Bool) {
@@ -135,6 +148,16 @@ class ArcGraphic: CircleGraphic
                 return !clockwise
             }
         }
+    }
+    
+    override func moveBy(offset: CGPoint) {
+        origin = origin + offset
+    }
+    
+    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+        origin = rotatePoint(origin, angle: angle, center: center)
+        startAngle = normalizeAngle(startAngle + angle)
+        endAngle = normalizeAngle(endAngle + angle)
     }
 
     override func closestPointToPoint(point: CGPoint) -> CGPoint {

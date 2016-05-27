@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class LineGraphic: Graphic
+class LineGraphic: PrimitiveGraphic
 {
     var endPoint: CGPoint {
         willSet {
@@ -42,13 +42,10 @@ class LineGraphic: Graphic
     }
     
     override var inspectables: [Inspectable] {
-        get {
-            return super.inspectables + [
-                Inspectable(name: "angle", type: .Angle),
-                Inspectable(name: "length", type: .Float)
-            ]
-        }
-        set {}
+        return super.inspectables + [
+            Inspectable(name: "angle", type: .Angle),
+            Inspectable(name: "length", type: .Float)
+        ]
     }
     
     override var inspectionName: String     { return "Line" }

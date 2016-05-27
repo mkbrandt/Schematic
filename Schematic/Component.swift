@@ -10,61 +10,89 @@ import Cocoa
 
 class Component: AttributedGraphic
 {
-    var refDes: String?
-    var refDesText: AttributeText?
+    var refDes: String         { return package?.refDes ?? "UNPACKAGED" }
+    var partNumber: String     { return package?.partNumber ?? "UNPACKAGED" }
+    var name: String = ""
     
-    var pins: [Pin] = [] {
-        willSet {
-            pins.forEach {
-                $0.moveBy(origin)
-                $0.component = nil
-            }
-        }
-        didSet {
-            pins.forEach {
-                $0.origin = $0.origin - origin
-                $0.component = self
-            }
-        }
+    var refDesText: AttributeText?
+    var partNumberText: AttributeText?
+    var nameText: AttributeText?
+    
+    override var boundAttributes: Set<AttributeText> {
+        return attributeTexts + [refDesText, partNumberText, nameText].flatMap({$0})
     }
     
+    var pins: Set<Pin> = []     { didSet { pins.forEach({$0.component = self}) }}
+    
     var package: Package?
-    var outline: Graphic? {
-        willSet {
-            if let g = outline {
-                g.moveBy(CGPoint(x: origin.x, y: origin.y))
-            }
-        }
-        didSet {
-            if let g = outline {
-                g.moveBy(CGPoint(x: -origin.x, y: -origin.y))
-            }
-        }
+    var outline: Graphic?
+    
+    override var origin: CGPoint {
+        get { return bounds.origin }
+        set { moveBy(newValue - origin) }
     }
     
     override var bounds: CGRect {
         let pinBounds = pins.reduce(CGRect(), combine: {$0 + $1.bounds})
-        var b = outline?.bounds ?? CGRect()
-        b = pinBounds + b
-        b.origin = b.origin + origin
-        return b
+        let b = outline?.bounds ?? CGRect()
+        return pinBounds + b + super.bounds
     }
     
-    override var elements: [Graphic]    { return pins + [refDesText, outline].flatMap({$0}) }
+    override var centerPoint: CGPoint { return graphicBounds.center }
+    
+    override var graphicBounds: CGRect { return outline?.bounds ?? bounds }
+    
+    override var elements: Set<Graphic>     { return pins + [refDesText, partNumberText, nameText].flatMap{$0} }
 
     override var inspectionName: String     { return "Component" }
-
-    override init(origin: CGPoint) {
+    override var inspectables: [Inspectable] {
+        return [
+            Inspectable(name: "name", type: .String, displayName: "Function Name"),
+            Inspectable(name: "refDes", type: .String, displayName: "Reference Designator"),
+            Inspectable(name: "partNumber", type: .String, displayName: "Part Number")
+        ]
+    }
+    
+    var cachedImage: NSImage?
+    
+    var image: NSImage {
+        if let image = cachedImage {
+            return image
+        } else {
+            let image = preview
+            cachedImage = image
+            return image
+        }
+    }
+    
+    var preview: NSImage {
+        let image = NSImage(size: bounds.size)
+        image.lockFocus()
+        let context = NSGraphicsContext.currentContext()?.CGContext
+        CGContextSaveGState(context)
+        CGContextTranslateCTM(context, -bounds.origin.x, -bounds.origin.y)
+        drawImage()
+        CGContextRestoreGState(context)
+        image.unlockFocus()
+        return image
+    }
+    
+    init(origin: CGPoint, pins: Set<Pin>, outline: Graphic) {
+        self.pins = pins
+        self.outline = outline
         super.init(origin: origin)
     }
     
     required init?(coder decoder: NSCoder) {
-        pins = decoder.decodeObjectForKey("pins") as? [Pin] ?? []
+        name = decoder.decodeObjectForKey("name") as? String ?? ""
+        pins = decoder.decodeObjectForKey("pins") as? Set<Pin> ?? []
         package = decoder.decodeObjectForKey("package") as? Package
         outline = decoder.decodeObjectForKey("outline") as? Graphic
-        refDes = decoder.decodeObjectForKey("refDes") as? String
         refDesText = decoder.decodeObjectForKey("refDesText") as? AttributeText
+        partNumberText = decoder.decodeObjectForKey("partNumberText") as? AttributeText
+        nameText = decoder.decodeObjectForKey("nameText") as? AttributeText
         super.init(coder: decoder)
+        pins.forEach({$0.component = self})
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
@@ -72,44 +100,99 @@ class Component: AttributedGraphic
     }
     
     override func encodeWithCoder(coder: NSCoder) {
+        coder.encodeObject(name, forKey: "name")
         coder.encodeObject(pins, forKey: "pins")
         coder.encodeObject(package, forKey: "package")
-        coder.encodeObject(refDes, forKey: "refDes")
-        coder.encodeObject(refDesText, forKey: "refDesText")
         coder.encodeObject(outline, forKey: "outline")
+        coder.encodeObject(refDesText, forKey: "refDesText")
+        coder.encodeObject(partNumberText, forKey: "partNumberText")
+        coder.encodeObject(nameText, forKey: "nameText")
         super.encodeWithCoder(coder)
     }
     
     override func attributeValue(name: String) -> String {
-        switch name.lowercaseString {
-        case "=refdes": return refDes ?? "U?"
-        default: return name
+        if name.hasPrefix("=") {
+            let name = stripPrefix(name)
+            
+            switch name.lowercaseString {
+            case "refdes": return refDes
+            case "partnumber": return partNumber
+            case "name": return self.name
+            default: return super.attributeValue(name)
+            }
+        }
+        return super.attributeValue(name)
+    }
+    
+    override func isSettable(key: String) -> Bool {
+        switch key {
+        case "refDes", "partNumber":
+            return package != nil
+        default:
+            return super.isSettable(key)
         }
     }
     
-    override func showHandlesInView(view: SchematicView) {
-        let r = CGRect(origin: bounds.origin - origin, size: bounds.size)
-        
-        drawPoint(r.origin, color: NSColor.blackColor(), view: view)
-        drawPoint(r.topLeft, color: NSColor.blackColor(), view: view)
-        drawPoint(r.topRight, color: NSColor.blackColor(), view: view)
-        drawPoint(r.bottomRight, color: NSColor.blackColor(), view: view)
+    override func setValue(value: AnyObject?, forUndefinedKey key: String) {
+        switch key {
+        case "refDes", "partNumber":
+            package?.setValue(value, forKey: key)
+        default:
+            break
+        }
+        cachedImage = nil
     }
     
-    override func drawInRect(rect: CGRect, view: SchematicView) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        
-        CGContextSaveGState(context)
-        
-        let rect = rect.translateBy(-origin)
-        
-        CGContextTranslateCTM(context, origin.x, origin.y)
-        outline?.drawInRect(rect, view: view)
-        pins.forEach { $0.drawInRect(rect, view: view) }
-        refDesText?.drawInRect(rect, view: view)
-        super.drawInRect(rect, view: view)            // draws all of the attributes
-        
-        CGContextRestoreGState(context)
+    override func moveBy(offset: CGPoint) {
+        outline?.moveBy(offset)
+        elements.forEach { $0.moveBy(offset) }
+    }
+    
+    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+        outline?.rotateByAngle(angle, center: center)
+        pins.forEach({ $0.rotateByAngle(angle, center: center)})
+        //boundAttributes.forEach({ $0.rotateByAngle(angle, center: center) })
+        //super.rotateByAngle(angle, center: center)
+    }
+    
+    override func intersectsRect(rect: CGRect) -> Bool {
+        for attr in boundAttributes {
+            if attr.intersectsRect(rect) {
+                return true
+            }
+        }
+        for pin in pins {
+            if pin.intersectsRect(rect) {
+                return true
+            }
+        }
+        return graphicBounds.intersects(rect)
+    }
+    
+    override func showHandles() {
+        drawPoint(graphicBounds.origin, color: NSColor.blackColor())
+        drawPoint(graphicBounds.topLeft, color: NSColor.blackColor())
+        drawPoint(graphicBounds.topRight, color: NSColor.blackColor())
+        drawPoint(graphicBounds.bottomRight, color: NSColor.blackColor())
+    }
+    
+    func drawImage() {
+        let rect = bounds
+        outline?.drawInRect(rect)
+        pins.forEach { $0.drawInRect(rect) }
+        refDesText?.drawInRect(rect)
+        partNumberText?.drawInRect(rect)
+        nameText?.drawInRect(rect)
+        super.drawInRect(rect)            // draws all of the attributes
+    }
+    
+    override func drawInRect(rect: CGRect) {
+        if rect.intersects(bounds.insetBy(dx: -SelectRadius, dy: -SelectRadius)) {
+            drawImage()
+            if selected {
+                showHandles()
+            }
+        }
     }
 }
 
@@ -121,7 +204,7 @@ class AutoComponent: Component
     
     init(origin: CGPoint, text: String) {
         self.text = text
-        super.init(origin: origin)
+        super.init(origin: origin, pins: [], outline: Graphic(origin: CGPoint()))
         rejigger()
     }
     
@@ -210,9 +293,10 @@ class AutoComponent: Component
         distributePins(bottomPins, start: CGPoint(x: bottomStart, y: 0), offset: CGPoint(x: rowHeight, y: 0))
         
         outline = RectGraphic(origin: CGPoint(x: 0, y: 0), size: CGSize(width: rectWidth, height: rectHeight))
-        pins = leftPins + rightPins + topPins + bottomPins
-        pins = pins.filter { $0.pinName != "" }
+        pins = Set(leftPins + rightPins + topPins + bottomPins)
+        pins = Set(pins.filter { $0.pinName != "" })
         
         refDesText = AttributeText(origin: CGPoint(x: 0, y: -GridSize), format: "=RefDes", angle: 0, owner: self)
+        cachedImage = nil
     }
 }

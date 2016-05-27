@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class CircleGraphic: Graphic
+class CircleGraphic: PrimitiveGraphic
 {
     var radius: CGFloat {
         willSet { willChangeValueForKey("radius") }
@@ -19,12 +19,9 @@ class CircleGraphic: Graphic
     override var points: [CGPoint]  { return [origin, origin + CGPoint(x: radius, y: 0)] }
     
     override var inspectables: [Inspectable] {
-        get {
-            return super.inspectables + [
-                Inspectable(name: "radius", type: .Float)
-            ]
-        }
-        set {}
+        return super.inspectables + [
+            Inspectable(name: "radius", type: .Float)
+        ]
     }
 
     override var inspectionName: String     { return "Circle" }
@@ -77,6 +74,10 @@ class CircleGraphic: Graphic
             return .HitsOn(self)
         }
         return nil
+    }
+    
+    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+        origin = rotatePoint(origin, angle: angle, center: center)
     }
     
     func intersectionsWithLine(line: Line) -> [CGPoint] {

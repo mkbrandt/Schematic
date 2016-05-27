@@ -49,7 +49,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     
     override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         if drawingView.selection.count == 1 {
-            if let pin = drawingView.selection[0] as? Pin {
+            if let pin = drawingView.selection.first as? Pin {
                 self.pin = pin
                 needsDisplay = true
             }

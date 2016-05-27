@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class GraphicInspector: NSView, NSTextFieldDelegate
+class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate
 {
     @IBOutlet var drawingView: SchematicView! {
         didSet {
@@ -16,8 +16,12 @@ class GraphicInspector: NSView, NSTextFieldDelegate
         }
     }
     
+    @IBOutlet var tableViewContainer: NSScrollView!
+    @IBOutlet var tableView: NSTableView!
+    
     var fieldConstraints: [NSLayoutConstraint] = []
     var inspectionFields: [NSControl] = []
+    var fieldBindings: [(NSControl, String)] = []
     
     var inspectee: Graphic? {
         willSet {
@@ -27,6 +31,10 @@ class GraphicInspector: NSView, NSTextFieldDelegate
                 f.removeFromSuperview()
             }
             inspectionFields = []
+            for (f, s) in fieldBindings {
+                f.unbind(s)
+            }
+            fieldBindings = []
         }
         didSet {
             createInspectionFields()
@@ -35,14 +43,29 @@ class GraphicInspector: NSView, NSTextFieldDelegate
     
     override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         if drawingView.selection.count == 1 {
-            inspectee = drawingView.selection[0]
+            inspectee = drawingView.selection.first
+        } else {
+            inspectee = nil
         }
+    }
+    
+    @IBAction func switchValueChanged(sender: NSButton) {
+        if let info = sender.infoForBinding("state") {
+            if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
+                if target.isSettable(key) {
+                    target.setValue(sender.state == NSOnState, forKey: key)
+                }
+            }
+        }
+        drawingView.needsDisplay = true
     }
     
     @IBAction func stringValueChanged(sender: NSTextField) {
         if let info = sender.infoForBinding("stringValue") {
             if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
-                target.setValue(sender.stringValue, forKey: key)
+                if target.isSettable(key) {
+                    target.setValue(sender.stringValue, forKey: key)
+                }
             }
         }
         drawingView.needsDisplay = true
@@ -51,7 +74,9 @@ class GraphicInspector: NSView, NSTextFieldDelegate
     @IBAction func doubleValueChanged(sender: NSTextField) {
         if let info = sender.infoForBinding("doubleValue") {
             if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
-                target.setValue(sender.doubleValue, forKey: key)
+                if target.isSettable(key) {
+                    target.setValue(sender.doubleValue, forKey: key)
+                }
             }
         }
         drawingView.needsDisplay = true
@@ -60,7 +85,9 @@ class GraphicInspector: NSView, NSTextFieldDelegate
     @IBAction func colorValueChanged(sender: NSColorWell) {
         if let info = sender.infoForBinding("color") {
             if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
-                target.setValue(sender.color, forKey: key)
+                if target.isSettable(key) {
+                    target.setValue(sender.color, forKey: key)
+                }
             }
         }
         drawingView.needsDisplay = true
@@ -78,8 +105,11 @@ class GraphicInspector: NSView, NSTextFieldDelegate
         
         fieldConstraints = []
         inspectionFields = []
+        fieldBindings = []
         
         if let inspectee = inspectee {
+            //Swift.print("Inspecting \(inspectee.inspectionName)")
+            
             let title = NSTextField(frame: CGRect())
             title.translatesAutoresizingMaskIntoConstraints = false
             title.stringValue = inspectee.inspectionName
@@ -95,7 +125,6 @@ class GraphicInspector: NSView, NSTextFieldDelegate
             var previousControl: NSControl = title
             
             for info in inspectee.inspectables {
-                var needsName = true
                 var control: NSControl
                 
                 switch info.type {
@@ -103,35 +132,36 @@ class GraphicInspector: NSView, NSTextFieldDelegate
                     let button = NSButton(frame: CGRect())
                     control = button
                     button.setButtonType(.SwitchButton)
-                    button.title = info.displayName
-                    button.bind("boolValue", toObject: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
-                    needsName = false
+                    button.title = ""
+                    button.bind("state", toObject: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
+                    button.action = #selector(switchValueChanged)
+                    fieldBindings.append((button, "state"))
+                    //needsName = false
                 case .Float, .Int, .Angle:
                     let textField = NSTextField(frame: CGRect())
                     control = textField
                     textField.bind("doubleValue", toObject: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
                     textField.action = #selector(doubleValueChanged)
+                    fieldBindings.append((textField, "doubleValue"))
                 case .String:
                     let textField = NSTextField(frame: CGRect())
                     control = textField
                     textField.bind("stringValue", toObject: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
                     textField.action = #selector(stringValueChanged)
-                case .Color:
+                    fieldBindings.append((textField, "stringValue"))
+               case .Color:
                     let colorWell = NSColorWell(frame: CGRect())
                     control = colorWell
                     colorWell.bind("color", toObject: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
                     fieldConstraints.append(NSLayoutConstraint(item: colorWell, attribute: .Height, relatedBy: .Equal, toItem: nil, attribute: .Height, multiplier: 0, constant: 32))
                     colorWell.action = #selector(colorValueChanged)
-                case .Attribute:
-                    let textField = NSTextField(frame: CGRect())
-                    control = textField
-                    textField.action = #selector(stringValueChanged)
-                    if let attr = inspectee.valueForKey(info.name) {
-                        textField.bind("stringValue", toObject: attr, withKeyPath: "string", options: [NSContinuouslyUpdatesValueBindingOption: true])
-                    }
+                    fieldBindings.append((colorWell, "colorValue"))
                 }
                 control.translatesAutoresizingMaskIntoConstraints = false
                 control.target = self
+                if !inspectee.isSettable(info.name) {
+                    control.enabled = false
+                }
                 addSubview(control)
                 inspectionFields.append(control)
                 
@@ -141,21 +171,18 @@ class GraphicInspector: NSView, NSTextFieldDelegate
                     fieldConstraints.append(NSLayoutConstraint(item: previousControl, attribute: .Width, relatedBy: .Equal, toItem: control, attribute: .Width, multiplier: 1, constant: 0))
                 }
                 
-                if needsName {
-                    let field = NSTextField(frame: CGRect())
-                    field.translatesAutoresizingMaskIntoConstraints = false
-                    field.editable = false
-                    field.bordered = false
-                    field.stringValue = info.displayName
-                    field.alignment = .Right
-                    addSubview(field)
-                    inspectionFields.append(field)
-                    fieldConstraints.append(NSLayoutConstraint(item: field, attribute: .Baseline, relatedBy: .Equal, toItem: control, attribute: .Baseline, multiplier: 1, constant: 0))
-                    fieldConstraints.append(NSLayoutConstraint(item: field, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 8))
-                    fieldConstraints.append(NSLayoutConstraint(item: field, attribute: .Right, relatedBy: .Equal, toItem: control, attribute: .Left, multiplier: 1, constant: -8))
-                } else {
-                    fieldConstraints.append(NSLayoutConstraint(item: self, attribute: .Left, relatedBy: .Equal, toItem: control, attribute: .Left, multiplier: 1, constant: -8))
-                }
+                let field = NSTextField(frame: CGRect())
+                field.translatesAutoresizingMaskIntoConstraints = false
+                field.editable = false
+                field.bordered = false
+                field.stringValue = info.displayName
+                field.alignment = .Right
+                addSubview(field)
+                inspectionFields.append(field)
+                fieldConstraints.append(NSLayoutConstraint(item: field, attribute: .Baseline, relatedBy: .Equal, toItem: control, attribute: .Baseline, multiplier: 1, constant: 0))
+                fieldConstraints.append(NSLayoutConstraint(item: field, attribute: .Left, relatedBy: .Equal, toItem: self, attribute: .Left, multiplier: 1, constant: 8))
+                fieldConstraints.append(NSLayoutConstraint(item: field, attribute: .Right, relatedBy: .Equal, toItem: control, attribute: .Left, multiplier: 1, constant: -8))
+
                 previousControl = control
                 if let textField = control as? NSTextField {
                     textField.editable = true
@@ -167,8 +194,44 @@ class GraphicInspector: NSView, NSTextFieldDelegate
                     lastTextField?.nextKeyView = textField
                 }
             }
-            addConstraints(fieldConstraints)
             firstTextField?.nextKeyView = lastTextField
+            fieldConstraints.append(NSLayoutConstraint(item: tableViewContainer, attribute: .Top, relatedBy: .Equal, toItem: previousControl, attribute: .Bottom, multiplier: 1, constant: 8))
+            tableView.enabled = inspectee is AttributedGraphic
+            tableView.reloadData()
+            addConstraints(fieldConstraints)
         }
+    }
+    
+    // MARK: TableView Data
+    
+    func numberOfRowsInTableView(tableView: NSTableView) -> Int {
+        if let inspectee = inspectee as? AttributedGraphic {
+            return inspectee.attributeNames.count
+        }
+        return 0
+    }
+    
+    func tableView(tableView: NSTableView, objectValueForTableColumn tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+        if let inspectee = inspectee as? AttributedGraphic {
+            if let id = tableColumn?.identifier {
+                switch id {
+                case "Name":
+                    return inspectee.attributeNames[row]
+                case "Value":
+                    let key = inspectee.attributeNames[row]
+                    return inspectee.attributeValue(key)
+                default: break
+                }
+            }
+        }
+        return nil
+    }
+    
+    func tableView(tableView: NSTableView, shouldEditTableColumn tableColumn: NSTableColumn?, row: Int) -> Bool {
+        return true
+    }
+    
+    override func drawRect(dirtyRect: NSRect) {
+        NSEraseRect(dirtyRect)
     }
 }

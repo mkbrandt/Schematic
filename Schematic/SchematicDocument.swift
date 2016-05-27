@@ -146,6 +146,22 @@ class SchematicDocument: NSDocument {
         }
     }
     
+    // MARK: Sanity Checks
+    
+    var components: Set<Component> {
+        let allGraphics = pages.reduce([]) { $0 + $1.displayList }
+        return Set(allGraphics.flatMap { $0 as? Component })
+    }
+    
+    var unplacedComponents: Set<Component> {
+        let allGraphics = pages.reduce([]) { $0 + $1.displayList }
+        let placedComponents = Set(allGraphics.flatMap { $0 as? Component })
+        let packages = Set(placedComponents.flatMap { $0.package })
+        let allComponents = Set(packages.reduce([]) { $0 + $1.components })
+        let unplacedComponents = allComponents.subtract(placedComponents)
+        return unplacedComponents
+    }
+    
     // MARK: Actions
     
     @IBAction func newPage(sender: AnyObject) {
@@ -165,7 +181,7 @@ class SchematicDocument: NSDocument {
     
     @IBAction func deletePage(sender: AnyObject) {
         
-    }
+    }    
 }
 
 class NewPageDialog: NSWindow
