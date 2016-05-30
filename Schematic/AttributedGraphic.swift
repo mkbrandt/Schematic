@@ -10,32 +10,49 @@ import Cocoa
 
 class AttributedGraphic: Graphic
 {
-    var attributeTexts: Set<AttributeText> = []
-    var boundAttributes: Set<AttributeText>         { return attributeTexts }
+    var _attributeTexts: Set<AttributeText> = []
+    var attributeTexts: Set<AttributeText> {
+        get { return _attributeTexts }
+        set {
+            let removed = _attributeTexts.subtract(newValue)
+            let added = newValue.subtract(_attributeTexts)
+            _attributeTexts = newValue
+            removed.forEach { $0._owner = nil }
+            added.forEach { $0._owner = self }
+        }
+    }
     
-    var freeAttributes: [String: String] = [:]
+    var attributes: [String: String] = [:]
     
     override var elements: Set<Graphic>     { return attributeTexts }
     
+    var cachedBounds: CGRect?
     override var bounds: CGRect {
-        return boundAttributes.reduce(CGRect(), combine: { $0 + $1.bounds })
+        if let bounds = cachedBounds {
+            return bounds
+        } else {
+            let bounds = attributeTexts.reduce(CGRect(), combine: { $0 + $1.bounds })
+            cachedBounds = bounds
+            return bounds
+        }
     }
     
-    var graphicBounds: CGRect { return bounds }
+    var graphicBounds: CGRect { return CGRect() }
     
     override init(origin: CGPoint) {
         super.init(origin: origin)
     }
     
     required init?(coder decoder: NSCoder) {
-        attributeTexts = decoder.decodeObjectForKey("attributes") as? Set<AttributeText> ?? []
-        freeAttributes = decoder.decodeObjectForKey("freeAttributes") as? [String: String] ?? [:]
+        _attributeTexts = decoder.decodeObjectForKey("attributeTexts") as? Set<AttributeText> ?? []
+        attributes = decoder.decodeObjectForKey("attributes") as? [String : String] ?? [:]
         super.init(coder: decoder)
+        _attributeTexts.forEach { $0._owner = self }
     }
     
     override func encodeWithCoder(coder: NSCoder) {
         coder.encodeObject(attributeTexts, forKey: "attributeTexts")
-        coder.encodeObject(freeAttributes, forKey: "freeAttributes")
+        coder.encodeObject(attributes, forKey: "attributes")
         super.encodeWithCoder(coder)
     }
 
@@ -50,40 +67,48 @@ class AttributedGraphic: Graphic
         return name.stringByReplacingCharactersInRange(name.startIndex...name.startIndex, withString: "")
     }
     
+    func attributeTextsForAttribute(name: String) -> [AttributeText] {
+        return attributeTexts.filter { $0.format == "=\(name)" }
+    }
+    
     var attributeNames: [String] {
-        return Array(freeAttributes.keys)
+        return Array(attributes.keys)
     }
     
     func attributeValue(name: String) -> String {
-        if name.hasPrefix("=") {
-            if let value = freeAttributes[stripPrefix(name)] {
-                return value
-            } else {
-                return name
-            }
-        }
-        return name
+        return attributes[name] ?? "=\(name)"
     }
     
     func setAttribute(value: String, name: String) {
-        freeAttributes[name] = value
+        attributes[name] = value
+    }
+    
+    func formatAttribute(format: String) -> String {
+        if format.hasPrefix("=") {
+            return attributeValue(stripPrefix(format))
+        } else {
+            return format
+        }
     }
     
     override func moveBy(offset: CGPoint) {
         attributeTexts.forEach({ $0.moveBy(offset) })
         super.moveBy(offset)
+        cachedBounds = nil
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {
         attributeTexts.forEach({ $0.rotateByAngle(angle, center: center) })
+        cachedBounds = nil
     }
-    
-    
+        
 // MARK: Drawing
     
-    override func draw() {
-        for attr in attributeTexts {
-            attr.draw();
+    override func drawInRect(rect: CGRect) {
+        if bounds.intersects(rect) {
+            for attr in attributeTexts {
+                attr.drawInRect(rect);
+            }
         }
     }
 

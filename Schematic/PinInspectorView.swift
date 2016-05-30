@@ -62,7 +62,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         pinNameField.stringValue = pin.pinName
         pinNumberField.stringValue = pin.pinNumber
         bubbleCheckBox.state = pin.hasBubble ? NSOnState : NSOffState
-        overbarCheckBox.state = pin.pinNameText.overbar ? NSOnState : NSOffState
+        overbarCheckBox.state = pin.pinNameText?.overbar ?? false ? NSOnState : NSOffState
         clockCheckBox.state = pin.hasClockFlag ? NSOnState : NSOffState
         switch pin.orientation {
         case .Right: orientationButton.selectItemAtIndex(0)
@@ -107,7 +107,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         pin?.orientation = orientation
         pin?.pinName = pinNameField.stringValue
         pin?.pinNumber = pinNumberField.stringValue
-        pin?.pinNameText.overbar = overbarCheckBox.state == NSOnState
+        pin?.pinNameText?.overbar = overbarCheckBox.state == NSOnState
         pin?.hasBubble = bubbleCheckBox.state == NSOnState
         pin?.hasClockFlag = clockCheckBox.state == NSOnState
         pin?.placeAttributes()
@@ -131,7 +131,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
             CGContextAddLineToPoint(context, bounds.right, pin.origin.y)
         }
         CGContextStrokePath(context)
-        pin?.draw()
+        pin?.drawInRect(bounds)
     }
     
     var pinImage: NSImage {
@@ -139,7 +139,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         image.lockFocus()
         let context = NSGraphicsContext.currentContext()?.CGContext
         CGContextTranslateCTM(context, -pin.bounds.origin.x, -pin.bounds.origin.y)
-        pin.draw()
+        pin.drawInRect(pin.bounds)
         image.unlockFocus()
         return image
     }

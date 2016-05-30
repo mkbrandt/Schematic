@@ -8,32 +8,82 @@
 
 import Cocoa
 
-class NetSegment: NSObject, NSCoding
+enum NetSegmentAttachment {
+    case pin(pin: Pin)
+    case segmentOrigin(segment: NetSegment)
+    case onSegment(segment: NetSegment)
+    
+    var location: CGPoint {
+        switch self {
+        case pin(let p):
+            return p.endPoint
+        case segmentOrigin(let seg):
+            return seg.origin
+        case onSegment(let seg):
+            return seg.origin
+        }
+    }
+}
+
+class NetSegment: AttributedGraphic
 {
-    var origin: CGPoint
+    var net: Net?
     var endPoint: CGPoint
     
-    init(origin: CGPoint) {
-        self.origin = origin
-        self.endPoint = origin
-        super.init()
+    var netNameText: NetNameAttributeText? {
+        let netNameTexts = attributeTexts.flatMap { $0 as? NetNameAttributeText }
+        return netNameTexts.first
+    }
+    
+    var netName: String? {
+        return netNameText?.netName
+    }
+    
+    init(origin: CGPoint, endPoint: CGPoint) {
+        self.endPoint = endPoint
+        super.init(origin: origin)
+    }
+    
+    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+        fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
     required init?(coder decoder: NSCoder) {
-        origin = decoder.decodePointForKey("origin")
         endPoint = decoder.decodePointForKey("endPoint")
-        super.init()
+        super.init(coder: decoder)
     }
     
-    func encodeWithCoder(encoder: NSCoder) {
-        encoder.encodePoint(origin, forKey: "origin")
-        encoder.encodePoint(endPoint, forKey: "endPoint")
+    override func encodeWithCoder(coder: NSCoder) {
+        coder.encodePoint(endPoint, forKey: "endPoint")
+        super.encodeWithCoder(coder)
+    }
+}
+
+class NetNameAttributeText: AttributeText
+{
+    var netName: String
+    
+    init(origin: CGPoint, netName: String, owner: NetSegment) {
+        self.netName = netName
+        super.init(origin: origin, format: "=netName", angle: 0, owner: owner)
     }
     
-    func draw() {
-        NSColor.blackColor().set()
-        NSBezierPath.setDefaultLineWidth(1.0)
-        NSBezierPath.strokeLineFromPoint(origin, toPoint: endPoint)
+    required init?(coder decoder: NSCoder) {
+        if let netName = decoder.decodeObjectForKey("netName") as? String {
+            self.netName = netName
+        } else {
+            return nil
+        }
+        super.init(coder: decoder)
+    }
+    
+    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+        fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
+    }
+    
+    override func encodeWithCoder(coder: NSCoder) {
+        coder.encodeObject(netName, forKey: "netName")
+        super.encodeWithCoder(coder)
     }
 }
 

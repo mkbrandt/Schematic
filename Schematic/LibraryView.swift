@@ -45,10 +45,10 @@ class LibraryPreview: NSView, NSDraggingSource
     }
 }
 
-class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate
+class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOutlineViewDataSource, NSOutlineViewDelegate
 {
     @IBOutlet var librariesTable: NSTableView!
-    @IBOutlet var componentsTable: NSTableView!
+    @IBOutlet var componentsTable: NSOutlineView!
     @IBOutlet var preview: LibraryPreview!
     
     var openLibs: [SchematicDocument] = []
@@ -79,6 +79,26 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate
         }
     }
     
+    @IBAction func openKiCadLibrary(sender: AnyObject) {
+        let openPanel = NSOpenPanel()
+        openPanel.allowedFileTypes = ["lib"]
+        openPanel.runModal()
+        let urls = openPanel.URLs
+        for url in urls {
+            let lib = SchematicDocument()
+            let ripper = KLibRipper()
+            if let text = try? String(contentsOfURL: url, encoding: NSUTF8StringEncoding) {
+                ripper.ripString(text, document: lib)
+                openLibs.append(lib)
+                currentIndex = openLibs.count - 1
+                componentsTable.reloadData()
+                librariesTable.reloadData()
+            }
+        }
+    }
+
+// MARK: TableView Data and Delegate
+    
     func numberOfRowsInTableView(tableView: NSTableView) -> Int {
         if tableView == librariesTable {
             return openLibs.count
@@ -103,6 +123,50 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate
             componentsTable.reloadData()
         } else {
             preview.component = sortedPackages[row].components.first
+        }
+        return true
+    }
+
+// MARK: Outline View Data and Delegate
+    
+    func outlineView(outlineView: NSOutlineView, child index: Int, ofItem item: AnyObject?) -> AnyObject {
+        if let currentLib = currentLib where item == nil {
+            return currentLib.pages[index]
+        } else if let page = item as? SchematicPage {
+            let components = page.displayList.flatMap { $0 as? Component }
+            let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
+            return packages[index]
+        }
+        return "---"
+    }
+    
+    func outlineView(outlineView: NSOutlineView, numberOfChildrenOfItem item: AnyObject?) -> Int {
+        if item == nil {
+            return currentLib?.pages.count ?? 0
+        } else if let page = item as? SchematicPage {
+            let components = page.displayList.flatMap { $0 as? Component }
+            let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
+            return packages.count
+        }
+        return 0
+    }
+    
+    func outlineView(outlineView: NSOutlineView, isItemExpandable item: AnyObject) -> Bool {
+        return item is SchematicPage
+    }
+    
+    func outlineView(outlineView: NSOutlineView, objectValueForTableColumn tableColumn: NSTableColumn?, byItem item: AnyObject?) -> AnyObject? {
+        if let page = item as? SchematicPage {
+            return page.name
+        } else if let package = item as? Package {
+            return package.partNumber ?? package.components.first?.value ?? "---"
+        }
+        return "-"
+    }
+    
+    func outlineView(outlineView: NSOutlineView, shouldSelectItem item: AnyObject) -> Bool {
+        if let package = item as? Package, let component = package.components.first {
+            preview.component = component
         }
         return true
     }

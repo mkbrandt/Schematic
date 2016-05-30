@@ -47,6 +47,8 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         return rectContainingPoints(points)
     }
     
+    var selectBounds: CGRect    { return bounds }
+    
     var inspectables: [Inspectable] { return [] }
     
     var elements: Set<Graphic> { return [] }
@@ -163,6 +165,11 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     // MARK: Selection
     
     func intersectsRect(rect: CGRect) -> Bool {
+        for el in elements {
+            if el.intersectsRect(rect) {
+                return true
+            }
+        }
         return bounds.intersects(rect)
     }
     
@@ -186,11 +193,11 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     
     func elementAtPoint(point: CGPoint) -> Graphic? {
         for el in elements {
-            if el.bounds.contains(point) {
+            if el.selectBounds.contains(point) {
                 return el.elementAtPoint(point)
             }
         }
-        if bounds.contains(point) {
+        if selectBounds.contains(point) {
             return self
         }
         return nil

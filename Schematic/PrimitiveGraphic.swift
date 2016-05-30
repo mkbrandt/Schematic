@@ -41,17 +41,17 @@ class PrimitiveGraphic: Graphic
     }
 
     override func drawInRect(rect: CGRect) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        
-        CGContextSaveGState(context)
         if intersectsRect(rect) {
+            let context = NSGraphicsContext.currentContext()?.CGContext
+            
+            CGContextSaveGState(context)
             CGContextSetLineWidth(context, lineWeight)
             color.set()
             draw()
-        }
-        if selected {
-            showHandles()
-        }
-        CGContextRestoreGState(context)
+            if selected {
+                showHandles()
+            }
+            CGContextRestoreGState(context)
+       }
     }
 }

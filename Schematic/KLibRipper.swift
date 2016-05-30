@@ -38,14 +38,11 @@ class KLibRipper: NSObject
     var origin = CGPoint(x: 100, y: 100)
     var comp: Component?
     var pkg: Package?
-    var name: String = ""
+    var value: String = ""
     var prefix: String = ""
     var drawPinNumber = true
     var drawPinName = true
-    var refText: AttributeText?
-    var valueText: AttributeText?
     var footprint: String?
-    var fpText: AttributeText?
     var group: GroupGraphic?
     
     func scaledNumber(s: String) -> CGFloat {
@@ -61,7 +58,7 @@ class KLibRipper: NSObject
             let fields = line.componentsSeparatedByCharactersInSet(NSCharacterSet.whitespaceCharacterSet()) // should account for quotes
             switch fields[0] {
             case "DEF":
-                name = fields[1]
+                value = fields[1]
                 prefix = fields[2]
                 drawPinNumber = fields[5] == "Y"
                 drawPinName = fields[6] == "Y"
@@ -69,24 +66,24 @@ class KLibRipper: NSObject
                 let homogeneous = fields[8] == "F"
                 group = GroupGraphic(contents: [])
                 comp = Component(origin: CGPoint(), pins: [], outline: group!)
-                comp?.name = name
+                comp?.value = value
                 pkg = Package(components: [comp!])
             case "F0":
                 let x = scaledNumber(fields[2])
                 let y = scaledNumber(fields[3])
-                refText = AttributeText(origin: CGPoint(x: x, y: y), format: "=refDes", angle: 0, owner: comp)
-                comp?.refDesText = refText
+                let refText = AttributeText(origin: CGPoint(x: x, y: y), format: "=refDes", angle: 0, owner: comp)
+                comp?.attributeTexts.insert(refText)
             case "F1":
                 let x = scaledNumber(fields[2])
                 let y = scaledNumber(fields[3])
-                valueText = AttributeText(origin: CGPoint(x: x, y: y), format: "=name", angle: 0, owner: comp)
-                comp?.nameText = valueText
+                let valueText = AttributeText(origin: CGPoint(x: x, y: y), format: "=value", angle: 0, owner: comp)
+                comp?.attributeTexts.insert(valueText)
             case "F2":
                 let x = scaledNumber(fields[2])
                 let y = scaledNumber(fields[3])
                 footprint = fields[1]
-                fpText = AttributeText(origin: CGPoint(x: x, y: y), format: "=footprint", angle: 0, owner: comp)
-                comp?.attributeTexts = [fpText!]
+                let fpText = AttributeText(origin: CGPoint(x: x, y: y), format: "=footprint", angle: 0, owner: comp)
+                comp?.attributeTexts.insert(fpText)
             case "S":
                 let x = scaledNumber(fields[1])
                 let y = scaledNumber(fields[2])

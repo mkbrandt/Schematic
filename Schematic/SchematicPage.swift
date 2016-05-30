@@ -20,7 +20,7 @@ class SchematicPage: NSObject, NSCoding
     
     override init() {
         pageSeq += 1
-        name = "Page_\(pageSeq)"
+        name = "New Page"
     }
     
     required init?(coder decoder: NSCoder) {

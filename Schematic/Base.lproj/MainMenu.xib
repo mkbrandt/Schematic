@@ -29,7 +29,7 @@
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
                                 <connections>
-                                    <action selector="orderFront:" target="gkN-4S-rdk" id="Hrk-vV-XwF"/>
+                                    <action selector="orderFront:" target="qR0-Ke-3kN" id="LsF-J7-S3P"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="wFC-TO-SCJ"/>
@@ -246,10 +246,16 @@
                             <menuItem title="Ungroup Selected Package" id="nOw-Le-xsB">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                             </menuItem>
-                            <menuItem title="Rip Library" id="RWc-lR-xWW">
+                            <menuItem title="Populate Parameters from Octopart" id="WJF-ZX-Uyx">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="ripLib:" target="-1" id="2j4-r9-v2I"/>
+                                    <action selector="populatePartParameters:" target="-1" id="y2G-fI-lDI"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Open KiCad Library" id="RWc-lR-xWW">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="openKiCadLibrary:" target="-1" id="AQ3-WY-Cbf"/>
                                 </connections>
                             </menuItem>
                         </items>
@@ -313,61 +319,6 @@
                 </menuItem>
             </items>
         </menu>
-        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" hidesOnDeactivate="YES" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="gkN-4S-rdk" customClass="SchematicPreferenceWindow" customModule="Schematic" customModuleProvider="target">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES"/>
-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="272" y="172" width="577" height="325"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
-            <view key="contentView" id="C5i-F2-7iw">
-                <rect key="frame" x="0.0" y="0.0" width="577" height="325"/>
-                <autoresizingMask key="autoresizingMask"/>
-            </view>
-            <toolbar key="toolbar" implicitIdentifier="CF157185-965D-4C8F-B8F0-2A3E44946716" autosavesConfiguration="NO" displayMode="iconAndLabel" sizeMode="regular" id="58M-I8-85T">
-                <allowedToolbarItems>
-                    <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="WqI-HQ-EVL"/>
-                    <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="vki-BJ-zfk"/>
-                    <toolbarItem implicitItemIdentifier="F7C4DA9F-91B2-47DF-891E-71573AEFB759" label="Colors" paletteLabel="Colors" image="NSColorPanel" id="pce-n7-Gw5">
-                        <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="48" height="48"/>
-                        <button key="view" id="Efg-mH-JdY" customClass="PrefToolBarButton" customModule="Schematic" customModuleProvider="target">
-                            <rect key="frame" x="0.0" y="14" width="45" height="38"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSColorPanel" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="i81-GL-xWl">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="setPrefViewFrom:" target="gkN-4S-rdk" id="yfX-RQ-aVy"/>
-                                <outlet property="preferenceView" destination="Xm4-OA-EhV" id="wuJ-s9-hZ7"/>
-                            </connections>
-                        </button>
-                    </toolbarItem>
-                    <toolbarItem implicitItemIdentifier="47B0FC25-05E3-4672-B499-33EFCF8F01C0" label="Network" paletteLabel="Network" image="NSNetwork" id="0hF-Ee-H8K">
-                        <nil key="toolTip"/>
-                        <size key="minSize" width="32" height="32"/>
-                        <size key="maxSize" width="48" height="48"/>
-                        <button key="view" id="qcB-qG-g74" customClass="PrefToolBarButton" customModule="Schematic" customModuleProvider="target">
-                            <rect key="frame" x="3" y="14" width="45" height="38"/>
-                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSNetwork" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="lTm-Zi-uCE">
-                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <connections>
-                                <action selector="setPrefViewFrom:" target="gkN-4S-rdk" id="PAd-4d-x5V"/>
-                                <outlet property="preferenceView" destination="bsc-hC-3eS" id="xIu-LX-6VC"/>
-                            </connections>
-                        </button>
-                    </toolbarItem>
-                </allowedToolbarItems>
-                <defaultToolbarItems>
-                    <toolbarItem reference="pce-n7-Gw5"/>
-                    <toolbarItem reference="0hF-Ee-H8K"/>
-                </defaultToolbarItems>
-            </toolbar>
-            <point key="canvasLocation" x="378.5" y="353.5"/>
-        </window>
         <customView id="Xm4-OA-EhV">
             <rect key="frame" x="0.0" y="0.0" width="405" height="201"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
@@ -498,6 +449,61 @@
         <menuItem title="Item" id="1D7-iB-kRt">
             <modifierMask key="keyEquivalentModifierMask"/>
         </menuItem>
+        <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="qR0-Ke-3kN" customClass="SchematicPreferenceWindow" customModule="Schematic" customModuleProvider="target">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="283" y="305" width="442" height="208"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
+            <view key="contentView" id="Gsx-Mg-gRj">
+                <rect key="frame" x="0.0" y="0.0" width="442" height="208"/>
+                <autoresizingMask key="autoresizingMask"/>
+            </view>
+            <toolbar key="toolbar" implicitIdentifier="B6F8ED14-C3BD-467C-948A-7B266C1871DB" autosavesConfiguration="NO" displayMode="iconAndLabel" sizeMode="regular" id="Dos-kS-r7w">
+                <allowedToolbarItems>
+                    <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="0ym-7t-Isq"/>
+                    <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="BAo-AV-IJU"/>
+                    <toolbarItem implicitItemIdentifier="8DEB6B59-E35B-4F94-99C1-4EB2D9503057" label="Colors" paletteLabel="Colors" image="NSColorPanel" id="J3Z-Cx-coC">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="48" height="48"/>
+                        <size key="maxSize" width="48" height="48"/>
+                        <button key="view" id="e5b-yK-l39" customClass="PrefToolBarButton" customModule="Schematic" customModuleProvider="target">
+                            <rect key="frame" x="0.0" y="14" width="48" height="48"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSColorPanel" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="nt7-lb-A2u">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="setPrefViewFrom:" target="qR0-Ke-3kN" id="2s5-uq-gE1"/>
+                                <outlet property="preferenceView" destination="Xm4-OA-EhV" id="hDc-Mx-H4Y"/>
+                            </connections>
+                        </button>
+                    </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="0E4DC21A-5895-4064-B771-CB2579F032CA" label="Network" paletteLabel="Network" image="NSNetwork" id="G7T-Yl-7az">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="48" height="48"/>
+                        <size key="maxSize" width="48" height="48"/>
+                        <button key="view" id="1rb-fK-qFs" customClass="PrefToolBarButton" customModule="Schematic" customModuleProvider="target">
+                            <rect key="frame" x="2" y="14" width="48" height="48"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSNetwork" imagePosition="only" alignment="center" imageScaling="proportionallyUpOrDown" inset="2" id="ovf-YG-LpU">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="setPrefViewFrom:" target="qR0-Ke-3kN" id="kaC-Bu-UJW"/>
+                                <outlet property="preferenceView" destination="bsc-hC-3eS" id="MQE-C2-KZp"/>
+                            </connections>
+                        </button>
+                    </toolbarItem>
+                </allowedToolbarItems>
+                <defaultToolbarItems>
+                    <toolbarItem reference="J3Z-Cx-coC"/>
+                    <toolbarItem reference="G7T-Yl-7az"/>
+                </defaultToolbarItems>
+            </toolbar>
+            <point key="canvasLocation" x="280" y="211"/>
+        </window>
     </objects>
     <resources>
         <image name="NSColorPanel" width="32" height="32"/>

@@ -8,9 +8,7 @@
 
 import Cocoa
 
-let SelectRadius: CGFloat = 6.0
-
-class Tool
+class Tool: NSObject
 {
     var cursor: NSCursor { return NSCursor.crosshairCursor() }
     
@@ -48,7 +46,7 @@ class SelectTool: Tool
     override var cursor: NSCursor { return NSCursor.arrowCursor() }
     
     func redrawSelection(view: SchematicView) {
-        let rect = view.selection.reduce(CGRect()) { $0 + $1.bounds.insetBy(dx: -SelectRadius, dy: -SelectRadius) }
+        let rect = view.selection.reduce(CGRect()) { $0 + $1.bounds.insetBy(dx: -view.selectRadius, dy: -view.selectRadius) }
         view.setNeedsDisplayInRect(rect)
     }
     
@@ -57,7 +55,7 @@ class SelectTool: Tool
         redrawSelection(view)
         if view.selection.count > 0 {
             for g in view.selection {
-                if let ht = g.hitTest(location, threshold: SelectRadius) {
+                if let ht = g.hitTest(location, threshold: view.selectRadius) {
                     switch ht {
                     case .HitsOn(_):
                         mode = .MoveGroup(view.selection)
@@ -80,7 +78,7 @@ class SelectTool: Tool
                 }
             }
         }
-        let rect = CGRect(x: location.x - SelectRadius / 2, y: location.y - SelectRadius / 2, width: SelectRadius, height: SelectRadius)
+        let rect = CGRect(x: location.x - view.selectRadius / 2, y: location.y - view.selectRadius / 2, width: view.selectRadius, height: view.selectRadius)
         view.selectInRect(rect)
         if let g = view.selection.first {
             mode = .MoveGraphic(g)
@@ -105,7 +103,7 @@ class SelectTool: Tool
             rg.lineWeight = 0.5
             view.construction = rg
             view.selectInRect(rect)
-            view.setNeedsDisplayInRect(rect.insetBy(dx: -SelectRadius, dy: -SelectRadius))
+            view.setNeedsDisplayInRect(rect.insetBy(dx: -view.selectRadius, dy: -view.selectRadius))
         case .MoveGraphic(let g):
             let offset = view.snapToGrid(location) - view.snapToGrid(startPoint)
             startPoint = location

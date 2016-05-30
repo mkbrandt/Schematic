@@ -19,6 +19,7 @@ class SchematicView: ZoomView
     @IBOutlet var componentSheet: ComponentSheet!
     @IBOutlet var packagingSheet: PackagingSheet!
     @IBOutlet var libraryManager: LibraryManager!
+    @IBOutlet var octopartWindow: OctoPartWindow!
     
     var displayList: [Graphic] {
         get { return document.page.displayList }
@@ -51,7 +52,7 @@ class SchematicView: ZoomView
             selection = []
             construction = nil
             tool.selectedTool(self)
-            tool.cursor.push()
+            resetCursorRects()
         }
     }
     
@@ -65,7 +66,9 @@ class SchematicView: ZoomView
     
     override var canBecomeKeyView: Bool         { return true }
     override var acceptsFirstResponder: Bool    { return true }
-    
+
+    var _trackingArea: NSTrackingArea?
+
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         registerForDraggedTypes([SchematicElementUTI])
@@ -88,6 +91,35 @@ class SchematicView: ZoomView
         } else {
             return point
         }
+    }
+    
+    var selectRadius: CGFloat {
+        return scaleFloat(5)
+    }
+
+    override func awakeFromNib()
+    {
+        window?.acceptsMouseMovedEvents = true
+        tool.selectedTool(self)
+        updateTrackingAreas()
+        registerForDraggedTypes([SchematicElementUTI])
+    }
+    
+    override func updateTrackingAreas()
+    {
+        let options: NSTrackingAreaOptions = [.MouseMoved, .MouseEnteredAndExited, .ActiveAlways]
+        
+        if _trackingArea != nil {
+            removeTrackingArea(_trackingArea!)
+        }
+        _trackingArea = NSTrackingArea(rect: visibleRect, options: options, owner: self, userInfo: nil)
+        addTrackingArea(_trackingArea!)
+    }
+
+    override func resetCursorRects()
+    {
+        discardCursorRects()
+        addCursorRect(visibleRect, cursor: tool.cursor)
     }
 
     func drawBorder(dirtyRect: CGRect) {
@@ -227,10 +259,12 @@ class SchematicView: ZoomView
     }
     
     func deleteGraphics(graphics: Set<Graphic>) {
+        let attrs = selection.flatMap { $0 as? AttributeText }
+        removeAttributes(attrs)
         document.willChangeValueForKey("unplacedComponents")
         displayList = displayList.filter { !graphics.contains($0) }
-        document.didChangeValueForKey("unplacedComponents")
         undoManager?.prepareWithInvocationTarget(self).addGraphics(graphics)
+        document.didChangeValueForKey("unplacedComponents")
         needsDisplay = true
     }
     
@@ -245,18 +279,41 @@ class SchematicView: ZoomView
             needsDisplay = true
         }
     }
+    
+    func addAttributes(attrs: [AttributeText], owners: [AttributedGraphic?]) {
+        undoManager?.registerUndoWithTarget(self, handler: { (_) in
+            self.removeAttributes(attrs)
+        })
+        for i in 0 ..< attrs.count {
+            if let owner = owners[i] {
+                attrs[i].owner = owner
+            }
+        }
+    }
+    
+    func removeAttributes(attrs: [AttributeText]) {
+        let owners = attrs.map { $0.owner }
+        undoManager?.registerUndoWithTarget(self, handler: { (_) in
+            self.addAttributes(attrs, owners: owners)
+        })
+        for attr in attrs {
+            attr.owner = nil
+        }
+    }
 
 // MARK: Selection
     
     func selectionRectAtPoint(point: CGPoint) -> CGRect {
-        return CGRect(x: point.x - SelectRadius, y: point.y - SelectRadius, width: SelectRadius * 2, height: SelectRadius * 2)
+        return CGRect(x: point.x - selectRadius, y: point.y - selectRadius, width: selectRadius * 2, height: selectRadius * 2)
     }
     
-    func findGraphicAtPoint(location: CGPoint) -> Graphic? {
+    func findGraphicAtPoint(location: CGPoint, selectionFirst: Bool = true) -> Graphic? {
         let srect = selectionRectAtPoint(location)
-        for g in selection {
-            if g.intersectsRect(srect) {
-                return g
+        if selectionFirst {
+            for g in selection {
+                if g.intersectsRect(srect) {
+                    return g
+                }
             }
         }
         
@@ -269,7 +326,7 @@ class SchematicView: ZoomView
     }
     
     func findElementAtPoint(location: CGPoint) -> Graphic? {
-        if let g = findGraphicAtPoint(location) {
+        if let g = findGraphicAtPoint(location, selectionFirst: false) {
             return g.elementAtPoint(location)
         }
         return nil
@@ -278,16 +335,14 @@ class SchematicView: ZoomView
     func selectInRect(rect: CGRect) {
         selection = Set(displayList.filter { $0.intersectsRect(rect) })
     }
-    
+
 // MARK: Mouse Handling
     
     override func mouseDown(theEvent: NSEvent) {
         let location = self.convertPoint(theEvent.locationInWindow, fromView: nil)
         
         if theEvent.clickCount > 1 {
-            let el = findElementAtPoint(location)
-            
-            if let el = el {
+            if let el = findElementAtPoint(location) {
                 selection = [el]
             } else {
                 selection = []
@@ -431,6 +486,14 @@ class SchematicView: ZoomView
         tool = CircleTool()
     }
     
+    @IBAction func selectPolygonTool(sender: AnyObject) {
+        tool = PolygonTool()
+    }
+    
+    @IBAction func selectTextTool(sender: AnyObject) {
+        tool = TextTool()
+    }
+    
     @IBAction func cut(sender: AnyObject) {
         copy(sender)
         delete(sender)
@@ -518,12 +581,12 @@ class SchematicView: ZoomView
         let outline = GroupGraphic(contents: Set(selection.filter { !($0 is AttributedGraphic) }))
         let pins = Set(selection.filter { $0 is Pin } as! [Pin])
         let component = Component(origin: outline.origin, pins: pins, outline: outline)
-        let refDesText = AttributeText(origin: outline.bounds.topLeft, format: "=RefDes", owner: component)
-        let partNumberText = AttributeText(origin: refDesText.bounds.topLeft, format: "=PartNumber", owner: component)
-        component.nameText = AttributeText(origin: partNumberText.bounds.topLeft, format: "=Name", owner: component)
-        component.refDesText = refDesText
-        component.partNumberText = partNumberText
-        component.name = componentSheet.nameField.stringValue
+        let refDesText = AttributeText(origin: outline.bounds.topLeft, format: "=refDes", owner: component)
+        let partNumberText = AttributeText(origin: refDesText.bounds.topLeft, format: "=partNumber", owner: component)
+        component.attributeTexts.insert(AttributeText(origin: partNumberText.bounds.topLeft, format: "=value", owner: component))
+        component.attributeTexts.insert(refDesText)
+        component.attributeTexts.insert(partNumberText)
+        component.value = componentSheet.nameField.stringValue
         deleteGraphics(outline.contents)
         deleteGraphics(component.pins)
         addGraphic(component)
@@ -580,11 +643,18 @@ class SchematicView: ZoomView
         
     }
     
-    @IBAction func ripLib(sender: AnyObject) {
-        runRipper(document)
+    @IBAction func openKiCadLibrary(sender: AnyObject) {
+        libraryManager.openKiCadLibrary(self)
     }
     
     @IBAction func openLibrary(sender: AnyObject) {
         libraryManager.openLibrary(self)
+    }
+    
+    @IBAction func populatePartParameters(sender: AnyObject) {
+        if let component = selection.first as? Component where selection.count == 1 {
+            octopartWindow.orderFront(self)
+            octopartWindow.prepopulateWithComponent(component)
+        }
     }
 }

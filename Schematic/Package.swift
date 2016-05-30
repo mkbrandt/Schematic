@@ -10,10 +10,30 @@ import Foundation
 
 class Package: AttributedGraphic
 {
-    var prefix: String = "U"
-    var refDes: String?
-    var footprint: String?
-    var partNumber: String?
+    var prefix: String {
+        get { return attributes["prefix"] ?? "U" }
+        set { attributes["prefix"] = newValue }
+    }
+    
+    var refDes: String?  {
+        get { return attributes["refDes"] }
+        set { attributes["refDes"] = newValue }
+    }
+
+    var footprint: String?  {
+        get { return attributes["footprint"] }
+        set { attributes["footprint"] = newValue }
+    }
+
+    var partNumber: String?  {
+        get { return attributes["partNumber"] }
+        set { attributes["partNumber"] = newValue }
+    }
+    
+    var manufacturer: String? {
+        get { return attributes["manufacturer"] }
+        set { attributes["manufacturer"] = newValue }
+    }
     
     var components: Set<Component> = [] {
         willSet {
@@ -24,21 +44,9 @@ class Package: AttributedGraphic
         }
     }
     
-    var sortName: String { return partNumber ?? components.first?.name ?? "unnamed" }
+    var sortName: String { return partNumber ?? components.first?.value ?? "unnamed" }
     
     override var inspectionName: String     { return "Package" }
-    override var inspectables: [Inspectable] {
-        return [
-            Inspectable(name: "prefix", type: .String, displayName: "Ref Prefix"),
-            Inspectable(name: "refDes", type: .String, displayName: "RefDes"),
-            Inspectable(name: "partNumber", type: .String, displayName: "Part Number"),
-            Inspectable(name: "footprint", type: .String, displayName: "Footprint")
-        ]
-    }
-    
-    override var attributeNames: [String] {
-        return super.attributeKeys + ["prefix", "refDes", "partNumber", "footprint"]
-    }
     
     init(components: Set<Component>) {
         self.components = components
@@ -48,10 +56,6 @@ class Package: AttributedGraphic
 
     required init?(coder decoder: NSCoder) {
         components = decoder.decodeObjectForKey("components") as? Set<Component> ?? []
-        prefix = decoder.decodeObjectForKey("prefix") as? String ?? "U"
-        refDes = decoder.decodeObjectForKey("refDes") as? String
-        footprint = decoder.decodeObjectForKey("footprint") as? String
-        partNumber = decoder.decodeObjectForKey("partNumber") as? String
         super.init(coder: decoder)
     }
     
@@ -61,10 +65,6 @@ class Package: AttributedGraphic
     
     override func encodeWithCoder(coder: NSCoder) {
         coder.encodeObject(components, forKey: "components")
-        coder.encodeObject(refDes, forKey: "refDes")
-        coder.encodeObject(prefix, forKey: "prefix")
-        coder.encodeObject(footprint, forKey: "footprint")
-        coder.encodeObject(partNumber, forKey: "partNumber")
         super.encodeWithCoder(coder)
     }
     

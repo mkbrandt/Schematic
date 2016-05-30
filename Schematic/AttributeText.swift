@@ -10,23 +10,28 @@ import Cocoa
 
 let AttributeFont = NSFont.systemFontOfSize(GridSize - 3)
 
-class AttributeText: PrimitiveGraphic
+class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
 {
-    var owner: AttributedGraphic?
-    var format: String
-    var angle: CGFloat
-    var overbar: Bool = false
-    
-    override var selected: Bool {
-        didSet {
-            invalidateDrawing()
+    var _owner: AttributedGraphic?
+    var owner: AttributedGraphic? {
+        get { return _owner }
+        set {
+            _owner?.attributeTexts.remove(self)
+            _owner = newValue
+            _owner?._attributeTexts.insert(self)
         }
     }
+        
+    var format: String              { didSet { invalidateDrawing() }}
+    var angle: CGFloat              { didSet { invalidateDrawing() }}
+    var overbar: Bool = false       { didSet { invalidateDrawing() }}
     
+    var font: NSFont                { return AttributeFont }
+        
     override var description: String { return "Attribute(\(format))" }
     
     var textAttributes: [String: AnyObject] {
-        return [NSForegroundColorAttributeName: color, NSFontAttributeName: AttributeFont]
+        return [NSForegroundColorAttributeName: color, NSFontAttributeName: font]
     }
     
     override var inspectables: [Inspectable] {
@@ -47,30 +52,51 @@ class AttributeText: PrimitiveGraphic
     var string: NSString {
         get {
             if let owner = owner {
-                return owner.attributeValue(format)
+                return owner.formatAttribute(format)
             }
             return format
         }
         set {
+            invalidateDrawing()
             if format.hasPrefix("=") {
                 if let name = owner?.stripPrefix(format) {
                     owner?.setAttribute(newValue as String, name: name)
+                    return
                 }
             }
+            format = newValue as String
         }
     }
 
+    var cachedBounds: CGRect?
     var textSize: CGSize            { return string.sizeWithAttributes(textAttributes) }
-    override var bounds: CGRect     { return CGRect(origin: origin, size: textSize).rotatedAroundPoint(origin, angle: angle) }
-    var size: CGSize                { return bounds.size }
+    var textBounds: CGRect {
+        if let bounds = cachedBounds {
+            return bounds
+        }
+        let bounds = CGRect(origin: origin, size: textSize).rotatedAroundPoint(origin, angle: angle)
+        cachedBounds = bounds
+        return bounds
+    }
+    
+    override var bounds: CGRect     {
+        if let owner = owner where selected {
+            return textBounds + owner.graphicBounds
+        }
+        return textBounds
+    }
+    var size: CGSize                { return textBounds.size }
+    
+    override var selectBounds: CGRect   { return textBounds }
 
-    override var centerPoint: CGPoint { return bounds.center }
+    override var centerPoint: CGPoint { return textBounds.center }
     
     init(origin: CGPoint, format: String, angle: CGFloat = 0, owner: AttributedGraphic?) {
         self.format = format
         self.angle = angle
-        self.owner = owner
+        self._owner = owner
         super.init(origin: origin)
+        owner?._attributeTexts.insert(self)
     }
     
     convenience init(format: String) {
@@ -84,7 +110,7 @@ class AttributeText: PrimitiveGraphic
     required init?(coder decoder: NSCoder) {
         format = decoder.decodeObjectForKey("format") as? String ?? ""
         angle = decoder.decodeCGFloatForKey("angle")
-        owner = decoder.decodeObjectForKey("owner") as? AttributedGraphic
+        _owner = decoder.decodeObjectForKey("owner") as? AttributedGraphic
         overbar = decoder.decodeBoolForKey("overbar")
         super.init(coder: decoder)
     }
@@ -120,10 +146,11 @@ class AttributeText: PrimitiveGraphic
     var distanceFromOwner: CGFloat = 0
 
     func invalidateDrawing() {
+        cachedBounds = nil
         if let comp = owner as? Component {
             let dist = comp.origin.distanceToPoint(origin)
             if dist != distanceFromOwner {
-                comp.cachedImage = nil
+                comp.cachedBounds = nil
                 distanceFromOwner = dist
             }
         }
@@ -140,19 +167,18 @@ class AttributeText: PrimitiveGraphic
         if self.angle < -PI { self.angle += 2 * PI }
         origin = rotatePoint(origin, angle: angle, center: center)
     }
-    
+        
     override func showHandles() {
         let context = NSGraphicsContext.currentContext()?.CGContext
         
         CGContextSaveGState(context)
         CGContextSetLineWidth(context, 0.1)
         NSColor.redColor().set()
-        CGContextStrokeRect(context, bounds)
+        CGContextStrokeRect(context, textBounds)
         if let owner = owner {
-            let center = bounds.center
             let cp = owner.graphicBounds.center
             CGContextBeginPath(context)
-            CGContextMoveToPoint(context, center.x, center.y)
+            CGContextMoveToPoint(context, centerPoint.x, centerPoint.y)
             CGContextAddLineToPoint(context, cp.x, cp.y)
             CGContextStrokePath(context)
         }

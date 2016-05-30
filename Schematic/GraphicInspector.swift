@@ -38,6 +38,7 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
         }
         didSet {
             createInspectionFields()
+            tableView.reloadData()
         }
     }
     
@@ -226,11 +227,7 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
         }
         return nil
     }
-    
-    func tableView(tableView: NSTableView, shouldEditTableColumn tableColumn: NSTableColumn?, row: Int) -> Bool {
-        return true
-    }
-    
+        
     override func drawRect(dirtyRect: NSRect) {
         NSEraseRect(dirtyRect)
     }
