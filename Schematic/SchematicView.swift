@@ -653,7 +653,7 @@ class SchematicView: ZoomView
         package.prefix = packagingSheet.prefixField.stringValue
         package.partNumber = packagingSheet.partNumberField.stringValue
         package.footprint = packagingSheet.footprintField.stringValue
-        package.assignReference(document.state)
+        package.assignReference(document)
     }
     
     @IBAction func ungroupPackages(sender: AnyObject) {

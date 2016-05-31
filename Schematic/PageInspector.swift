@@ -46,7 +46,7 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
             self.insertPage(page, index: index)
         })
         if document.pages.count > 1 {
-            document.state.pages.removeAtIndex(index)
+            document.pages.removeAtIndex(index)
             if document.currentPage >= index {
                 document.currentPage -= 1
             }
@@ -57,7 +57,7 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
     
     func insertPage(page: SchematicPage, index: Int) {
         if index <= document.pages.count {
-            document.state.pages.insert(page, atIndex: index)
+            document.pages.insert(page, atIndex: index)
             schematic.needsDisplay = true
             document.undoManager?.registerUndoWithTarget(self, handler: { _ in
                 self.deletePageAtIndex(index)

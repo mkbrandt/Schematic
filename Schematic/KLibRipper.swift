@@ -159,7 +159,7 @@ class KLibRipper: NSObject
             pkg.footprint = footprint
             pkg.prefix = prefix
             if let document = document {
-                pkg.assignReference(document.state)
+                pkg.assignReference(document)
             }
             comp.moveTo(origin)
             origin.x += 100

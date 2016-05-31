@@ -11,7 +11,29 @@ import Cocoa
 let GridSize: CGFloat = 10.0
 let MajorGridSize: CGFloat = 100.0
 
+/*
 class SchematicDocumentState: NSObject, NSCoding
+{
+    var pages: [SchematicPage] = [SchematicPage()]
+    var currentPage: Int = 0
+    
+    override init() {
+        super.init()
+    }
+    
+    required init?(coder decoder: NSCoder) {
+        pages = decoder.decodeObjectForKey("pages") as? [SchematicPage] ?? [SchematicPage()]
+        currentPage = decoder.decodeIntegerForKey("currentPage")
+    }
+    
+    func encodeWithCoder(encoder: NSCoder) {
+        encoder.encodeObject(pages, forKey: "pages")
+        encoder.encodeInteger(currentPage, forKey: "currentPage")
+    }
+}
+*/
+
+class Schematic: NSObject, NSCoding
 {
     var pages: [SchematicPage] = [SchematicPage()]
     var currentPage: Int = 0
@@ -36,17 +58,17 @@ class SchematicDocument: NSDocument {
     @IBOutlet var drawingView: SchematicView?
     @IBOutlet var newPageDialog: NewPageDialog?
     
-    var state = SchematicDocumentState()
+    var schematic = Schematic()
     
     var pages: [SchematicPage] {
-        get { return state.pages }
-        set { state.pages = newValue }
+        get { return schematic.pages }
+        set { schematic.pages = newValue }
     }
     
     var currentPage: Int {
-        get { return state.currentPage }
+        get { return schematic.currentPage }
         set {
-            state.currentPage = newValue
+            schematic.currentPage = newValue
             drawingView?.needsDisplay = true
         }
     }
@@ -79,17 +101,20 @@ class SchematicDocument: NSDocument {
 
     override func dataOfType(typeName: String) throws -> NSData
     {
-        let data = NSKeyedArchiver.archivedDataWithRootObject(state)
+        let data = NSKeyedArchiver.archivedDataWithRootObject(schematic)
         
         return data
     }
     
     override func readFromData(data: NSData, ofType typeName: String) throws
     {
-        if let state = NSKeyedUnarchiver.unarchiveObjectWithData(data) as? SchematicDocumentState {
-            self.state = state
+        let doc = NSKeyedUnarchiver.unarchiveObjectWithData(data)
+        if let schematic = doc as? Schematic {
+            self.schematic = schematic
+      /*  } else if let state = doc as? SchematicDocumentState {
+            self.schematic.pages = state.pages
             currentPage = 0
-        } else {
+      */  } else {
             throw NSError(domain: NSOSStatusErrorDomain, code: unimpErr, userInfo: nil)
         }
     }

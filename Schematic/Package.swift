@@ -68,7 +68,7 @@ class Package: AttributedGraphic
         super.encodeWithCoder(coder)
     }
     
-    func assignReference(document: SchematicDocumentState) {
+    func assignReference(document: SchematicDocument) {
         let allGraphics = document.pages.reduce([]) { $0 + $1.displayList }
         let components = allGraphics.filter { $0 is Component } as! [Component]
         let designators = Set(components.flatMap { $0.refDes })
