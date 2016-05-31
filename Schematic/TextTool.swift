@@ -8,29 +8,12 @@
 
 import Cocoa
 
-
 class TextTool: Tool, NSTextFieldDelegate
 {
     var activeEditor: NSTextField?
     var currentAttribute: AttributeText?
     
-    var menu: NSMenu
-    var fontPanel: NSFontPanel?
-    
     override var cursor: NSCursor   { return NSCursor.IBeamCursor() }
-    
-    override init() {
-        menu = NSMenu()
-        let fontItem = NSMenuItem(title: "Font", action: #selector(showFontPanel), keyEquivalent: "")
-        super.init()
-        fontItem.target = self
-        menu.addItem(fontItem)
-    }
-    
-    func showFontPanel(sender: AnyObject) {
-        fontPanel = NSFontPanel.sharedFontPanel()
-        fontPanel?.orderFront(self)
-    }
     
     func editAttribute(attribute: AttributeText, view: SchematicView) {
         clearEditing()
@@ -45,11 +28,17 @@ class TextTool: Tool, NSTextFieldDelegate
         editor.focusRingType = .None
         editor.frameRotation = attribute.angle * 180 / PI
         editor.delegate = self
-        editor.menu = self.menu
         activeEditor = editor
         view.addSubview(editor)
         editor.stringValue = attribute.string as String
         editor.selectText(self)
+        let menu = NSMenu()
+        let mi = NSMenuItem(title: "Font", action: #selector(SchematicView.showFontPanel), keyEquivalent: "")
+        mi.target = view
+        menu.addItem(mi)
+        let fieldEditor = view.window?.fieldEditor(true, forObject: editor)
+        fieldEditor?.menu = menu
+        NSFontPanel.sharedFontPanel().setPanelFont(attribute.font, isMultiple: false)
     }
     
     override func controlTextDidChange(obj: NSNotification) {
@@ -61,7 +50,8 @@ class TextTool: Tool, NSTextFieldDelegate
                 var size = text.sizeWithAttributes([NSFontAttributeName: attr.font])
                 size.width += extra.sizeWithAttributes([NSFontAttributeName: attr.font]).width
                 var frame = editor.frame
-                frame.size.width = max(frame.size.width, size.width)
+                size.width = max(frame.size.width, size.width)
+                frame.size = size
                 editor.frame = frame
                 if let view = editor.superview as? SchematicView {
                     view.setNeedsDisplayInRect(editor.bounds.insetBy(dx: -20, dy: -20))

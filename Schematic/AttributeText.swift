@@ -8,7 +8,7 @@
 
 import Cocoa
 
-let AttributeFont = NSFont.systemFontOfSize(GridSize - 3)
+let AttributeFont =  NSFont(name: "Geneva", size: GridSize - 3) ?? NSFont.systemFontOfSize(GridSize - 3)
 
 class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
 {
@@ -26,7 +26,16 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     var angle: CGFloat              { didSet { invalidateDrawing() }}
     var overbar: Bool = false       { didSet { invalidateDrawing() }}
     
-    var font: NSFont                { return AttributeFont }
+    var font: NSFont = AttributeFont    {
+        didSet {
+            invalidateDrawing()
+            fontName = font.fontName
+            fontSize = font.pointSize
+        }
+    }
+    
+    var fontName: String?
+    var fontSize: CGFloat = GridSize - 3
         
     override var description: String { return "Attribute(\(format))" }
     
@@ -91,6 +100,12 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
 
     override var centerPoint: CGPoint { return textBounds.center }
     
+    override var selected: Bool {
+        didSet {
+            NSFontPanel.sharedFontPanel().setPanelFont(font, isMultiple: false)
+        }
+    }
+    
     init(origin: CGPoint, format: String, angle: CGFloat = 0, owner: AttributedGraphic?) {
         self.format = format
         self.angle = angle
@@ -112,7 +127,14 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         angle = decoder.decodeCGFloatForKey("angle")
         _owner = decoder.decodeObjectForKey("owner") as? AttributedGraphic
         overbar = decoder.decodeBoolForKey("overbar")
+        if let fontName = decoder.decodeObjectForKey("fontName") as? String {
+            self.fontSize = decoder.decodeCGFloatForKey("fontSize")
+            self.fontName = fontName
+        }
         super.init(coder: decoder)
+        if let fontName = fontName {
+            font = NSFont(name: fontName, size: fontSize) ?? NSFont.systemFontOfSize(fontSize)
+        }
     }
     
     convenience init(copy attr: AttributeText) {
@@ -126,6 +148,10 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         coder.encodeCGFloat(angle, forKey: "angle")
         coder.encodeObject(owner, forKey: "owner")
         coder.encodeBool(overbar, forKey: "overbar")
+        if let fontName = fontName {
+            coder.encodeObject(fontName, forKey: "fontName")
+            coder.encodeCGFloat(fontSize, forKey: "fontSize")
+        }
         super.encodeWithCoder(coder)
     }
     

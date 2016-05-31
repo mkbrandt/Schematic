@@ -71,11 +71,15 @@ class SchematicView: ZoomView
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        registerForDraggedTypes([SchematicElementUTI])
+        viewSetup()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+        viewSetup()
+    }
+    
+    func viewSetup() {
         registerForDraggedTypes([SchematicElementUTI])
     }
     
@@ -335,6 +339,15 @@ class SchematicView: ZoomView
     func selectInRect(rect: CGRect) {
         selection = Set(displayList.filter { $0.intersectsRect(rect) })
     }
+    
+    override func changeFont(sender: AnyObject?) {
+        for g in selection {
+            if let text = g as? AttributeText {
+                text.font = NSFontPanel.sharedFontPanel().panelConvertFont(text.font)
+            }
+        }
+        needsDisplay = true
+    }
 
 // MARK: Mouse Handling
     
@@ -465,6 +478,10 @@ class SchematicView: ZoomView
     }
     
 // MARK: Actions
+
+    @IBAction func showFontPanel(sender: AnyObject) {
+        NSFontPanel.sharedFontPanel().orderFront(self)
+    }
     
     @IBAction func selectLineTool(sender: AnyObject) {
         tool = LineTool()
