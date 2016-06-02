@@ -127,9 +127,11 @@ class LineGraphic: PrimitiveGraphic
         return nil
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        let b0 = bounds
         origin = origin + offset
         endPoint = endPoint + offset
+        return b0 + bounds
     }
     
     override func draw() {

@@ -94,8 +94,10 @@ class RectGraphic: PrimitiveGraphic
         rect = rect.rotatedAroundPoint(center, angle: angle)
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        let b0 = bounds
         origin = origin + offset
+        return b0 + bounds
     }
     
     override func scaleFromRect(fromRect: CGRect, toRect: CGRect) {

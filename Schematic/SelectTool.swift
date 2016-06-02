@@ -21,6 +21,9 @@ class Tool: NSObject
     func unselectedTool(view: SchematicView) {
     }
     
+    func doubleClick(location: CGPoint, view: SchematicView) {
+    }
+    
     func mouseDown(location: CGPoint, view: SchematicView) {
     }
     
@@ -48,6 +51,16 @@ class SelectTool: Tool
     func redrawSelection(view: SchematicView) {
         let rect = view.selection.reduce(CGRect()) { $0 + $1.bounds.insetBy(dx: -view.selectRadius, dy: -view.selectRadius) }
         view.setNeedsDisplayInRect(rect)
+    }
+    
+    override func doubleClick(location: CGPoint, view: SchematicView) {
+        redrawSelection(view)
+        if let el = view.findElementAtPoint(location) {
+            view.selection = [el]
+        } else {
+            view.selection = []
+        }
+        redrawSelection(view)
     }
     
     override func mouseDown(location: CGPoint, view: SchematicView) {
@@ -107,7 +120,8 @@ class SelectTool: Tool
         case .MoveGraphic(let g):
             let offset = view.snapToGrid(location) - view.snapToGrid(startPoint)
             startPoint = location
-            g.moveBy(offset)
+            let changed = g.moveBy(offset)
+            view.setNeedsDisplayInRect(changed)
         case .MoveGroup(let gs):
             let offset = view.snapToGrid(location) - view.snapToGrid(startPoint)
             startPoint = location

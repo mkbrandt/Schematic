@@ -68,8 +68,10 @@ class PolygonGraphic: PrimitiveGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        let b0 = bounds
         points = points.map { $0 + offset }
+        return b0 + bounds
     }
     
     override func closestPointToPoint(point: CGPoint) -> CGPoint {

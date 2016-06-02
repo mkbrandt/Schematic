@@ -91,17 +91,28 @@ class AttributedGraphic: Graphic
         }
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        let b0 = bounds
         attributeTexts.forEach({ $0.moveBy(offset) })
-        super.moveBy(offset)
         cachedBounds = nil
+        return b0 + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {
         attributeTexts.forEach({ $0.rotateByAngle(angle, center: center) })
         cachedBounds = nil
     }
-        
+    
+    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+        if let ht = super.hitTest(point, threshold: threshold) {
+            return ht
+        }
+        if closestPointToPoint(point).distanceToPoint(point) < threshold {
+            return .HitsOn(self)
+        }
+        return nil
+    }
+    
 // MARK: Drawing
     
     override func drawInRect(rect: CGRect) {

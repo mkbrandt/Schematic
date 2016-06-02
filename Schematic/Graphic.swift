@@ -173,8 +173,10 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         return bounds.intersects(rect)
     }
     
-    func moveBy(offset: CGPoint) {
+    func moveBy(offset: CGPoint) -> CGRect {
+        let earlyRect = bounds
         origin = origin + offset
+        return earlyRect + bounds
     }
     
     func moveTo(location: CGPoint) {
@@ -215,6 +217,10 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
             }
         }
         return nil
+    }
+    
+    func unlink(view: SchematicView) {
+        // do anything necessary to delete the graphic from the drawing
     }
     
     // MARK: Drawing

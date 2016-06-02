@@ -78,10 +78,12 @@ class GroupGraphic: Graphic
         return nil
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        let b0 = bounds
         for g in contents {
             g.moveBy(offset)
         }
+        return b0 + bounds
     }
     
     override func flipHorizontalAroundPoint(center: CGPoint) {

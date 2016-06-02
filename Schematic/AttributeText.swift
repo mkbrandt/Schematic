@@ -182,9 +182,11 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         }
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        let b0 = bounds
         super.moveBy(offset)
         invalidateDrawing()
+        return b0 + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {

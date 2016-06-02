@@ -120,7 +120,10 @@ class TextTool: Tool, NSTextFieldDelegate
     }
     
     override func mouseDragged(location: CGPoint, view: SchematicView) {
-        currentAttribute?.origin = view.snapToGrid(location)
+        if let attr = currentAttribute {
+            attr.origin = view.snapToGrid(location)
+            view.needsDisplay = true
+        }
     }
     
     override func mouseUp(location: CGPoint, view: SchematicView) {

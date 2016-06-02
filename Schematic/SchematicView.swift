@@ -266,6 +266,7 @@ class SchematicView: ZoomView
         let attrs = selection.flatMap { $0 as? AttributeText }
         removeAttributes(attrs)
         document.willChangeValueForKey("unplacedComponents")
+        graphics.forEach { $0.unlink(self) }
         displayList = displayList.filter { !graphics.contains($0) }
         undoManager?.prepareWithInvocationTarget(self).addGraphics(graphics)
         document.didChangeValueForKey("unplacedComponents")
@@ -355,12 +356,7 @@ class SchematicView: ZoomView
         let location = self.convertPoint(theEvent.locationInWindow, fromView: nil)
         
         if theEvent.clickCount > 1 {
-            if let el = findElementAtPoint(location) {
-                selection = [el]
-            } else {
-                selection = []
-            }
-            needsDisplay = true
+            tool.doubleClick(location, view: self)
         } else {
             tool.mouseDown(location, view: self)
         }
@@ -509,6 +505,14 @@ class SchematicView: ZoomView
     
     @IBAction func selectTextTool(sender: AnyObject) {
         tool = TextTool()
+    }
+    
+    @IBAction func selectNetNameTool(sender: AnyObject) {
+        tool = NetNameTool()
+    }
+    
+    @IBAction func selectNetTool(sender: AnyObject) {
+        tool = NetTool()
     }
     
     @IBAction func cut(sender: AnyObject) {

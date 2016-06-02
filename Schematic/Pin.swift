@@ -23,6 +23,8 @@ class Pin: AttributedGraphic
             }
         }
     }
+    
+    var node: Node?
 
     var orientation: PinOrientation             { didSet { placeAttributes() }}
     var hasBubble: Bool = false
@@ -52,12 +54,12 @@ class Pin: AttributedGraphic
     weak var pinNumberText: AttributeText?      { return attributeTextsForAttribute("pinNumber").first }
     
     override var origin: CGPoint                { didSet { placeAttributes() }}
-    override var description: String            { return "Pin(\(pinName):\(pinNumber)" }
+    override var description: String            { return "Pin(\(pinName):\(pinNumber))" }
     
     var pinLength = GridSize * 1
     
     override var bounds: CGRect {
-        return rectContainingPoints([origin, endPoint]) + super.bounds
+        return graphicBounds + super.bounds
     }
     
     var endPoint: CGPoint {
@@ -73,7 +75,7 @@ class Pin: AttributedGraphic
         }
     }
     
-    override var graphicBounds: CGRect { return rectContainingPoints([origin, endPoint]) }
+    override var graphicBounds: CGRect { return rectContainingPoints([origin, endPoint]).insetBy(dx: -2, dy: -2) }
     override var centerPoint: CGPoint { return origin }
     
     override var inspectionName: String     { return "Pin" }
@@ -153,6 +155,19 @@ class Pin: AttributedGraphic
         }
     }
     
+    override func moveBy(offset: CGPoint) -> CGRect {
+        guard offset.x != 0 || offset.y != 0 else { return CGRect() }
+        var changed = bounds
+        if let node = node {
+            node.pin = nil
+            node.attachments.forEach { changed = changed + $0.moveBy(offset) }
+            node.pin = self
+        }
+        super.moveBy(offset)
+        origin = origin + offset
+        return changed + bounds
+    }
+    
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {
         origin = rotatePoint(origin, angle: angle, center: center)
         let angle = normalizeAngle((endPoint - origin).angle + angle)
@@ -174,6 +189,7 @@ class Pin: AttributedGraphic
         let context = NSGraphicsContext.currentContext()?.CGContext
 
         NSColor.blackColor().set()
+        CGContextSetLineWidth(context, 1)
         CGContextBeginPath(context)
         CGContextMoveToPoint(context, origin.x, origin.y)
         if hasBubble {
@@ -190,6 +206,13 @@ class Pin: AttributedGraphic
         }
         CGContextAddLineToPoint(context, endPoint.x, endPoint.y)
         CGContextStrokePath(context)
+        if node == nil {
+            CGContextBeginPath(context)
+            CGContextAddArc(context, endPoint.x, endPoint.y, 2, 0, 2 * PI, 1)
+            CGContextSetLineWidth(context, 0.2)
+            NSColor.redColor().set()
+            CGContextStrokePath(context)
+        }
         super.drawInRect(rect)
     }
 }

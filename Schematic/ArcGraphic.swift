@@ -150,8 +150,10 @@ class ArcGraphic: CircleGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        let b0 = bounds
         origin = origin + offset
+        return b0 + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {

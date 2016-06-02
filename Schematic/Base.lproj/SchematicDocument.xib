@@ -682,6 +682,38 @@ Gw
                             <action selector="selectTextTool:" target="Vze-9M-f7e" id="vYu-ZH-LnT"/>
                         </connections>
                     </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="C6612E98-1BA9-4F5E-8101-2BC276A0EB93" label="Net" paletteLabel="Net" image="NetTool" id="9Ep-Gk-HQp">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="32" height="32"/>
+                        <size key="maxSize" width="32" height="32"/>
+                        <button key="view" id="NRD-YY-ssc">
+                            <rect key="frame" x="0.0" y="14" width="32" height="32"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NetTool" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyUpOrDown" inset="2" id="J24-Eb-w86">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </button>
+                        <connections>
+                            <action selector="selectNetTool:" target="Vze-9M-f7e" id="Dsm-wd-1dk"/>
+                        </connections>
+                    </toolbarItem>
+                    <toolbarItem implicitItemIdentifier="EC1C87E4-5D53-477A-93F4-8B31A6995112" label="NetName" paletteLabel="NetName" image="NetNameTool" id="vk4-WJ-jJY">
+                        <nil key="toolTip"/>
+                        <size key="minSize" width="32" height="32"/>
+                        <size key="maxSize" width="32" height="32"/>
+                        <button key="view" id="yMg-qt-TAs">
+                            <rect key="frame" x="12" y="14" width="32" height="32"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NetNameTool" imagePosition="only" alignment="center" borderStyle="border" imageScaling="proportionallyUpOrDown" inset="2" id="BwI-wX-Q8C">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                        </button>
+                        <connections>
+                            <action selector="selectNetNameTool:" target="Vze-9M-f7e" id="aaE-IG-SvP"/>
+                        </connections>
+                    </toolbarItem>
                     <toolbarItem implicitItemIdentifier="4AB6FCE6-9A15-41F1-A2FD-342E9049F3A1" label="Flip Horiz" paletteLabel="Flip Horiz" image="Flip Horizontal" id="UDo-n1-CZQ">
                         <nil key="toolTip"/>
                         <size key="minSize" width="32" height="32"/>
@@ -739,6 +771,8 @@ Gw
                     <toolbarItem reference="UHT-FM-w8w"/>
                     <toolbarItem reference="bPs-W0-zKj"/>
                     <toolbarItem reference="4HO-J1-OIL"/>
+                    <toolbarItem reference="9Ep-Gk-HQp"/>
+                    <toolbarItem reference="vk4-WJ-jJY"/>
                     <toolbarItem reference="Zy2-4x-e0p"/>
                     <toolbarItem reference="UDo-n1-CZQ"/>
                     <toolbarItem reference="xQl-Mh-kdu"/>
@@ -747,7 +781,7 @@ Gw
                     <toolbarItem reference="JB8-6N-hq6"/>
                 </defaultToolbarItems>
             </toolbar>
-            <point key="canvasLocation" x="128.5" y="165.5"/>
+            <point key="canvasLocation" x="145.5" y="63.5"/>
         </window>
         <customView placeholderIntrinsicWidth="162" placeholderIntrinsicHeight="305" translatesAutoresizingMaskIntoConstraints="NO" id="u0A-5H-C1C" customClass="InspectorSelectorView" customModule="Schematic" customModuleProvider="target">
             <rect key="frame" x="0.0" y="0.0" width="182" height="305"/>
@@ -1871,6 +1905,8 @@ Gw
         <image name="NSAddTemplate" width="11" height="11"/>
         <image name="NSInfo" width="32" height="32"/>
         <image name="NSRemoveTemplate" width="11" height="11"/>
+        <image name="NetNameTool" width="48" height="48"/>
+        <image name="NetTool" width="48" height="48"/>
         <image name="PinTool" width="48" height="48"/>
         <image name="PolyTool" width="48" height="48"/>
         <image name="RectTool" width="48" height="48"/>

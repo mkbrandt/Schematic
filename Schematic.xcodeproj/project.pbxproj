@@ -13,6 +13,8 @@
 		7A074AB31CF93D18008D8EA7 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074AB21CF93D18008D8EA7 /* SwiftyJSON.swift */; };
 		7A074AB51CF9E979008D8EA7 /* PolygonTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074AB41CF9E979008D8EA7 /* PolygonTool.swift */; };
 		7A074AB71CFC918C008D8EA7 /* TextTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074AB61CFC918C008D8EA7 /* TextTool.swift */; };
+		7A074AB91CFDD4A5008D8EA7 /* NetTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074AB81CFDD4A5008D8EA7 /* NetTool.swift */; };
+		7A074ABB1CFFA90F008D8EA7 /* NetNameTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074ABA1CFFA90F008D8EA7 /* NetNameTool.swift */; };
 		7A4894401CF74CFF00F6D132 /* PolygonGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A48943F1CF74CFF00F6D132 /* PolygonGraphic.swift */; };
 		7A4894421CF7A0B000F6D132 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4894411CF7A0B000F6D132 /* LibraryView.swift */; };
 		7A4A226A1CF132D800EA774C /* AbstractGraphics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4A22691CF132D800EA774C /* AbstractGraphics.swift */; };
@@ -61,6 +63,8 @@
 		7A074AB21CF93D18008D8EA7 /* SwiftyJSON.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyJSON.swift; sourceTree = "<group>"; };
 		7A074AB41CF9E979008D8EA7 /* PolygonTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PolygonTool.swift; sourceTree = "<group>"; };
 		7A074AB61CFC918C008D8EA7 /* TextTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextTool.swift; sourceTree = "<group>"; };
+		7A074AB81CFDD4A5008D8EA7 /* NetTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetTool.swift; sourceTree = "<group>"; };
+		7A074ABA1CFFA90F008D8EA7 /* NetNameTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetNameTool.swift; sourceTree = "<group>"; };
 		7A48943F1CF74CFF00F6D132 /* PolygonGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PolygonGraphic.swift; sourceTree = "<group>"; };
 		7A4894411CF7A0B000F6D132 /* LibraryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		7A4A22691CF132D800EA774C /* AbstractGraphics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AbstractGraphics.swift; sourceTree = "<group>"; };
@@ -189,6 +193,8 @@
 				7A8C9BC21CEAADD1000B79BE /* CircleTool.swift */,
 				7A074AB41CF9E979008D8EA7 /* PolygonTool.swift */,
 				7A074AB61CFC918C008D8EA7 /* TextTool.swift */,
+				7A074AB81CFDD4A5008D8EA7 /* NetTool.swift */,
+				7A074ABA1CFFA90F008D8EA7 /* NetNameTool.swift */,
 				7A74973D1CEA427000C6AAFB /* SelectTool.swift */,
 			);
 			name = Tools;
@@ -281,7 +287,9 @@
 			files = (
 				7A8C9BC31CEAADD1000B79BE /* CircleTool.swift in Sources */,
 				7A4A226A1CF132D800EA774C /* AbstractGraphics.swift in Sources */,
+				7A074ABB1CFFA90F008D8EA7 /* NetNameTool.swift in Sources */,
 				7A5FBE211CE67C290031ED77 /* Component.swift in Sources */,
+				7A074AB91CFDD4A5008D8EA7 /* NetTool.swift in Sources */,
 				7A074AB31CF93D18008D8EA7 /* SwiftyJSON.swift in Sources */,
 				7A5FBE291CE67F6C0031ED77 /* GraphicMath.swift in Sources */,
 				7A4894421CF7A0B000F6D132 /* LibraryView.swift in Sources */,

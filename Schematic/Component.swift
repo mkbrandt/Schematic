@@ -147,9 +147,11 @@ class Component: AttributedGraphic
         cachedImage = nil
     }
     
-    override func moveBy(offset: CGPoint) {
+    override func moveBy(offset: CGPoint) -> CGRect {
+        var b0 = bounds
         outline?.moveBy(offset)
-        elements.forEach { $0.moveBy(offset) }
+        elements.forEach { b0 = b0 + $0.moveBy(offset) }
+        return b0 + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {
@@ -161,6 +163,13 @@ class Component: AttributedGraphic
     
     override func intersectsRect(rect: CGRect) -> Bool {
         return graphicBounds.intersects(rect) || super.intersectsRect(rect)
+    }
+    
+    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+        if graphicBounds.contains(point) {
+            return point
+        }
+        return origin
     }
     
     override func showHandles() {
