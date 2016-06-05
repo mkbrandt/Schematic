@@ -39,6 +39,15 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         
     override var description: String { return "Attribute(\(format))" }
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "AttributeText"
+        json["format"] = JSON(format)
+        json["angle"] = JSON(angle)
+        json["overbar"] = JSON(overbar)
+        return json
+    }
+    
     var textAttributes: [String: AnyObject] {
         return [NSForegroundColorAttributeName: color, NSFontAttributeName: font]
     }
@@ -138,9 +147,16 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
     
     convenience init(copy attr: AttributeText) {
-        self.init(origin: attr.origin, format: attr.format as String, angle: attr.angle, owner: attr.owner)
+        self.init(origin: attr.origin, format: attr.format as String, angle: attr.angle, owner: nil)
         overbar = attr.overbar
         color = attr.color
+    }
+    
+    override init(json: JSON) {
+        angle = CGFloat(json["angle"].doubleValue)
+        format = json["format"].stringValue
+        overbar = json["overbar"].boolValue
+        super.init(json: json)
     }
     
     override func encodeWithCoder(coder: NSCoder) {
@@ -182,11 +198,9 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         }
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
-        super.moveBy(offset)
+    override func moveBy(offset: CGPoint, view: SchematicView) {
+        super.moveBy(offset, view: view)
         invalidateDrawing()
-        return b0 + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {

@@ -25,6 +25,13 @@ class CircleGraphic: PrimitiveGraphic
     }
 
     override var inspectionName: String     { return "Circle" }
+    
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "CircleGraphic"
+        json["radius"] = JSON(radius)
+        return json
+    }
 
     init(origin: CGPoint, radius: CGFloat) {
         self.radius = radius
@@ -34,6 +41,11 @@ class CircleGraphic: PrimitiveGraphic
     required init?(coder decoder: NSCoder) {
         radius = decoder.decodeCGFloatForKey("radius")
         super.init(coder: decoder)
+    }
+    
+    override init(json: JSON) {
+        radius = CGFloat(json["radius"].doubleValue)
+        super.init(json: json)
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {

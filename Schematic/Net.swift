@@ -12,99 +12,21 @@ enum NetOrientation: Int {
     case Horizontal, Vertical
 }
 
-class Node: PrimitiveGraphic
-{
-    var pin: Pin? {
-        willSet { pin?.node = nil }
-        didSet  { pin?.node = self }
-    }
-    
-    var attachments: Set<Net> = [] { didSet { if attachments.count == 0 { pin = nil }}}
-    
-    override var origin: CGPoint {
-        get {
-            if let pin = pin {
-                return pin.endPoint
-            }
-            return super.origin
-        }
-        set {
-            super.origin = newValue
-        }
-    }
-    
-    var canMove: Bool           { return pin == nil }
-    var singleEndpoint: Bool    { return pin == nil && attachments.count == 1 }
-    
-    override init(origin: CGPoint) {
-        super.init(origin: origin)
-    }
-    
-    required init?(coder decoder: NSCoder) {
-        pin = decoder.decodeObjectForKey("pin") as? Pin
-        if let attachments = decoder.decodeObjectForKey("attachments") as? Set<Net> {
-            self.attachments = attachments
-        }
-        super.init(coder: decoder)
-        if let pin = pin {
-            pin.node = self
-        }
-    }
-    
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
-        fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
-    }
-    
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(attachments, forKey: "attachments")
-        if let pin = pin {
-            coder.encodeObject(pin, forKey: "pin")
-        }
-        super.encodeWithCoder(coder)
-    }
-
-    func optimize(view: SchematicView) {
-        if attachments.count == 2 && pin == nil {
-            let lines = attachments.map { $0.line }             // can't quite figure out how to call this when nets are deleted
-            if lines[0].isParallelWith(lines[1]) {
-                let net1 = attachments.removeFirst()
-                let net2 = attachments.removeFirst()
-                let outerNodes = [net1.originNode, net1.endPointNode, net2.originNode, net2.endPointNode].filter { $0 != self }
-                net1.originNode = outerNodes[0]
-                net1.endPointNode = outerNodes[1]
-                outerNodes[0].attachments.insert(net1)
-                outerNodes[1].attachments.insert(net1)
-                view.deleteGraphic(net2)
-            }
-        }
-    }
-    
-    override func draw() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        if pin == nil && attachments.count > 2 {
-            NSColor.blackColor().set()
-            CGContextBeginPath(context)
-            CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
-            CGContextFillPath(context)
-        } else if pin == nil && attachments.count == 1 {
-            NSColor.redColor().set()
-            CGContextBeginPath(context)
-            CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
-            CGContextFillPath(context)
-        }
-    }
+struct NetState {
+    var originNode: Node
+    var endPointNode: Node
 }
 
 class Net: AttributedGraphic
 {
     var originNode: Node {
         willSet { originNode.attachments.remove(self) }
-        didSet  { originNode.attachments.insert(self) }
+        didSet  { originNode.attachments.insert(self); endPointNode.attachments.insert(self) }
     }
     
     var endPointNode: Node {
         willSet { endPointNode.attachments.remove(self) }
-        didSet  { endPointNode.attachments.insert(self) }
+        didSet  { endPointNode.attachments.insert(self); originNode.attachments.insert(self) }
     }
     
     var orientation: NetOrientation {
@@ -129,6 +51,12 @@ class Net: AttributedGraphic
             endPointNode.origin = newValue
         }
     }
+    
+    var state: NetState {
+        get { return NetState(originNode: originNode, endPointNode: endPointNode) }
+        set { originNode = newValue.originNode; endPointNode = newValue.endPointNode }
+    }
+    var lastUndoSave = -1
     
     override var description: String    { return "net \(name): \(origin) - \(endPoint)" }
     override var points: [CGPoint] { return [origin, endPoint] }
@@ -190,6 +118,13 @@ class Net: AttributedGraphic
         return line.intersectsRect(rect) || super.intersectsRect(rect)
     }
     
+    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+        if line.distanceToPoint(point) < threshold {
+            return .HitsOn(self)
+        }
+        return nil
+    }
+    
     override func elementAtPoint(point: CGPoint) -> Graphic? {
         if point.distanceToPoint(origin) < 3 {
             return originNode
@@ -199,20 +134,47 @@ class Net: AttributedGraphic
         return super.elementAtPoint(point)
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
-        if originNode.canMove && endPointNode.canMove {
-            let offset = orientation == .Horizontal ? CGPoint(x: 0, y: offset.y) : CGPoint(x: offset.x, y: 0)
-            
-            originNode.moveBy(offset)
-            endPointNode.moveBy(offset)
-        }
-        return b0 + bounds + super.moveBy(offset)
+    func restoreUndoState(state: NetState, view: SchematicView) {
+        view.setNeedsDisplayInRect(bounds.insetBy(dx: -5, dy: -5))
+        let oldState = self.state
+        self.state = state
+        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+            self.restoreUndoState(oldState, view: view)
+        })
+        view.setNeedsDisplayInRect(bounds.insetBy(dx: -5, dy: -5))
     }
     
-    func propagatedName(exclude exclude: [Net]) -> String? {
+    func saveUndoState(view: SchematicView) {
+        if undoSequence != lastUndoSave {
+            lastUndoSave = undoSequence
+            let state = self.state
+            view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+                self.restoreUndoState(state, view: view)
+            })
+        }
+    }
+    
+    override func moveBy(offset: CGPoint, view: SchematicView) {
+        saveUndoState(view)
+        originNode.moveBy(offset, view: view)
+        endPointNode.moveBy(offset, view: view)
+        super.moveBy(offset, view: view)
+    }
+    
+    func propagatedName(exclude exclude: Set<Net>) -> String? {
         let connected = (originNode.attachments + endPointNode.attachments).filter { !exclude.contains($0) }
-        return explicitName ?? connected.reduce(nil, combine: {$0 ?? $1.propagatedName(exclude: [self] + exclude)})
+        let pinName = originNode.pin?.netName ?? endPointNode.pin?.netName
+        if let name = explicitName ?? pinName {
+            return name
+        }
+        var exclude = exclude
+        for net in connected {
+            exclude.insert(net)
+            if let name = net.propagatedName(exclude: exclude) {
+                return name
+            }
+        }
+        return nil
     }
     
     func relink(view: SchematicView) {
@@ -281,7 +243,7 @@ class NetNameAttributeText: AttributeText
     
     override var inspectionName: String { return "NetNameAttribute" }
     
-    init(origin: CGPoint, netName: String, owner: Net) {
+    init(origin: CGPoint, netName: String, owner: AttributedGraphic) {
         self.netName = netName
         super.init(origin: origin, format: "*netName*", angle: 0, owner: owner)
     }

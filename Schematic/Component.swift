@@ -42,9 +42,19 @@ class Component: AttributedGraphic
     var package: Package?
     var outline: Graphic?
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "Component"
+        if let outline = outline {
+            json["outline"] = outline.json
+        }
+        json["pins"] = JSON(pins.map { $0.json })
+        return json
+    }
+    
     override var origin: CGPoint {
         get { return bounds.origin }
-        set { moveBy(newValue - origin) }
+        set { fatalError("AttributedGraphic.setOrigin not implemented") }
     }
     
     override var bounds: CGRect {
@@ -53,6 +63,8 @@ class Component: AttributedGraphic
         let attrBounds = super.bounds
         return pinBounds + b + attrBounds
     }
+    
+    var sortName: String { return (package?.partNumber ?? "_") + (value ?? "UNNAMED") }
     
     override var centerPoint: CGPoint { return graphicBounds.center }
     
@@ -69,7 +81,7 @@ class Component: AttributedGraphic
             return image
         } else {
             let image = preview
-            cachedImage = image
+            //cachedImage = image
             return image
         }
     }
@@ -90,6 +102,7 @@ class Component: AttributedGraphic
         self.pins = pins
         self.outline = outline
         super.init(origin: origin)
+        pins.forEach({ $0.component = self })
     }
     
     required init?(coder decoder: NSCoder) {
@@ -98,6 +111,13 @@ class Component: AttributedGraphic
         outline = decoder.decodeObjectForKey("outline") as? Graphic
         super.init(coder: decoder)
         pins.forEach({$0.component = self})
+    }
+    
+    override init(json: JSON) {
+        outline = jsonToGraphic(json["outline"])
+        pins = Set(json["pins"].arrayValue.map { Pin(json: $0) })
+        super.init(json: json)
+        pins.forEach { $0.component = self }
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
@@ -147,18 +167,70 @@ class Component: AttributedGraphic
         cachedImage = nil
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        var b0 = bounds
-        outline?.moveBy(offset)
-        elements.forEach { b0 = b0 + $0.moveBy(offset) }
-        return b0 + bounds
+    override func designCheck(view: SchematicView) {
+        pins.forEach { pin in
+            pin.designCheck(view)
+        }
+    }
+    
+    override func moveBy(offset: CGPoint, view: SchematicView) {
+        outline?.moveBy(offset, view: view)
+        elements.forEach { $0.moveBy(offset, view: view) }
+        cachedBounds = nil
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {
         cachedImage = nil
         outline?.rotateByAngle(angle, center: center)
         pins.forEach({ $0.rotateByAngle(angle, center: center)})
-        super.rotateByAngle(angle, center: center)
+        //super.rotateByAngle(angle, center: center)                // attributeTexts
+    }
+    
+    func flipAttributeHorizontal(attribute: AttributeText, center: CGPoint) {
+        let c2o = attribute.bounds.center.x - attribute.origin.x
+        var ac = attribute.bounds.center.x
+        ac = center.x - (ac - center.x)
+        attribute.origin.x = ac - c2o
+        attribute.cachedBounds = nil
+    }
+    
+    func flipAttributeVertical(attribute: AttributeText, center: CGPoint) {
+        let c2o = attribute.bounds.center.y - attribute.origin.y
+        var ac = attribute.bounds.center.y
+        ac = center.y - (ac - center.y)
+        attribute.origin.y = ac - c2o
+        attribute.cachedBounds = nil
+    }
+    
+    override func flipHorizontalAroundPoint(center: CGPoint) {
+        cachedImage = nil
+        outline?.flipHorizontalAroundPoint(center)
+        pins.forEach({ $0.flipHorizontalAroundPoint(center) })
+        attributeTexts.forEach({ flipAttributeHorizontal($0, center: center) })
+    }
+    
+    override func flipVerticalAroundPoint(center: CGPoint) {
+        cachedImage = nil
+        outline?.flipVerticalAroundPoint(center)
+        pins.forEach({ $0.flipVerticalAroundPoint(center) })
+        attributeTexts.forEach({ flipAttributeVertical($0, center: center) })
+    }
+    
+    func relink(nodeInfo: [(Pin, Node?)], view: SchematicView) {
+        nodeInfo.forEach { (pin, node) in pin.node = node; node?.pin = pin }
+        view.undoManager?.registerUndoWithTarget(self) { _ in
+            self.unlink(view)
+        }
+        view.setNeedsDisplayInRect(self.bounds.insetBy(dx: -5, dy: -5))
+    }
+    
+    override func unlink(view: SchematicView) {
+        let nodeInfo = pins.map { (pin: Pin) in (pin, pin.node) }
+        pins.forEach { $0.node?.pin = nil }
+        view.undoManager?.registerUndoWithTarget(self) { _ in
+            self.relink(nodeInfo, view: view)
+        }
+        view.setNeedsDisplayInRect(self.bounds.insetBy(dx: -5, dy: -5))
     }
     
     override func intersectsRect(rect: CGRect) -> Bool {
@@ -170,6 +242,15 @@ class Component: AttributedGraphic
             return point
         }
         return origin
+    }
+    
+    override func elementAtPoint(point: CGPoint) -> Graphic? {
+        for pin in pins {
+            if pin.graphicBounds.contains(point) {
+                return pin
+            }
+        }
+        return super.elementAtPoint(point)
     }
     
     override func showHandles() {

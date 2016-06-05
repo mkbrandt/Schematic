@@ -22,6 +22,8 @@ class NetNameTool: TextTool
             } else {
                 currentAttribute = NetNameAttributeText(origin: location, netName: "UNNAMED", owner: net)
             }
+        } else if let pin = el as? Pin {
+            currentAttribute = NetNameAttributeText(origin: pin.origin, netName: "UNNAMED", owner: pin)
         }
     }
 }

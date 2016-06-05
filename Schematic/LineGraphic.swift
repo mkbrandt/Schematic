@@ -50,9 +50,21 @@ class LineGraphic: PrimitiveGraphic
     
     override var inspectionName: String     { return "Line" }
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "LineGraphic"
+        json["endPoint"] = endPoint.json
+        return json
+    }
+    
     init(origin: CGPoint, endPoint: CGPoint) {
         self.endPoint = endPoint
         super.init(origin: origin)
+    }
+    
+    override init(json: JSON) {
+        endPoint = CGPoint(json: json["endPoint"])
+        super.init(json: json)
     }
     
     convenience init(origin: CGPoint, vector: CGPoint) {
@@ -127,11 +139,9 @@ class LineGraphic: PrimitiveGraphic
         return nil
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
+    override func moveBy(offset: CGPoint, view: SchematicView) {
         origin = origin + offset
         endPoint = endPoint + offset
-        return b0 + bounds
     }
     
     override func draw() {

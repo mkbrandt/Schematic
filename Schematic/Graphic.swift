@@ -32,8 +32,13 @@ class Inspectable: NSObject {
     }
 }
 
+var _NextGraphicID = 0
+var nextGraphicID: Int { _NextGraphicID += 1; return _NextGraphicID }
+
 class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
 {
+    var graphicID: Int
+    
     var origin: CGPoint
     var selected = false
     
@@ -55,13 +60,23 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     
     var inspectionName: String      { return "Graphic" }
     
+    var json: JSON  { return JSON(["origin": origin.json]) }
+    
     init(origin: CGPoint) {
         self.origin = origin
+        graphicID = nextGraphicID
+        super.init()
+    }
+    
+    init(json: JSON) {
+        origin = CGPoint(json: json["origin"])
+        graphicID = nextGraphicID
         super.init()
     }
     
     required init?(coder decoder: NSCoder) {
         origin = decoder.decodePointForKey("origin")
+        graphicID = nextGraphicID
         super.init()
     }
     
@@ -162,6 +177,9 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
+    func designCheck(view: SchematicView) {
+    }
+    
     // MARK: Selection
     
     func intersectsRect(rect: CGRect) -> Bool {
@@ -173,20 +191,16 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         return bounds.intersects(rect)
     }
     
-    func moveBy(offset: CGPoint) -> CGRect {
-        let earlyRect = bounds
+    func moveBy(offset: CGPoint, view: SchematicView) {
+        view.setNeedsDisplayInRect(bounds)
         origin = origin + offset
-        return earlyRect + bounds
+       view.setNeedsDisplayInRect(bounds)
     }
-    
-    func moveTo(location: CGPoint) {
-        let offset = location - origin
-        moveBy(offset)
-    }
-    
+        
     func moveTo(location: CGPoint, view: SchematicView) {
         let p = origin
-        moveTo(location)
+        let offset = location - origin
+        moveBy(offset, view: view)
         view.undoManager?.registerUndoWithTarget(self) { (g) in
             g.moveTo(p, view: view)
             view.needsDisplay = true

@@ -161,7 +161,7 @@ class KLibRipper: NSObject
             if let document = document {
                 pkg.assignReference(document)
             }
-            comp.moveTo(origin)
+            comp.origin = origin
             origin.x += 100
             if origin.x > 1500 {
                 origin.y += 100

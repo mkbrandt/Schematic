@@ -35,6 +35,14 @@ class PolygonGraphic: PrimitiveGraphic
         return lines
     }
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "PolygonGraphic"
+        json["filled"] = JSON(filled)
+        json["vertices"] = JSON(_vertices.map { $0.json })
+        return json
+    }
+    
     init(vertices: [CGPoint], filled: Bool) {
         self.filled = filled
         super.init(origin: vertices[0])
@@ -47,6 +55,12 @@ class PolygonGraphic: PrimitiveGraphic
         }
         filled = decoder.decodeBoolForKey("filled")
         super.init(coder: decoder)
+    }
+    
+    override init(json: JSON) {
+        _vertices = json["vertices"].arrayValue.map { CGPoint(json: $0) }
+        filled = json["filled"].boolValue
+        super.init(json: json)
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
@@ -68,10 +82,8 @@ class PolygonGraphic: PrimitiveGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
+    override func moveBy(offset: CGPoint, view: SchematicView) {
         points = points.map { $0 + offset }
-        return b0 + bounds
     }
     
     override func closestPointToPoint(point: CGPoint) -> CGPoint {

@@ -26,13 +26,21 @@ class AttributedGraphic: Graphic
     
     override var elements: Set<Graphic>     { return attributeTexts }
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "AttributedGraphic"
+        json["attributeTexts"] = JSON(attributeTexts.map { $0.json })
+        json["attributes"] = JSON(attributes)
+        return json
+    }
+    
     var cachedBounds: CGRect?
     override var bounds: CGRect {
         if let bounds = cachedBounds {
             return bounds
         } else {
             let bounds = attributeTexts.reduce(CGRect(), combine: { $0 + $1.bounds })
-            cachedBounds = bounds
+            //cachedBounds = bounds
             return bounds
         }
     }
@@ -63,6 +71,12 @@ class AttributedGraphic: Graphic
         return nil
     }
     
+    override init(json: JSON) {
+        attributes = json["attributes"].dictionaryObject as? [String: String] ?? [:]
+        super.init(json: json)
+        attributeTexts = Set(json["attributeTexts"].arrayValue.flatMap { jsonToGraphic($0) as? AttributeText })
+    }
+    
     func stripPrefix(name: String) -> String {
         return name.stringByReplacingCharactersInRange(name.startIndex...name.startIndex, withString: "")
     }
@@ -72,7 +86,7 @@ class AttributedGraphic: Graphic
     }
     
     var attributeNames: [String] {
-        return Array(attributes.keys)
+        return attributes.keys.sort { $0 < $1 }
     }
     
     func attributeValue(name: String) -> String {
@@ -91,11 +105,9 @@ class AttributedGraphic: Graphic
         }
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
-        attributeTexts.forEach({ $0.moveBy(offset) })
+    override func moveBy(offset: CGPoint, view: SchematicView) {
+        attributeTexts.forEach({ $0.moveBy(offset, view: view) })
         cachedBounds = nil
-        return b0 + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {
@@ -112,7 +124,7 @@ class AttributedGraphic: Graphic
         }
         return nil
     }
-    
+        
 // MARK: Drawing
     
     override func drawInRect(rect: CGRect) {

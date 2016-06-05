@@ -8,9 +8,7 @@
 
 import Cocoa
 
-let testComponent = "left{ CLOCK:5, -, DATA0: 4, DATA1: 3, DATA2: 2, DATA3: 1}" +
-                    "right{ DIR: 12, -, OUT0: 11, OUT1: 10, OUT2: 9, OUT3: 8}" +
-                    "top{ VCC: 14}" + "bottom{GND: 7, VSS: 6, GND: 13}"
+let DefaultPasteOffset = CGPoint(x: GridSize, y: -GridSize)
 
 class SchematicView: ZoomView
 {
@@ -40,6 +38,7 @@ class SchematicView: ZoomView
             for g in selection {
                 g.selected = true
             }
+            justPasted = false
         }
     }
     
@@ -68,6 +67,10 @@ class SchematicView: ZoomView
     override var acceptsFirstResponder: Bool    { return true }
 
     var _trackingArea: NSTrackingArea?
+    
+    var pasteOrigin = CGPoint()
+    var pasteOffset = DefaultPasteOffset
+    var justPasted = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -228,6 +231,13 @@ class SchematicView: ZoomView
         
         for g in displayList {
             g.drawInRect(dirtyRect)
+            if let comp = g as? Component where false {
+                if let pkg = comp.package {
+                    Swift.print("\(pkg.json.rawString()!)")
+                } else {
+                    Swift.print("\(comp.json.rawString()!)")
+                }
+            }
         }
         
         if let g = construction {
@@ -274,6 +284,9 @@ class SchematicView: ZoomView
     }
     
     func deleteGraphic(graphic: Graphic) {
+        if graphic is Net {
+            Swift.print("deleting NET \(graphic.graphicID)")
+        }
         deleteGraphics([graphic])
     }
     
@@ -337,6 +350,11 @@ class SchematicView: ZoomView
         return nil
     }
     
+    func findElementsAtPoint(location: CGPoint) -> [Graphic] {
+        let graphics = Set(displayList.filter {$0.intersectsRect(selectionRectAtPoint(location)) })
+        return graphics.flatMap { $0.elementAtPoint(location) }
+    }
+    
     func selectInRect(rect: CGRect) {
         selection = Set(displayList.filter { $0.intersectsRect(rect) })
     }
@@ -352,8 +370,13 @@ class SchematicView: ZoomView
 
 // MARK: Mouse Handling
     
+    var dragOrigin = CGPoint()
+    
     override func mouseDown(theEvent: NSEvent) {
         let location = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+        if selection.count == 0 {
+            pasteOrigin = snapToGrid(location)
+        }
         
         if theEvent.clickCount > 1 {
             tool.doubleClick(location, view: self)
@@ -410,7 +433,7 @@ class SchematicView: ZoomView
         if let comp = g as? Component {
             if let p1 = comp.pins.first?.origin {
                 let p2 = self.snapToGrid(p1)
-                g.moveBy(p2 - p1)
+                g.moveBy(p2 - p1, view: self)
             }
         }
     }
@@ -421,7 +444,7 @@ class SchematicView: ZoomView
             let pin = source.pinCopy
             let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
             source.updatePinAttributes(self)
-            pin.moveTo(location)
+            pin.moveTo(location, view: self)
             construction = pin
             needsDisplay = true
             return .Copy
@@ -430,7 +453,7 @@ class SchematicView: ZoomView
                 Swift.print("Got graphic: \(g)")
                 construction = g
                 let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
-                construction?.moveTo(location)
+                construction?.moveTo(location, view: self)
                 needsDisplay = true
                 sender.enumerateDraggingItemsWithOptions(.ClearNonenumeratedImages, forView: self, classes: [], searchOptions: [:]) { _ in }
                 return .Move
@@ -443,7 +466,7 @@ class SchematicView: ZoomView
                 item.setDraggingFrame(fr, contents: image)
                 self.construction = g
                 let location = self.snapToGrid(self.convertPoint(sender.draggingLocation(), fromView: nil))
-                g.moveTo(location)
+                g.moveTo(location, view: self)
                 self.adjustPosition(g)
                 self.needsDisplay = true
                 return
@@ -455,7 +478,7 @@ class SchematicView: ZoomView
     override func draggingUpdated(sender: NSDraggingInfo) -> NSDragOperation {
         let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
         if let g = construction {
-            g.moveTo(location)
+            g.moveTo(location, view: self)
             adjustPosition(g)
         }
         needsDisplay = true
@@ -524,6 +547,9 @@ class SchematicView: ZoomView
         let pasteBoard = NSPasteboard.generalPasteboard()
         
         pasteBoard.clearContents()
+        let group = GroupGraphic(contents: selection)
+        pasteOrigin = group.origin
+        pasteOffset = DefaultPasteOffset
         pasteBoard.writeObjects(Array(selection))
     }
     
@@ -532,8 +558,14 @@ class SchematicView: ZoomView
         let classes = [Graphic.self]
         if pasteBoard.canReadObjectForClasses(classes, options: [:]) {
             if let graphics = pasteBoard.readObjectsForClasses([Graphic.self], options:[:]) as? [Graphic] {
-                addGraphics(Set(graphics))
-                selection = Set(graphics)
+                let graphicSet = Set(graphics)
+                let group = GroupGraphic(contents: graphicSet)
+                group.moveTo(pasteOrigin + pasteOffset, view: self)
+                pasteOrigin = group.origin
+                addGraphics(graphicSet)
+                graphicSet.forEach { adjustPosition($0) }
+                selection = graphicSet
+                justPasted = true
             }
         }
     }
@@ -602,11 +634,7 @@ class SchematicView: ZoomView
         let outline = GroupGraphic(contents: Set(selection.filter { !($0 is AttributedGraphic) }))
         let pins = Set(selection.filter { $0 is Pin } as! [Pin])
         let component = Component(origin: outline.origin, pins: pins, outline: outline)
-        let refDesText = AttributeText(origin: outline.bounds.topLeft, format: "=refDes", owner: component)
-        let partNumberText = AttributeText(origin: refDesText.bounds.topLeft, format: "=partNumber", owner: component)
-        component.attributeTexts.insert(AttributeText(origin: partNumberText.bounds.topLeft, format: "=value", owner: component))
-        component.attributeTexts.insert(refDesText)
-        component.attributeTexts.insert(partNumberText)
+        component.attributeTexts.insert(AttributeText(origin: component.bounds.topLeft, format: "=value", owner: component))
         component.value = componentSheet.nameField.stringValue
         deleteGraphics(outline.contents)
         deleteGraphics(component.pins)
@@ -658,6 +686,12 @@ class SchematicView: ZoomView
         package.partNumber = packagingSheet.partNumberField.stringValue
         package.footprint = packagingSheet.footprintField.stringValue
         package.assignReference(document)
+        components.forEach {
+            let refDes = AttributeText(origin: $0.bounds.topLeft, format: "=refDes", owner: $0)
+            let partNumber = AttributeText(origin: refDes.bounds.topLeft, format: "=partNumber", owner: $0)
+            $0.attributeTexts.insert(refDes)
+            $0.attributeTexts.insert(partNumber)
+        }
     }
     
     @IBAction func ungroupPackages(sender: AnyObject) {

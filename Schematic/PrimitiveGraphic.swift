@@ -24,6 +24,16 @@ class PrimitiveGraphic: Graphic
         super.init(origin: origin)
     }
     
+    override init(json: JSON) {
+        let color = json["color"]
+        let r = CGFloat(color["r"].doubleValue)
+        let g = CGFloat(color["g"].doubleValue)
+        let b = CGFloat(color["b"].doubleValue)
+        self.color = NSColor(red: r, green: g, blue: b, alpha: 1)
+        lineWeight = CGFloat(json["lineweight"].doubleValue)
+        super.init(json: json)
+    }
+    
     required init?(coder decoder: NSCoder) {
         color = decoder.decodeObjectForKey("color") as? NSColor ?? NSColor.blackColor()
         lineWeight = decoder.decodeCGFloatForKey("lineWeight")
@@ -34,6 +44,14 @@ class PrimitiveGraphic: Graphic
         coder.encodeObject(color, forKey: "color")
         coder.encodeCGFloat(lineWeight, forKey: "lineWeight")
         super.encodeWithCoder(coder)
+    }
+    
+    override var json: JSON {
+        var json = super.json
+        let color = self.color.colorUsingColorSpace(NSColorSpace.deviceRGBColorSpace())!
+        json["color"] = JSON(["r": color.redComponent, "g": color.greenComponent, "b": color.blueComponent])
+        json["lineWeight"] = JSON(lineWeight)
+        return json
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {

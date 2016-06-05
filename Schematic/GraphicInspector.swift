@@ -227,6 +227,15 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
         }
         return nil
     }
+    
+    @IBAction func attributeChanged(sender: AnyObject) {
+        let row = tableView.selectedRow
+        if let g = inspectee as? AttributedGraphic where row >= 0 && row <= g.attributeNames.count {
+            drawingView.setNeedsDisplayInRect(g.bounds)
+            g.setAttribute(sender.stringValue, name: g.attributeNames[row])
+            drawingView.setNeedsDisplayInRect(g.bounds)
+        }
+    }
         
     override func drawRect(dirtyRect: NSRect) {
         NSEraseRect(dirtyRect)

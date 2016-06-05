@@ -58,6 +58,15 @@ class ArcGraphic: CircleGraphic
     
     override var inspectionName: String     { return "Arc" }
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "ArcGraphic"
+        json["startAngle"] = JSON(startAngle)
+        json["endAngle"] = JSON(endAngle)
+        json["clockwise"] = JSON(clockwise)
+        return json
+    }
+    
     init(origin: CGPoint, radius: CGFloat, startAngle: CGFloat, endAngle: CGFloat, clockwise: Bool) {
         self.startAngle = startAngle
         self.endAngle = endAngle
@@ -75,6 +84,13 @@ class ArcGraphic: CircleGraphic
         endAngle = decoder.decodeCGFloatForKey("endAngle")
         clockwise = decoder.decodeBoolForKey("clockwise")
         super.init(coder: decoder)
+    }
+    
+    override init(json: JSON) {
+        startAngle = CGFloat(json["startAngle"].doubleValue)
+        endAngle = CGFloat(json["endAngle"].doubleValue)
+        clockwise = json["clockwise"].boolValue
+        super.init(json: json)
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
@@ -150,10 +166,8 @@ class ArcGraphic: CircleGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
+    override func moveBy(offset: CGPoint, view: SchematicView) {
         origin = origin + offset
-        return b0 + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {

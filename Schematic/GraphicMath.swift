@@ -135,6 +135,14 @@ extension CGPoint
         self.init(x: x0, y: y0)
     }
     
+    init(json: JSON) {
+        let x = CGFloat(json["x"].doubleValue)
+        let y = CGFloat(json["y"].doubleValue)
+        self.init(x: x, y: y)
+    }
+    
+    var json: JSON  { return JSON(["x": x, "y": y]) }
+    
     var length: CGFloat {
         get { return sqrt(x * x + y * y) }
         set {

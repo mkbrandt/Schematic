@@ -50,6 +50,13 @@ class RectGraphic: PrimitiveGraphic
         ]
     }
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "RectGraphic"
+        json["size"] = JSON(["width": JSON(width), "height": JSON(height)])
+        return json
+    }
+    
     override var inspectionName: String     { return "Rectangle" }
 
     init(origin: CGPoint, size: CGSize) {
@@ -64,6 +71,11 @@ class RectGraphic: PrimitiveGraphic
     required init?(coder decoder: NSCoder) {
         size = decoder.decodeSizeForKey("size")
         super.init(coder: decoder)
+    }
+    
+    override init(json: JSON) {
+        size = CGSize(width: CGFloat(json["size", "width"].doubleValue), height: CGFloat(json["size", "height"].doubleValue))
+        super.init(json: json)
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
@@ -94,10 +106,8 @@ class RectGraphic: PrimitiveGraphic
         rect = rect.rotatedAroundPoint(center, angle: angle)
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
+    override func moveBy(offset: CGPoint, view: SchematicView) {
         origin = origin + offset
-        return b0 + bounds
     }
     
     override func scaleFromRect(fromRect: CGRect, toRect: CGRect) {

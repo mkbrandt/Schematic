@@ -25,19 +25,24 @@ class Pin: AttributedGraphic
     }
     
     var node: Node?
-
+    var hasConnection: Bool {
+        if let node = node where node.attachments.count > 0 {
+            return true
+        }
+        return false
+    }
+    
     var orientation: PinOrientation             { didSet { placeAttributes() }}
     var hasBubble: Bool = false
     var hasClockFlag: Bool = false
-    var netName: String? {
-        get { return attributes["net"] }
-        set {
-            if let newValue = newValue where newValue != "" {
-                attributes["net"] = newValue
-            } else {
-                attributes["net"] = nil
-            }
-        }
+    
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "Pin"
+        json["orientation"] = JSON(orientation.rawValue)
+        json["hasBubble"] = JSON(hasBubble)
+        json["hasClockFlag"] = JSON(hasClockFlag)
+        return json
     }
     
     var pinName: String {
@@ -48,6 +53,11 @@ class Pin: AttributedGraphic
     var pinNumber: String {
         get {return attributes["pinNumber"] ?? "" }
         set { attributes["pinNumber"] = newValue }
+    }
+    
+    var netName: String? {
+        let netNameAttributes = attributeTexts.flatMap({$0 as? NetNameAttributeText })
+        return netNameAttributes.first?.netName
     }
     
     weak var pinNameText: AttributeText?        { return attributeTextsForAttribute("pinName").first }
@@ -98,7 +108,8 @@ class Pin: AttributedGraphic
         ]
         
         placeAttributes()
-}
+        node = Node(origin: endPoint)
+    }
     
     required init?(coder decoder: NSCoder) {
         self.component = decoder.decodeObjectForKey("component") as? Component
@@ -106,6 +117,13 @@ class Pin: AttributedGraphic
         hasBubble = decoder.decodeBoolForKey("bubble")
         hasClockFlag = decoder.decodeBoolForKey("clock")
         super.init(coder: decoder)
+    }
+    
+    override init(json: JSON) {
+        orientation = PinOrientation(rawValue: json["orientation"].intValue) ?? .Right
+        hasBubble = json["hasBubble"].boolValue
+        hasClockFlag = json["hasClockFlag"].boolValue
+        super.init(json: json)
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
@@ -155,17 +173,10 @@ class Pin: AttributedGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        guard offset.x != 0 || offset.y != 0 else { return CGRect() }
-        var changed = bounds
-        if let node = node {
-            node.pin = nil
-            node.attachments.forEach { changed = changed + $0.moveBy(offset) }
-            node.pin = self
-        }
-        super.moveBy(offset)
+    override func moveBy(offset: CGPoint, view: SchematicView) {
+        node?.moveBy(offset, view: view)
+        super.moveBy(offset, view: view)
         origin = origin + offset
-        return changed + bounds
     }
     
     override func rotateByAngle(angle: CGFloat, center: CGPoint) {
@@ -183,6 +194,42 @@ class Pin: AttributedGraphic
         }
         placeAttributes()
         cachedBounds = nil
+    }
+    
+    override func flipHorizontalAroundPoint(center: CGPoint) {
+        origin.x = center.x - (origin.x - center.x)
+        switch orientation {
+        case .Left: orientation = .Right
+        case .Right: orientation = .Left
+        default: break
+        }
+    }
+    
+    override func flipVerticalAroundPoint(center: CGPoint) {
+        origin.y = center.y - (origin.y - center.y)
+        switch orientation {
+        case .Top: orientation = .Bottom
+        case .Bottom: orientation = .Top
+        default: break
+        }
+    }
+    
+    override func elementAtPoint(point: CGPoint) -> Graphic? {
+        if point.distanceToPoint(endPoint) < 3 {
+            return self
+        }
+        return super.elementAtPoint(point)
+    }
+    
+    override func designCheck(view: SchematicView) {
+        let graphics = view.findElementsAtPoint(endPoint)
+        for g in graphics {
+            if let node = g as? Node {
+                self.node = node
+                node.pin = self
+            }
+        }
+        node?.designCheck(view)
     }
     
     override func drawInRect(rect: CGRect) {
@@ -206,7 +253,7 @@ class Pin: AttributedGraphic
         }
         CGContextAddLineToPoint(context, endPoint.x, endPoint.y)
         CGContextStrokePath(context)
-        if node == nil {
+        if !hasConnection {
             CGContextBeginPath(context)
             CGContextAddArc(context, endPoint.x, endPoint.y, 2, 0, 2 * PI, 1)
             CGContextSetLineWidth(context, 0.2)

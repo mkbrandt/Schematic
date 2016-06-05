@@ -8,11 +8,28 @@
 
 import Cocoa
 
+func jsonToGraphic(json: JSON) -> Graphic {
+    let type = json["__class__"].stringValue
+    switch type {
+    case "LineGraphic": return LineGraphic.init(json: json)
+    case "RectGraphic": return RectGraphic.init(json: json)
+    case "CircleGraphic": return CircleGraphic.init(json: json)
+    case "ArcGraphic": return ArcGraphic.init(json: json)
+    case "PolygonGraphic": return PolygonGraphic.init(json: json)
+    case "AttributeText": return AttributeText.init(json: json)
+    case "AttributedGraphic": return AttributedGraphic.init(json: json)
+    case "Component": return Component.init(json: json)
+    case "Pin": return Pin.init(json: json)
+    case "Package": return Package.init(json: json)
+    default: return Graphic.init(json: json)
+    }
+}
+
 class GroupGraphic: Graphic
 {
     override var origin: CGPoint {
         get { return bounds.origin }
-        set { moveTo(origin) }
+        set { fatalError("GroupGraphic.setOrigin not implemented") }
     }
     var contents: Set<Graphic>
     
@@ -26,6 +43,11 @@ class GroupGraphic: Graphic
     override var inspectionName: String         { return "Group" }
     override var inspectables: [Inspectable]    { return [] }
     
+    override var json: JSON {
+        var json = JSON(["__class__": "GroupGraphic"])
+        json["contents"] = JSON(contents.map { $0.json })
+        return json
+    }
 
     init(contents: Set<Graphic>) {
         self.contents = contents
@@ -78,12 +100,10 @@ class GroupGraphic: Graphic
         return nil
     }
     
-    override func moveBy(offset: CGPoint) -> CGRect {
-        let b0 = bounds
+    override func moveBy(offset: CGPoint, view: SchematicView) {
         for g in contents {
-            g.moveBy(offset)
+            g.moveBy(offset, view: view)
         }
-        return b0 + bounds
     }
     
     override func flipHorizontalAroundPoint(center: CGPoint) {

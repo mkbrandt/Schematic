@@ -61,8 +61,11 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     }
     
     var components: Set<Component>  { return currentLib?.components ?? [] }
-    var packages: Set<Package>      { return Set(components.flatMap { $0.package }) }
-    var sortedPackages: [Package]   { return packages.sort { $0.sortName < $1.sortName } }
+    var sortedComponents: [Component] {
+        return components.sort { $0.sortName < $1.sortName }
+    }
+    //var packages: Set<Package>      { return Set(components.flatMap { $0.package }) }
+    //var sortedPackages: [Package]   { return packages.sort { $0.sortName < $1.sortName } }
     
     @IBAction func openLibrary(sender: AnyObject) {
         let openPanel = NSOpenPanel()
@@ -103,7 +106,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         if tableView == librariesTable {
             return openLibs.count
         } else if tableView == componentsTable {
-            return sortedPackages.count
+            return sortedComponents.count
         }
         return 0
     }
@@ -112,8 +115,8 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         if tableView == librariesTable {
             return openLibs[row]
         } else {
-            let pkg = sortedPackages[row]
-            return pkg.sortName
+            let comp = sortedComponents[row]
+            return comp.sortName
         }
     }
     
@@ -122,7 +125,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
             currentIndex = row
             componentsTable.reloadData()
         } else {
-            preview.component = sortedPackages[row].components.first
+            preview.component = sortedComponents[row]
         }
         return true
     }
@@ -134,8 +137,8 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
             return currentLib.pages[index]
         } else if let page = item as? SchematicPage {
             let components = page.displayList.flatMap { $0 as? Component }
-            let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
-            return packages[index]
+            //let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
+            return components[index]
         }
         return "---"
     }
@@ -145,8 +148,8 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
             return currentLib?.pages.count ?? 0
         } else if let page = item as? SchematicPage {
             let components = page.displayList.flatMap { $0 as? Component }
-            let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
-            return packages.count
+            //let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
+            return components.count
         }
         return 0
     }
@@ -160,12 +163,16 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
             return page.name
         } else if let package = item as? Package {
             return package.partNumber ?? package.components.first?.value ?? "---"
+        } else if let component = item as? Component {
+            return component.value
         }
         return "-"
     }
     
     func outlineView(outlineView: NSOutlineView, shouldSelectItem item: AnyObject) -> Bool {
         if let package = item as? Package, let component = package.components.first {
+            preview.component = component
+        } else if let component = item as? Component {
             preview.component = component
         }
         return true

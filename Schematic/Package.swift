@@ -44,6 +44,13 @@ class Package: AttributedGraphic
         }
     }
     
+    override var json: JSON {
+        var json = super.json
+        json["__class__"] = "Package"
+        json["components"] = JSON(components.map { $0.json })
+        return json
+    }
+    
     var sortName: String { return partNumber ?? components.first?.value ?? "unnamed" }
     
     override var inspectionName: String     { return "Package" }
@@ -57,6 +64,12 @@ class Package: AttributedGraphic
     required init?(coder decoder: NSCoder) {
         components = decoder.decodeObjectForKey("components") as? Set<Component> ?? []
         super.init(coder: decoder)
+    }
+    
+    override init(json: JSON) {
+        components = Set(json["components"].arrayValue.map { Component(json: $0) })
+        super.init(json: json)
+        components.forEach { $0.package = self }
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {

@@ -8,6 +8,10 @@
 
 import Cocoa
 
+let testComponent = "left{ CLOCK:5, -, DATA0: 4, DATA1: 3, DATA2: 2, DATA3: 1}" +
+    "right{ DIR: 12, -, OUT0: 11, OUT1: 10, OUT2: 9, OUT3: 8}" +
+    "top{ VCC: 14}" + "bottom{GND: 7, VSS: 6, GND: 13}"
+
 class AutoComponent: Component
 {
     var text: String {

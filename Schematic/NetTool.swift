@@ -21,6 +21,9 @@ class NetConstructor: Graphic
         }
     }
     
+    var preferHorizontal = false    { didSet { if preferHorizontal { preferVertical = false }}}
+    var preferVertical = false      { didSet { if preferVertical { preferHorizontal = false }}}
+    
     override init(origin: CGPoint) {
         super.init(origin: origin)
     }
@@ -38,6 +41,23 @@ class NetConstructor: Graphic
         fatalError("init(coder:) has not been implemented")
     }
     
+    let TiltThreshold = GridSize * 2
+    
+    func addPoint(point: CGPoint) {
+        let previousPoint = points[points.count - 2]
+        let delta = endPoint - previousPoint
+        if preferHorizontal && abs(delta.x) > TiltThreshold || !preferVertical && abs(delta.x) > abs(delta.y) {
+            endPoint = previousPoint + CGPoint(x: delta.x, y: 0)
+            print("Add horizontal corner: \(endPoint)")
+            preferVertical = true
+        } else {
+            endPoint = previousPoint + CGPoint(x: 0, y: delta.y)
+            print("Add vertical corner: \(endPoint)")
+            preferHorizontal = true
+        }
+        wayPoints.append(point)
+    }
+    
     override func draw() {
         let context = NSGraphicsContext.currentContext()?.CGContext
         var sp = origin
@@ -47,55 +67,45 @@ class NetConstructor: Graphic
         CGContextMoveToPoint(context, sp.x, sp.y)
         for wp in wayPoints {
             let delta = wp - sp
-            if abs(delta.x) > abs(delta.y) {
-                CGContextAddLineToPoint(context, wp.x, sp.y)
-            } else {
-                CGContextAddLineToPoint(context, sp.x, wp.y)
-            }
-            
-            if wp != sp {
+            if delta.x == 0 || delta.y == 0 {
                 CGContextAddLineToPoint(context, wp.x, wp.y)
+            } else {
+                if abs(delta.x) < TiltThreshold {
+                    if preferHorizontal && wayPoints.count > 1 {
+                        wayPoints.removeLast()
+                        print("removed point")
+                    }
+                    preferHorizontal = false
+                }
+                if abs(delta.y) < TiltThreshold {
+                    if preferVertical && wayPoints.count > 1 {
+                        wayPoints.removeLast()
+                        print("removed point")
+                    }
+                    preferVertical = false
+                }
+                
+                if preferHorizontal || !preferVertical && abs(delta.x) > abs(delta.y) {
+                    CGContextAddLineToPoint(context, wp.x, sp.y)
+                    if !preferHorizontal {
+                        print("prefer horizontal")
+                        preferHorizontal = true
+                    }
+                } else {
+                    CGContextAddLineToPoint(context, sp.x, wp.y)
+                    if !preferVertical {
+                        print("prefer vertical")
+                        preferVertical = true
+                    }
+                }
+                
+                if wp != sp {
+                    CGContextAddLineToPoint(context, wp.x, wp.y)
+                }
             }
             sp = wp
         }
         CGContextStrokePath(context)
-    }
-    
-    var corners: [CGPoint] {
-        var corners: [CGPoint] = []
-        var sp = origin
-        corners.append(sp)
-        for wp in wayPoints {
-            let delta = wp - sp
-            var cp: CGPoint
-            if abs(delta.x) > abs(delta.y) {
-                cp = CGPoint(x: wp.x, y: sp.y)
-                corners.append(cp)
-            } else {
-                cp = CGPoint(x: sp.x, y: wp.y)
-                corners.append(cp)
-            }
-            
-            if wp != cp {
-                corners.append(CGPoint(x: wp.x, y: wp.y))
-            }
-            sp = wp
-        }
-        if let last = corners.last where last != endPoint {
-            corners.append(endPoint)
-        }
-        
-        var optCorners: [CGPoint] = [origin]
-        for i in 2 ..< corners.count {
-            let line = Line(origin: corners[i - 2], endPoint: corners[i])
-            if line.distanceToPoint(corners[i - 1]) != 0 {
-                optCorners.append(corners[i - 1])
-            }
-        }
-        if let last = optCorners.last where last != endPoint {
-            optCorners.append(endPoint)
-        }
-        return optCorners
     }
     
     func makeNetInView(view: SchematicView) {
@@ -111,7 +121,7 @@ class NetConstructor: Graphic
             net.endPointNode = startNode
         }
         
-        for p in corners.dropFirst() {
+        for p in wayPoints {
             var endNode = Node(origin: p)
             let el = view.findElementAtPoint(p)
             if let pin = el as? Pin {
@@ -123,8 +133,12 @@ class NetConstructor: Graphic
                 view.addGraphic(net2)
                 net.endPointNode = endNode
             }
-            let newNet = Net(originNode: startNode, endPointNode: endNode)
-            view.addGraphic(newNet)
+            
+            if startNode.origin != endNode.origin {
+                let newNet = Net(originNode: startNode, endPointNode: endNode)
+                view.addGraphic(newNet)
+            }
+            endNode.optimize(view)
             startNode = endNode
         }
     }
@@ -159,7 +173,7 @@ class NetTool: Tool
     override func mouseDown(location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
         if let netcon = view.construction as? NetConstructor {
-            netcon.wayPoints.append(location)
+            netcon.addPoint(location)
             if let el = view.findElementAtPoint(location) {
                 if el is Pin || el is Net || el is Node {
                     makeNet(netcon, view: view)
