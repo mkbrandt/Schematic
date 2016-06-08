@@ -66,7 +66,17 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return components.sort { $0.sortName < $1.sortName }
     }
     
-    var openLibraryURLs: [NSURL]    { return openLibs.flatMap { $0.fileURL } }
+    var bookmarks: [NSData] {
+        let answer: [NSData] = openLibs.flatMap { (lib: SchematicDocument) in
+            let bookmark = try? lib.fileURL?.bookmarkDataWithOptions(NSURLBookmarkCreationOptions.WithSecurityScope, includingResourceValuesForKeys: nil, relativeToURL: nil)
+            if let bookmark = bookmark {
+                return bookmark
+            }
+            return nil
+        }
+        return answer
+    }
+    
     //var packages: Set<Package>      { return Set(components.flatMap { $0.package }) }
     //var sortedPackages: [Package]   { return packages.sort { $0.sortName < $1.sortName } }
     
@@ -82,16 +92,33 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         setViewState()
     }
     
-    func openLibrarysByURL(urls: [NSURL]) {
-        for url in urls {
-            if let lib = try? SchematicDocument(contentsOfURL: url, ofType: "sch") {
-                openLibs.append(lib)
-                currentIndex = openLibs.count - 1
-                componentsTable.reloadData()
-                librariesTable.reloadData()
-            }
+    func openLibraryURL(url: NSURL) {
+        do {
+            let lib = try SchematicDocument(contentsOfURL: url, ofType: "")
+            openLibs.append(lib)
+            currentIndex = openLibs.count - 1
+            componentsTable.reloadData()
+            librariesTable.reloadData()
+        } catch(let err) {
+            print("Error opening: \(err)")
         }
         setViewState()
+    }
+    
+    func openLibrariesByBookmark(bookmarks: [NSData]) {
+        for bookmark in bookmarks {
+            var stale: ObjCBool = false
+            if let url = try? NSURL(byResolvingBookmarkData: bookmark, options: NSURLBookmarkResolutionOptions.WithSecurityScope, relativeToURL: nil, bookmarkDataIsStale: &stale) {
+                url.startAccessingSecurityScopedResource()
+                openLibraryURL(url)
+            }
+        }
+    }
+    
+    func openLibrarysByURL(urls: [NSURL]) {
+        for url in urls {
+            openLibraryURL(url)
+        }
     }
     
     @IBAction func openLibrary(sender: AnyObject) {
@@ -108,6 +135,9 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
             lib.close()
         }
         setViewState()
+        currentIndex = 0
+        librariesTable.reloadData()
+        componentsTable.reloadData()
     }
     
     @IBAction func openKiCadLibrary(sender: AnyObject) {

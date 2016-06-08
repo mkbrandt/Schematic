@@ -39,7 +39,7 @@ class Schematic: NSObject, NSCoding
 {
     var pages: [SchematicPage] = [SchematicPage()]
     var currentPage: Int = 0
-    var openLibraries: [NSURL] = []
+    var openLibraries: [NSData] = []
     var printInfoDict: [String: AnyObject] = [:]
     var savedScale: CGFloat?
     var centeredPoint = CGPoint()
@@ -51,7 +51,7 @@ class Schematic: NSObject, NSCoding
     required init?(coder decoder: NSCoder) {
         pages = decoder.decodeObjectForKey("pages") as? [SchematicPage] ?? [SchematicPage()]
         currentPage = decoder.decodeIntegerForKey("currentPage")
-        if let libs = decoder.decodeObjectForKey("libraries") as? [NSURL] {
+        if let libs = decoder.decodeObjectForKey("libraries") as? [NSData] {
             openLibraries = libs
         }
         if let printInfo = decoder.decodeObjectForKey("printInfo") as? [String: AnyObject] {
@@ -127,7 +127,7 @@ class SchematicDocument: NSDocument {
 
     override func dataOfType(typeName: String) throws -> NSData
     {
-        if let libs = libraryManager?.openLibraryURLs {
+        if let libs = libraryManager?.bookmarks {
             schematic.openLibraries = libs
         }
         schematic.savedScale = drawingView?.scale
@@ -149,7 +149,7 @@ class SchematicDocument: NSDocument {
     }
     
     override func awakeFromNib() {
-        libraryManager?.openLibrarysByURL(schematic.openLibraries)
+        libraryManager?.openLibrariesByBookmark(schematic.openLibraries)
         printInColor = Defaults.boolForKey("printColor")
         if let scale = schematic.savedScale {
             drawingView?.zoomToFit(self)
