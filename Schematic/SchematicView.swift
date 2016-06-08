@@ -527,45 +527,73 @@ class SchematicView: ZoomView
     }
     
 // MARK: Actions
+    
+    func clearButtonStates() {
+        if let toolbar = window?.toolbar {
+            for item in toolbar.items {
+                if let button = item.view as? NSButton {
+                    button.state = NSOffState
+                }
+            }
+        }
+    }
 
     @IBAction func showFontPanel(sender: AnyObject) {
         NSFontPanel.sharedFontPanel().orderFront(self)
     }
     
-    @IBAction func selectLineTool(sender: AnyObject) {
+    @IBAction func selectLineTool(sender: NSButton) {
         tool = LineTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectRectTool(sender: AnyObject) {
+    @IBAction func selectRectTool(sender: NSButton) {
         tool = RectTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectArrowTool(sender: AnyObject) {
+    @IBAction func selectArrowTool(sender: NSButton) {
         tool = SelectTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectArcTool(sender: AnyObject) {
+    @IBAction func selectArcTool(sender: NSButton) {
         tool = ArcTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectCircleTool(sender: AnyObject) {
+    @IBAction func selectCircleTool(sender: NSButton) {
         tool = CircleTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectPolygonTool(sender: AnyObject) {
+    @IBAction func selectPolygonTool(sender: NSButton) {
         tool = PolygonTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectTextTool(sender: AnyObject) {
+    @IBAction func selectTextTool(sender: NSButton) {
         tool = TextTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectNetNameTool(sender: AnyObject) {
+    @IBAction func selectNetNameTool(sender: NSButton) {
         tool = NetNameTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
-    @IBAction func selectNetTool(sender: AnyObject) {
+    @IBAction func selectNetTool(sender: NSButton) {
         tool = NetTool()
+        clearButtonStates()
+        sender.state = NSOnState
     }
     
     @IBAction func cut(sender: AnyObject) {

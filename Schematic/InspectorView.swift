@@ -10,6 +10,7 @@ import Cocoa
 
 class InspectorSelectorView: NSView
 {
+    @IBOutlet var defaultSelectorButton: InspectorSelectorButton?
     @IBOutlet var horizontalLine: NSView!
     @IBOutlet var inspectorSplitView: NSSplitView!
     
@@ -36,15 +37,30 @@ class InspectorSelectorView: NSView
         }
     }
     
+    override func awakeFromNib() {
+        inspector = defaultSelectorButton?.auxView
+    }
+    
     override func drawRect(dirtyRect: NSRect) {
         NSEraseRect(dirtyRect)
     }
     
     @IBAction func toggleShowHide(sender: AnyObject) {
+        if inspectorSplitView.hidden {
+            inspectorSplitView.hidden = false
+        } else {
+            inspectorSplitView.hidden = true
+        }
     }
     
     @IBAction func takeInspectorFrom(button: InspectorSelectorButton) {
         inspector = button.auxView
+        for subview in subviews {
+            if let b = subview as? InspectorSelectorButton {
+                b.state = NSOffState
+            }
+        }
+        button.state = NSOnState
     }
 }
 
