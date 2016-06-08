@@ -257,7 +257,7 @@ class Pin: AttributedGraphic
             CGContextBeginPath(context)
             CGContextAddArc(context, endPoint.x, endPoint.y, 2, 0, 2 * PI, 1)
             CGContextSetLineWidth(context, 0.2)
-            NSColor.redColor().set()
+            setDrawingColor(NSColor.redColor())
             CGContextStrokePath(context)
         }
         super.drawInRect(rect)

@@ -31,6 +31,7 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
     }
     
     @IBAction func changePageName(sender: NSTextField) {
+        guard pageTable.selectedRow >= 0 else { return }
         let page = document.pages[pageTable.selectedRow]
         page.name = sender.stringValue
     }

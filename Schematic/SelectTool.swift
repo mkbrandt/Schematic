@@ -72,7 +72,11 @@ class SelectTool: Tool
     override func doubleClick(location: CGPoint, view: SchematicView) {
         redrawSelection(view)
         if let el = view.findElementAtPoint(location) {
-            view.selection = [el]
+            if let net = el as? Net {
+                view.selection = net.logicallyConnectedNets(view)
+            } else {
+                view.selection = [el]
+            }
         } else {
             view.selection = []
         }
@@ -169,6 +173,8 @@ class SelectTool: Tool
     
     override func mouseUp(location: CGPoint, view: SchematicView) {
         view.construction = nil
-        view.undoManager?.endUndoGrouping()
+        if view.undoManager?.groupingLevel > 0 {
+            view.undoManager?.endUndoGrouping()
+        }
     }
 }

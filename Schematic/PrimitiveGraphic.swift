@@ -64,7 +64,7 @@ class PrimitiveGraphic: Graphic
             
             CGContextSaveGState(context)
             CGContextSetLineWidth(context, lineWeight)
-            color.set()
+            setDrawingColor(color)
             draw()
             if selected {
                 showHandles()

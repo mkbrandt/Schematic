@@ -16,8 +16,6 @@ class SchematicView: ZoomView
     
     @IBOutlet var componentSheet: ComponentSheet!
     @IBOutlet var packagingSheet: PackagingSheet!
-    @IBOutlet var libraryManager: LibraryManager!
-    @IBOutlet var octopartWindow: OctoPartWindow!
     
     var displayList: [Graphic] {
         get { return document.page.displayList }
@@ -231,13 +229,6 @@ class SchematicView: ZoomView
         
         for g in displayList {
             g.drawInRect(dirtyRect)
-            if let comp = g as? Component where false {
-                if let pkg = comp.package {
-                    Swift.print("\(pkg.json.rawString()!)")
-                } else {
-                    Swift.print("\(comp.json.rawString()!)")
-                }
-            }
         }
         
         if let g = construction {
@@ -491,9 +482,48 @@ class SchematicView: ZoomView
     }
     
     override func performDragOperation(sender: NSDraggingInfo) -> Bool {
+        if let component = construction as? Component {
+            component.package?.assignReference(document)
+            adjustPosition(component)
+        }
         addConstruction()
         needsDisplay = true
         return true
+    }
+    
+// MARK: Printing
+    
+    var printSize: NSSize {
+        let printRect = document.printInfo.imageablePageBounds
+        let printScale = document.printInfo.scalingFactor
+        let width = printRect.size.width * 100 / (72 * printScale)
+        let height = printRect.size.height * 100 / (72 * printScale)
+        return NSSize(width: width, height: height)
+    }
+    
+    override func knowsPageRange(range: NSRangePointer) -> Bool {
+        let hcount = ceil(pageRect.size.width / printSize.width)
+        let vcount = ceil(pageRect.size.height / printSize.height)
+        let numPages = document.pages.count
+        let r = NSRange(1...Int(hcount * vcount * CGFloat(numPages)))
+        range.memory = r
+        return true
+    }
+    
+    override func rectForPage(page: Int) -> NSRect {
+        let pageIndex = page - 1
+        let hcount = ceil(pageRect.size.width / printSize.width)
+        let vcount = ceil(pageRect.size.height / printSize.height)
+        let perPage = Int(hcount * vcount)
+        let thisPage = pageIndex / perPage
+        document.currentPage = thisPage
+        needsDisplay = true
+        let thisPageIndex = pageIndex % perPage
+        let v = CGFloat(thisPageIndex / Int(hcount))
+        let h = CGFloat(thisPageIndex % Int(hcount))
+        let x = h * printSize.width
+        let y = v * printSize.height
+        return CGRect(x: x, y: y, width: printSize.width, height: printSize.height)
     }
     
 // MARK: Actions
@@ -563,7 +593,12 @@ class SchematicView: ZoomView
                 group.moveTo(pasteOrigin + pasteOffset, view: self)
                 pasteOrigin = group.origin
                 addGraphics(graphicSet)
-                graphicSet.forEach { adjustPosition($0) }
+                graphicSet.forEach {
+                    if let comp = $0 as? Component {
+                        comp.package?.assignReference(document)
+                    }
+                    adjustPosition($0)
+                }
                 selection = graphicSet
                 justPasted = true
             }
@@ -695,21 +730,12 @@ class SchematicView: ZoomView
     }
     
     @IBAction func ungroupPackages(sender: AnyObject) {
-        
-    }
-    
-    @IBAction func openKiCadLibrary(sender: AnyObject) {
-        libraryManager.openKiCadLibrary(self)
-    }
-    
-    @IBAction func openLibrary(sender: AnyObject) {
-        libraryManager.openLibrary(self)
-    }
-    
-    @IBAction func populatePartParameters(sender: AnyObject) {
-        if let component = selection.first as? Component where selection.count == 1 {
-            octopartWindow.orderFront(self)
-            octopartWindow.prepopulateWithComponent(component)
+        let components = selection.flatMap { $0 as? Component }
+        let packages = Set(components.flatMap { $0.package })
+        for pkg in packages {
+            pkg.components = []
         }
+        needsDisplay = true
     }
+    
 }

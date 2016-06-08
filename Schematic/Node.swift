@@ -298,12 +298,12 @@ class Node: AttributedGraphic
             CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
             CGContextFillPath(context)
         } else if pin == nil && attachments.count == 1 {
-            NSColor.redColor().set()
+            setDrawingColor(NSColor.redColor())
             CGContextBeginPath(context)
             CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
             CGContextFillPath(context)
         } else if attachments.count == 0 {
-            NSColor.redColor().set()
+            setDrawingColor(NSColor.redColor())
             CGContextBeginPath(context)
             CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
             CGContextStrokePath(context)

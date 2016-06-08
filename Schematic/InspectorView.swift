@@ -11,6 +11,7 @@ import Cocoa
 class InspectorSelectorView: NSView
 {
     @IBOutlet var horizontalLine: NSView!
+    @IBOutlet var inspectorSplitView: NSSplitView!
     
     var inspectorConstraints: [NSLayoutConstraint] = []
     

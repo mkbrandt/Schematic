@@ -37,6 +37,7 @@ class Schematic: NSObject, NSCoding
 {
     var pages: [SchematicPage] = [SchematicPage()]
     var currentPage: Int = 0
+    var openLibraries: [NSURL] = []
     
     override init() {
         super.init()
@@ -45,11 +46,15 @@ class Schematic: NSObject, NSCoding
     required init?(coder decoder: NSCoder) {
         pages = decoder.decodeObjectForKey("pages") as? [SchematicPage] ?? [SchematicPage()]
         currentPage = decoder.decodeIntegerForKey("currentPage")
+        if let libs = decoder.decodeObjectForKey("libraries") as? [NSURL] {
+            openLibraries = libs
+        }
     }
     
     func encodeWithCoder(encoder: NSCoder) {
         encoder.encodeObject(pages, forKey: "pages")
         encoder.encodeInteger(currentPage, forKey: "currentPage")
+        encoder.encodeObject(openLibraries, forKey: "libraries")
     }
 }
 
@@ -57,6 +62,9 @@ class SchematicDocument: NSDocument {
     
     @IBOutlet var drawingView: SchematicView?
     @IBOutlet var newPageDialog: NewPageDialog?
+    @IBOutlet var pageLayoutAccessory: SchematicPageLayoutController?
+    @IBOutlet var libraryManager: LibraryManager?
+    @IBOutlet var octopartWindow: OctoPartWindow?
     
     var schematic = Schematic()
     
@@ -101,6 +109,9 @@ class SchematicDocument: NSDocument {
 
     override func dataOfType(typeName: String) throws -> NSData
     {
+        if let libs = libraryManager?.openLibraryURLs {
+            schematic.openLibraries = libs
+        }
         let data = NSKeyedArchiver.archivedDataWithRootObject(schematic)
         
         return data
@@ -111,12 +122,13 @@ class SchematicDocument: NSDocument {
         let doc = NSKeyedUnarchiver.unarchiveObjectWithData(data)
         if let schematic = doc as? Schematic {
             self.schematic = schematic
-      /*  } else if let state = doc as? SchematicDocumentState {
-            self.schematic.pages = state.pages
-            currentPage = 0
-      */  } else {
+        } else {
             throw NSError(domain: NSOSStatusErrorDomain, code: unimpErr, userInfo: nil)
         }
+    }
+    
+    override func awakeFromNib() {
+        libraryManager?.openLibrarysByURL(schematic.openLibraries)
     }
 
     // MARK: Window Delegate
@@ -133,11 +145,15 @@ class SchematicDocument: NSDocument {
     }
     
     func pageLayoutDone(context: AnyObject?) {
-        page.pageSize = printInfo.imageablePageBounds.size * (100.0 / 72.0)
+        if let matchButton = pageLayoutAccessory?.matchDrawingPageToLayout where matchButton.state == NSOnState {
+            page.pageSize = printInfo.imageablePageBounds.size * (100.0 / 72.0)
+        }
     }
     
     override func preparePageLayout(pageLayout: NSPageLayout) -> Bool {
-        //pageLayout.addAccessoryController(pageLayoutAccessory)
+        if let pageLayoutAccessory = pageLayoutAccessory {
+            pageLayout.addAccessoryController(pageLayoutAccessory)
+        }
         return true
     }
     
@@ -146,6 +162,7 @@ class SchematicDocument: NSDocument {
     }
     
     var printSaveZoomState = ZoomState(scale: 1, centerPoint: CGPoint())
+    var printSavePageNumber = 0
     
     override func printOperationWithSettings(printSettings: [String : AnyObject]) throws -> NSPrintOperation {
         if let drawingView = drawingView {
@@ -157,6 +174,7 @@ class SchematicDocument: NSDocument {
     }
     
     func document(document: NSDocument, didPrintSuccessfully: Bool,  contextInfo: UnsafeMutablePointer<Void>) {
+        currentPage = printSavePageNumber
         drawingView?.zoomState = printSaveZoomState
         drawingView?.constrainViewToSuperview = true
         drawingView?.needsDisplay = true
@@ -164,9 +182,10 @@ class SchematicDocument: NSDocument {
     
     override func printDocument(sender: AnyObject?) {
         if let drawingView = drawingView {
+            printSavePageNumber = currentPage
             drawingView.constrainViewToSuperview = false        // allow random zooming
             printSaveZoomState = drawingView.zoomState
-            drawingView.zoomToAbsoluteScale(0.72 * printInfo.scalingFactor)
+            drawingView.zoomToAbsoluteScale((72.0 / 100.0) * printInfo.scalingFactor)
             printDocumentWithSettings([:], showPrintPanel: true, delegate: self, didPrintSelector: #selector(SchematicDocument.document(_:didPrintSuccessfully:contextInfo:)), contextInfo: nil)
         }
     }
@@ -206,7 +225,31 @@ class SchematicDocument: NSDocument {
     
     @IBAction func deletePage(sender: AnyObject) {
         
-    }    
+    }
+
+    @IBAction func openKiCadLibrary(sender: AnyObject) {
+        libraryManager?.openKiCadLibrary(self)
+    }
+    
+    @IBAction func openLibrary(sender: AnyObject) {
+        libraryManager?.openLibrary(self)
+    }
+    
+    @IBAction func closeLibrary(sender: AnyObject) {
+        libraryManager?.closeLibrary(self)
+    }
+    
+    @IBAction func populatePartParameters(sender: AnyObject) {
+        if let selection = drawingView?.selection, let component = selection.first as? Component where selection.count == 1 {
+            octopartWindow?.orderFront(self)
+            octopartWindow?.prepopulateWithComponent(component)
+        }
+    }
+}
+
+class SchematicPageLayoutController: NSViewController
+{
+    @IBOutlet var matchDrawingPageToLayout: NSButton?
 }
 
 class NewPageDialog: NSWindow

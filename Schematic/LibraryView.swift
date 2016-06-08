@@ -50,6 +50,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     @IBOutlet var librariesTable: NSTableView!
     @IBOutlet var componentsTable: NSOutlineView!
     @IBOutlet var preview: LibraryPreview!
+    @IBOutlet var librarySplitView: NSView!
     
     var openLibs: [SchematicDocument] = []
     var currentIndex: Int = 0
@@ -64,14 +65,24 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     var sortedComponents: [Component] {
         return components.sort { $0.sortName < $1.sortName }
     }
+    
+    var openLibraryURLs: [NSURL]    { return openLibs.flatMap { $0.fileURL } }
     //var packages: Set<Package>      { return Set(components.flatMap { $0.package }) }
     //var sortedPackages: [Package]   { return packages.sort { $0.sortName < $1.sortName } }
     
-    @IBAction func openLibrary(sender: AnyObject) {
-        let openPanel = NSOpenPanel()
-        openPanel.allowedFileTypes = ["sch"]
-        openPanel.runModal()
-        let urls = openPanel.URLs
+    func setViewState() {
+        if openLibs.count == 0 {
+            librarySplitView.hidden = true
+        } else {
+            librarySplitView.hidden = false
+        }
+    }
+    
+    override func awakeFromNib() {
+        setViewState()
+    }
+    
+    func openLibrarysByURL(urls: [NSURL]) {
         for url in urls {
             if let lib = try? SchematicDocument(contentsOfURL: url, ofType: "sch") {
                 openLibs.append(lib)
@@ -80,6 +91,23 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
                 librariesTable.reloadData()
             }
         }
+        setViewState()
+    }
+    
+    @IBAction func openLibrary(sender: AnyObject) {
+        let openPanel = NSOpenPanel()
+        openPanel.allowedFileTypes = ["sch"]
+        openPanel.runModal()
+        let urls = openPanel.URLs
+        openLibrarysByURL(urls)
+    }
+    
+    @IBAction func closeLibrary(sender: AnyObject) {
+        if currentIndex >= 0 && currentIndex < openLibs.count {
+            let lib = openLibs.removeAtIndex(currentIndex)
+            lib.close()
+        }
+        setViewState()
     }
     
     @IBAction func openKiCadLibrary(sender: AnyObject) {

@@ -107,6 +107,12 @@
                                     <action selector="performClose:" target="-1" id="HmO-Ls-i7Q"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Close Library" id="wQc-mx-Ko2">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="closeLibrary:" target="-1" id="nYm-2x-o0p"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Save…" keyEquivalent="s" id="pxx-59-PXV">
                                 <connections>
                                     <action selector="saveDocument:" target="-1" id="teZ-XB-qJY"/>
@@ -118,7 +124,6 @@
                                 </connections>
                             </menuItem>
                             <menuItem title="Revert to Saved" id="KaW-ft-85H">
-                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="revertDocumentToSaved:" target="-1" id="iJ3-Pv-kwq"/>
                                 </connections>
@@ -256,6 +261,24 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="openKiCadLibrary:" target="-1" id="AQ3-WY-Cbf"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Generate JSON Netlist" id="HKs-fp-Nct">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="runNetlist:" target="-1" id="LFw-5U-eP2"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Generate OrCad Netlist" id="Hbq-Yn-Uh7">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="runOrcadNetlist:" target="-1" id="HxN-1L-hcl"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Repackage Design" id="j8G-rX-qJ0">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="repackage:" target="-1" id="LjE-Rn-8nA"/>
                                 </connections>
                             </menuItem>
                         </items>

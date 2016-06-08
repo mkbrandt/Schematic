@@ -246,6 +246,14 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
+    func setDrawingColor(color: NSColor) {
+        if NSGraphicsContext.currentContextDrawingToScreen() {
+            color.set()
+        } else {
+            print("drawing color not set")
+        }
+    }
+    
     func draw() {
     }
     
@@ -261,10 +269,10 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         if unit.width > 1 {
             NSColor.whiteColor().set()
             CGContextFillRect(context, rect)
-            color.set()
+            setDrawingColor(color)
             CGContextFillRect(context, irect)
         } else {
-            color.set()
+            setDrawingColor(color)
             CGContextFillRect(context, irect)
         }
         CGContextRestoreGState(context)

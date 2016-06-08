@@ -110,6 +110,27 @@ class Net: AttributedGraphic
         super.encodeWithCoder(coder)
     }
     
+    func physicallyConnectedNets(gathered: Set<Net>) -> Set<Net> {
+        if gathered.contains(self) {
+            return gathered
+        }
+        var gathered = gathered + [self]
+        let newNets = Set((originNode.attachments + endPointNode.attachments).filter { !gathered.contains($0) })
+        for net in newNets {
+            gathered = gathered + net.physicallyConnectedNets(gathered)
+        }
+        return gathered
+    }
+    
+    func logicallyConnectedNets(view: SchematicView) -> Set<Net> {
+        if let name = name {
+            let nets = view.displayList.flatMap { $0 as? Net }
+            return Set(nets.filter { $0.name == name })
+        } else {
+            return physicallyConnectedNets([])
+        }
+    }
+    
     override func closestPointToPoint(point: CGPoint) -> CGPoint {
         return line.closestPointToPoint(point)
     }

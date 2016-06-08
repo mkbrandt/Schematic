@@ -49,7 +49,11 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
     
     var textAttributes: [String: AnyObject] {
-        return [NSForegroundColorAttributeName: color, NSFontAttributeName: font]
+        if NSGraphicsContext.currentContextDrawingToScreen() {
+            return [NSForegroundColorAttributeName: color, NSFontAttributeName: font]
+        } else {
+            return [NSFontAttributeName: font]
+        }
     }
     
     override var inspectables: [Inspectable] {
@@ -215,7 +219,7 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         
         CGContextSaveGState(context)
         CGContextSetLineWidth(context, 0.1)
-        NSColor.redColor().set()
+        setDrawingColor(NSColor.redColor())
         CGContextStrokeRect(context, textBounds)
         if let owner = owner {
             let cp = owner.graphicBounds.center

@@ -62,8 +62,8 @@ class KLibRipper: NSObject
                 prefix = fields[2]
                 drawPinNumber = fields[5] == "Y"
                 drawPinName = fields[6] == "Y"
-                let units = Int(fields[7]) ?? 0
-                let homogeneous = fields[8] == "F"
+                //let units = Int(fields[7]) ?? 0
+                //let homogeneous = fields[8] == "F"
                 group = GroupGraphic(contents: [])
                 comp = Component(origin: CGPoint(), pins: [], outline: group!)
                 comp?.value = value
