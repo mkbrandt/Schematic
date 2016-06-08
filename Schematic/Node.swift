@@ -103,8 +103,8 @@ class Node: AttributedGraphic
     
     override func moveBy(offset: CGPoint, view: SchematicView) {
         var offset = offset
-        if constrainedX([]) { offset.x = 0 }
-        if constrainedY([]) { offset.y = 0 }
+        if constrainedX() { offset.x = 0 }
+        if constrainedY() { offset.y = 0 }
         if moveBy(offset, overlapsPinInView: view) {
             print("overlap detected")
             return
@@ -143,7 +143,7 @@ class Node: AttributedGraphic
         return false
     }
     
-    func constrainedX(exclude: Set<Net>) -> Bool {
+    func constrainedX(exclude: Set<Net> = []) -> Bool {
         if let comp = pin?.component where !comp.selected {
             return true
         }
@@ -152,7 +152,7 @@ class Node: AttributedGraphic
         return verticalNodes.reduce(false) { $0 || $1.constrainedX(exclude + Set(verticalNets)) }
     }
     
-    func constrainedY(exclude: Set<Net>) -> Bool {
+    func constrainedY(exclude: Set<Net> = []) -> Bool {
         if let comp = pin?.component where !comp.selected {
             return true
         }
@@ -175,6 +175,57 @@ class Node: AttributedGraphic
         }
     }
     
+    func setOtherNodeOfNet(net: Net, node: Node) {
+        if net.originNode == self {
+            net.endPointNode = node
+        } else {
+            net.originNode = node
+        }
+    }
+    
+    func splitNetOrNode(net: Net, node: Node, view: SchematicView) {
+        switch net.orientation {
+        case .Horizontal:
+            if node.origin.y != origin.y {
+                if node.pin == nil {
+                    // create a new node vertically offset from this one
+                    let newNode = Node(origin: CGPoint(x: node.origin.x, y: origin.y))
+                    let newNet = Net(originNode: newNode, endPointNode: node)
+                    view.addGraphic(newNet)
+                    setOtherNodeOfNet(net, node: newNode)
+                } else {
+                    // break this net into two nets at the midpoint and connect
+                    let midx = (node.origin.x + origin.x) / 2
+                    let node1 = Node(origin: CGPoint(x: midx, y: node.origin.y))
+                    let node2 = Node(origin: CGPoint(x: midx, y: origin.y))
+                    let net1 = Net(originNode: node1, endPointNode: node2)
+                    let net2 = Net(originNode: node, endPointNode: node1)
+                    setOtherNodeOfNet(net, node: node2)
+                    view.addGraphics([net1, net2])
+                }
+            }
+        case .Vertical:
+            if node.origin.x != origin.x {
+                if node.pin == nil {
+                    // create a new node horizontally offset from this one
+                    let newNode = Node(origin: CGPoint(x: origin.x, y: node.origin.y))
+                    let newNet = Net(originNode: newNode, endPointNode: node)
+                    view.addGraphic(newNet)
+                    setOtherNodeOfNet(net, node: newNode)
+                } else {
+                    // break this net into two nets at the midpoint and connect
+                    let midy = (node.origin.y + origin.y) / 2
+                    let node1 = Node(origin: CGPoint(x: node.origin.x, y: midy))
+                    let node2 = Node(origin: CGPoint(x: origin.x, y: midy))
+                    let net1 = Net(originNode: node1, endPointNode: node2)
+                    let net2 = Net(originNode: node, endPointNode: node1)
+                    setOtherNodeOfNet(net, node: node2)
+                    view.addGraphics([net1, net2])
+                }
+            }
+        }
+    }
+    
     func designCheck(view: SchematicView, checked: Set<Node>) {
         saveUndoState(view)
         var checked = checked
@@ -187,12 +238,20 @@ class Node: AttributedGraphic
                 switch net.orientation {
                 case .Horizontal:
                     if node.origin.y != origin.y {
-                        node.moveBy(CGPoint(x: 0, y: origin.y - node.origin.y), view: view)
+                        if node.constrainedY() {
+                            splitNetOrNode(net, node: node, view: view)
+                        } else {
+                            node.moveBy(CGPoint(x: 0, y: origin.y - node.origin.y), view: view)
+                        }
                         propagates.append(node)
                     }
                 case .Vertical:
                     if node.origin.x != origin.x {
-                        node.moveBy(CGPoint(x: origin.x - node.origin.x, y: 0), view: view)
+                        if node.constrainedX() {
+                            splitNetOrNode(net, node: node, view: view)
+                        } else {
+                            node.moveBy(CGPoint(x: origin.x - node.origin.x, y: 0), view: view)
+                        }
                         propagates.append(node)
                     }
                 }
@@ -222,18 +281,18 @@ class Node: AttributedGraphic
             switch tnet {
             case .Origin(let net):
                 net.saveUndoState(view)
-                print("moving origin of NET \(net.graphicID) from NODE \(net.originNode.graphicID) to NODE \(self.graphicID)")
+                //print("moving origin of NET \(net.graphicID) from NODE \(net.originNode.graphicID) to NODE \(self.graphicID)")
                 net.originNode = self
-                showNet(net)
+                //showNet(net)
             case .EndPoint(let net):
                 net.saveUndoState(view)
-                print("moving endPoint of NET \(net.graphicID) from NODE \(net.endPointNode.graphicID) to NODE \(self.graphicID)")
+                //print("moving endPoint of NET \(net.graphicID) from NODE \(net.endPointNode.graphicID) to NODE \(self.graphicID)")
                 net.endPointNode = self
-                showNet(net)
+                //showNet(net)
             }
         }
         if let pin = pin {
-            print("movin pin from \(pin.node) to \(self)")
+            //print("movin pin from \(pin.node) to \(self)")
             self.pin = pin
         }
     }
@@ -244,9 +303,9 @@ class Node: AttributedGraphic
         for net in attachments {
             if net.line.length == 0 {
                 net.saveUndoState(view)
-                print("removing zero length NET \(net.graphicID)")
+                //print("removing zero length NET \(net.graphicID)")
                 if net.originNode == net.endPointNode {
-                    print("Warning: Net \(net.graphicID) has two connections to NODE \(graphicID)")
+                    //print("Warning: Net \(net.graphicID) has two connections to NODE \(graphicID)")
                     view.deleteGraphic(net)
                 } else if pin == nil {                      // we should merge with another node
                     let other = otherNode(net)
@@ -263,7 +322,7 @@ class Node: AttributedGraphic
                 let other = otherNode(net2)
                 if net.line.distanceToPoint(other.origin) == 0 {
                     net.saveUndoState(view)
-                    print("merging overlapping NET \(net.graphicID) and NODE \(other.graphicID)")
+                    //print("merging overlapping NET \(net.graphicID) and NODE \(other.graphicID)")
                     other.moveNodeConnectionsFromNode(self, attachments: [self.typedNet(net)], pin: nil, view: view)
                 }
             }
@@ -277,7 +336,7 @@ class Node: AttributedGraphic
                 let net2 = attachments.removeFirst()
                 net1.saveUndoState(view)
                 net2.saveUndoState(view)
-                print("merging NET \(net1.graphicID) and NET \(net2.graphicID)")
+                //print("merging NET \(net1.graphicID) and NET \(net2.graphicID)")
                 otherNode(net2).moveNodeConnectionsFromNode(self, attachments: [self.typedNet(net1)], pin: nil, view: view)
                 view.deleteGraphic(net2)
             }

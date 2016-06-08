@@ -532,6 +532,17 @@
             </toolbar>
             <point key="canvasLocation" x="280" y="211"/>
         </window>
+        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" frameAutosaveName="" animationBehavior="default" id="sCY-Ku-vE7">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="283" y="305" width="480" height="270"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
+            <view key="contentView" id="YOM-wg-ZcO">
+                <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
+                <autoresizingMask key="autoresizingMask"/>
+            </view>
+            <point key="canvasLocation" x="538" y="446"/>
+        </window>
     </objects>
     <resources>
         <image name="NSColorPanel" width="32" height="32"/>

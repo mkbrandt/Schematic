@@ -275,9 +275,7 @@ class SchematicView: ZoomView
     }
     
     func deleteGraphic(graphic: Graphic) {
-        if graphic is Net {
-            Swift.print("deleting NET \(graphic.graphicID)")
-        }
+        //if graphic is Net { Swift.print("deleting NET \(graphic.graphicID)") }
         deleteGraphics([graphic])
     }
     
@@ -441,7 +439,7 @@ class SchematicView: ZoomView
             return .Copy
         } else if let table = sender.draggingSource() as? NSTableView, let source = table.dataSource() as? UnplacedcomponentsTableViewDataSource {
             if let g = source.draggedComponent {
-                Swift.print("Got graphic: \(g)")
+                //Swift.print("Got graphic: \(g)")
                 construction = g
                 let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
                 construction?.moveTo(location, view: self)
