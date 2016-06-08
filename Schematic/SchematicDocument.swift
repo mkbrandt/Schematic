@@ -11,6 +11,8 @@ import Cocoa
 let GridSize: CGFloat = 10.0
 let MajorGridSize: CGFloat = 100.0
 
+var printInColor = false
+
 /*
 class SchematicDocumentState: NSObject, NSCoding
 {
@@ -38,6 +40,9 @@ class Schematic: NSObject, NSCoding
     var pages: [SchematicPage] = [SchematicPage()]
     var currentPage: Int = 0
     var openLibraries: [NSURL] = []
+    var printInfoDict: [String: AnyObject] = [:]
+    var savedScale: CGFloat?
+    var centeredPoint = CGPoint()
     
     override init() {
         super.init()
@@ -49,12 +54,25 @@ class Schematic: NSObject, NSCoding
         if let libs = decoder.decodeObjectForKey("libraries") as? [NSURL] {
             openLibraries = libs
         }
+        if let printInfo = decoder.decodeObjectForKey("printInfo") as? [String: AnyObject] {
+            printInfoDict = printInfo
+        }
+        if let scale = decoder.decodeObjectForKey("savedScale") {
+            centeredPoint = decoder.decodePointForKey("centeredPoint")
+            savedScale = CGFloat(scale.doubleValue)
+        }
     }
     
     func encodeWithCoder(encoder: NSCoder) {
         encoder.encodeObject(pages, forKey: "pages")
         encoder.encodeInteger(currentPage, forKey: "currentPage")
         encoder.encodeObject(openLibraries, forKey: "libraries")
+        encoder.encodeObject(printInfoDict, forKey: "printInfo")
+        if let savedScale = savedScale {
+            let scale = NSNumber(double: Double(savedScale))
+            encoder.encodeObject(scale, forKey: "savedScale")
+            encoder.encodePoint(centeredPoint, forKey: "centeredPoint")
+        }
     }
 }
 
@@ -112,6 +130,8 @@ class SchematicDocument: NSDocument {
         if let libs = libraryManager?.openLibraryURLs {
             schematic.openLibraries = libs
         }
+        schematic.savedScale = drawingView?.scale
+        schematic.centeredPoint = drawingView?.centeredPointInDocView ?? CGPoint()
         let data = NSKeyedArchiver.archivedDataWithRootObject(schematic)
         
         return data
@@ -122,6 +142,7 @@ class SchematicDocument: NSDocument {
         let doc = NSKeyedUnarchiver.unarchiveObjectWithData(data)
         if let schematic = doc as? Schematic {
             self.schematic = schematic
+            printInfo = NSPrintInfo(dictionary: schematic.printInfoDict)
         } else {
             throw NSError(domain: NSOSStatusErrorDomain, code: unimpErr, userInfo: nil)
         }
@@ -129,6 +150,14 @@ class SchematicDocument: NSDocument {
     
     override func awakeFromNib() {
         libraryManager?.openLibrarysByURL(schematic.openLibraries)
+        printInColor = Defaults.boolForKey("printColor")
+        if let scale = schematic.savedScale {
+            drawingView?.zoomToFit(self)
+            drawingView?.zoomByFactor(100)
+            drawingView?.zoomByFactor(0.01)
+            drawingView?.zoomToAbsoluteScale(scale)
+            drawingView?.scrollPointToCenter(schematic.centeredPoint)
+        }
     }
 
     // MARK: Window Delegate
@@ -148,10 +177,17 @@ class SchematicDocument: NSDocument {
         if let matchButton = pageLayoutAccessory?.matchDrawingPageToLayout where matchButton.state == NSOnState {
             page.pageSize = printInfo.imageablePageBounds.size * (100.0 / 72.0)
         }
+        if let dict = (printInfo.dictionary() as NSDictionary) as? [String: AnyObject] {
+            schematic.printInfoDict = dict
+            printInColor = (pageLayoutAccessory?.printInColor?.state ?? NSOffState) == NSOnState
+            Defaults.setBool(printInColor, forKey: "printColor")
+        }
     }
     
     override func preparePageLayout(pageLayout: NSPageLayout) -> Bool {
         if let pageLayoutAccessory = pageLayoutAccessory {
+            pageLayoutAccessory.printInColor?.state = Defaults.boolForKey("printColor") ? NSOnState : NSOffState
+            pageLayoutAccessory.matchDrawingPageToLayout?.state = NSOffState
             pageLayout.addAccessoryController(pageLayoutAccessory)
         }
         return true
@@ -250,6 +286,7 @@ class SchematicDocument: NSDocument {
 class SchematicPageLayoutController: NSViewController
 {
     @IBOutlet var matchDrawingPageToLayout: NSButton?
+    @IBOutlet var printInColor: NSButton?
 }
 
 class NewPageDialog: NSWindow

@@ -247,7 +247,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     }
     
     func setDrawingColor(color: NSColor) {
-        if NSGraphicsContext.currentContextDrawingToScreen() {
+        if printInColor || NSGraphicsContext.currentContextDrawingToScreen() {
             color.set()
         } else {
             print("drawing color not set")

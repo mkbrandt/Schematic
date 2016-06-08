@@ -13,6 +13,27 @@ struct NetInfo {
     var attributes: [String: String]
 }
 
+var _autoNameSequence = 10000
+var autoNameSequence: Int    { let an = _autoNameSequence; _autoNameSequence += 1; return an }
+
+class NetList: NSObject
+{
+    var nets: Set<Net> = []
+    var name: String {
+        if let name = nets.first?.name {
+            return name
+        }
+        let autoName = nets.first?.attributes["autoNetName"] ?? "N\(autoNameSequence)"
+        for net in nets {
+            net.attributes["autoNetName"] = autoName
+        }
+        return autoName
+    }
+    
+    var nodes: Set<Node>    { return Set(nets.reduce([]) { $0 + [$1.originNode, $1.endPointNode] }) }
+    var pins: Set<Pin>      { return Set(nodes.flatMap { $0.pin }) }
+}
+
 extension SchematicDocument
 {
     @IBAction func repackage(sender: AnyObject) {
@@ -33,13 +54,31 @@ extension SchematicDocument
         drawingView?.needsDisplay = true
     }
     
+    var packages: Set<Package>      { return Set(self.components.flatMap { $0.package }) }
+    var netLists: Set<NetList> {
+        var netLists: [NetList] = []
+        let allGraphics = pages.reduce([]) { $0 + $1.displayList }
+        var allNets = Set(allGraphics.flatMap { $0 as? Net })
+        
+        while let net = allNets.first {
+            let netList = NetList()
+            if let drawingView = drawingView {
+                netList.nets = net.logicallyConnectedNets(drawingView)
+            } else {
+                netList.nets = net.physicallyConnectedNets([])
+            }
+            allNets.subtractInPlace(netList.nets)
+            netLists.append(netList)
+        }
+        return Set(netLists)
+    }
+    
     func jsonNetList() -> JSON
     {
         var errors: [String] = []
         var warnings: [String] = []
         var netDict: [String: JSON] = [:]
-        var autoRef = 10000
-        let packages = Set(self.components.flatMap { $0.package })
+
         var packageArray: [JSON] = []
         
         for pkg in packages {
@@ -51,42 +90,28 @@ extension SchematicDocument
             }
             packageArray.append(JSON(pjson))
         }
-        
-        let allGraphics = pages.reduce([]) { $0 + $1.displayList }
-        var allNets = Set(allGraphics.flatMap { $0 as? Net })
-        
-        while let segment = allNets.first {
-            var nets: Set<Net>
-            var netName: String
-            if let name = segment.name {
-                nets = Set(allNets.filter { $0.name == name })
-                netName = name
-            } else {
-                nets = segment.physicallyConnectedNets([])
-                netName = "NET_\(autoRef)"
-                autoRef += 1
-                nets.forEach { $0.attributes["autoNetName"] = netName }
-            }
-            allNets.subtractInPlace(nets)
-            let nodes = nets.reduce([]) { $0 + [$1.originNode, $1.endPointNode] }
-            let pins = Set(nodes).flatMap { $0.pin }
+
+        for nlist in netLists {
             var pinNames: [String] = []
-            for pin in pins {
+
+            for pin in nlist.pins {
                 let refDes = pin.component?.refDes
                 let pinNumber = pin.pinNumber
                 if let refDes = refDes where pin.component?.package != nil {
                     if pinNumber == "" {
-                        errors.append("unnamed pin on net \(netName) component \(refDes)")
+                        errors.append("unnamed pin on net \(nlist.name) component \(refDes)")
                     }
                     pinNames.append("\(refDes):\(pinNumber)")
                 } else if refDes == nil {
-                    errors.append("net \(netName) attached to pin \(pinNumber) of unnamed component")
+                    errors.append("net \(nlist.name) attached to pin \(pinNumber) of unnamed component")
                 }
             }
+            
             if pinNames.count == 0 {
-                warnings.append("No pins present on net \(netName)")
+                warnings.append("No pins present on net \(nlist.name)")
             }
-            let attributes: [String: String] = nets.reduce([:]) { attr, net in
+            
+            let attributes: [String: String] = nlist.nets.reduce([:]) { attr, net in
                 var attr = attr
                 for (k, v) in net.attributes {
                     attr[k] = v
@@ -97,7 +122,7 @@ extension SchematicDocument
             if attributes.count > 0 {
                 netInfo["attributes"] = JSON(attributes)
             }
-            netDict[netName] = JSON(netInfo)
+            netDict[nlist.name] = JSON(netInfo)
         }
         
         var netlist: [String: JSON] = ["packages": JSON(packageArray), "nets": JSON(netDict)]
@@ -147,6 +172,10 @@ extension SchematicDocument
         netlist += ")\n"
         
         return netlist
+    }
+    
+    @IBAction func runGenericNetlist(sender: AnyObject) {
+        
     }
     
     @IBAction func runNetlist(sender: AnyObject) {

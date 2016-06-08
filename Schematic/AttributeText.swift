@@ -49,7 +49,7 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
     
     var textAttributes: [String: AnyObject] {
-        if NSGraphicsContext.currentContextDrawingToScreen() {
+        if printInColor || NSGraphicsContext.currentContextDrawingToScreen() {
             return [NSForegroundColorAttributeName: color, NSFontAttributeName: font]
         } else {
             return [NSFontAttributeName: font]

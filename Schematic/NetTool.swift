@@ -48,11 +48,11 @@ class NetConstructor: Graphic
         let delta = endPoint - previousPoint
         if preferHorizontal && abs(delta.x) > TiltThreshold || !preferVertical && abs(delta.x) > abs(delta.y) {
             endPoint = previousPoint + CGPoint(x: delta.x, y: 0)
-            print("Add horizontal corner: \(endPoint)")
+            //print("Add horizontal corner: \(endPoint)")
             preferVertical = true
         } else {
             endPoint = previousPoint + CGPoint(x: 0, y: delta.y)
-            print("Add vertical corner: \(endPoint)")
+            //print("Add vertical corner: \(endPoint)")
             preferHorizontal = true
         }
         wayPoints.append(point)
@@ -73,14 +73,14 @@ class NetConstructor: Graphic
                 if abs(delta.x) < TiltThreshold {
                     if preferHorizontal && wayPoints.count > 1 {
                         wayPoints.removeLast()
-                        print("removed point")
+                        //print("removed point")
                     }
                     preferHorizontal = false
                 }
                 if abs(delta.y) < TiltThreshold {
                     if preferVertical && wayPoints.count > 1 {
                         wayPoints.removeLast()
-                        print("removed point")
+                        //print("removed point")
                     }
                     preferVertical = false
                 }
@@ -88,13 +88,13 @@ class NetConstructor: Graphic
                 if preferHorizontal || !preferVertical && abs(delta.x) > abs(delta.y) {
                     CGContextAddLineToPoint(context, wp.x, sp.y)
                     if !preferHorizontal {
-                        print("prefer horizontal")
+                        //print("prefer horizontal")
                         preferHorizontal = true
                     }
                 } else {
                     CGContextAddLineToPoint(context, sp.x, wp.y)
                     if !preferVertical {
-                        print("prefer vertical")
+                        //print("prefer vertical")
                         preferVertical = true
                     }
                 }
