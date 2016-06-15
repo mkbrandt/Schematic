@@ -11,6 +11,8 @@
             <connections>
                 <outlet property="drawingView" destination="Vze-9M-f7e" id="de2-zE-0L2"/>
                 <outlet property="libraryManager" destination="Q8F-xi-eUs" id="MCn-Dp-9fH"/>
+                <outlet property="netlistAccessory" destination="jlV-We-PGs" id="YKh-ji-wjI"/>
+                <outlet property="netlistChooser" destination="bNp-tc-C0l" id="ap6-nx-hJ7"/>
                 <outlet property="newPageDialog" destination="XEX-C0-vui" id="jDt-UR-ybX"/>
                 <outlet property="octopartWindow" destination="kUL-0a-YNw" id="Elf-h1-bZk"/>
                 <outlet property="pageLayoutAccessory" destination="RYA-48-DHZ" id="ADt-M1-cga"/>
@@ -1654,10 +1656,10 @@ Gw
                                             <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                             <prototypeCellViews>
                                                 <tableCellView id="YFh-l8-GF9">
-                                                    <rect key="frame" x="510" y="1" width="60" height="17"/>
+                                                    <rect key="frame" x="510" y="1" width="61" height="17"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <subviews>
-                                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="fBG-T0-DU5">
+                                                        <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fBG-T0-DU5">
                                                             <rect key="frame" x="0.0" y="0.0" width="62" height="17"/>
                                                             <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Table View Cell" id="8ra-ef-Vbw">
                                                                 <font key="font" metaFont="system"/>
@@ -1931,6 +1933,35 @@ Gw
                 <outlet property="view" destination="7p5-yv-kwP" id="cJX-W4-xKa"/>
             </connections>
         </customObject>
+        <customView id="jlV-We-PGs">
+            <rect key="frame" x="0.0" y="0.0" width="272" height="57"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bNp-tc-C0l">
+                    <rect key="frame" x="73" y="13" width="182" height="26"/>
+                    <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="YX8-77-Lv6" id="NQ2-qV-268">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="menu"/>
+                        <menu key="menu" id="d3I-yv-sjE">
+                            <items>
+                                <menuItem title="Item 1" state="on" id="YX8-77-Lv6"/>
+                                <menuItem title="Item 2" id="kBm-AR-g6A"/>
+                                <menuItem title="Item 3" id="bJu-md-IKo"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                </popUpButton>
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Bxr-8Z-7qW">
+                    <rect key="frame" x="18" y="20" width="47" height="17"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Format" id="qjO-T8-QID">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <point key="canvasLocation" x="210" y="554.5"/>
+        </customView>
     </objects>
     <resources>
         <image name="Arc3Point" width="48" height="48"/>

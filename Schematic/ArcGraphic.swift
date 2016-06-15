@@ -40,6 +40,15 @@ class ArcGraphic: CircleGraphic
     }
     
     override var bounds: CGRect {
+        var points: [CGPoint] = self.points
+        
+        var angle = clockwise ? endAngle : startAngle
+        let steps = 36
+        let incr = sweep / CGFloat(steps)
+        for _ in 1 ..< steps {
+            points.append(origin + CGPoint(length: radius, angle: angle))
+            angle += incr
+        }
         return rectContainingPoints(points)
     }
     

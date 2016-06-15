@@ -13,6 +13,7 @@ class AppDelegate: NSObject, NSApplicationDelegate
 {
     func applicationDidFinishLaunching(aNotification: NSNotification) {
         Defaults.registerDefaults(initialUserDefaults)
+        SchematicDocument.installScripts()
     }
 
     func applicationWillTerminate(aNotification: NSNotification) {

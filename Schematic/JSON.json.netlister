@@ -1,0 +1,8 @@
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'json'
+
+text = $stdin.read
+json = JSON.parse(text)
+puts JSON.pretty_generate(json)

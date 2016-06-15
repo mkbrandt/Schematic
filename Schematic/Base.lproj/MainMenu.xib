@@ -263,16 +263,10 @@
                                     <action selector="openKiCadLibrary:" target="-1" id="AQ3-WY-Cbf"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Generate JSON Netlist" id="HKs-fp-Nct">
+                            <menuItem title="Generate Netlist" id="Hbq-Yn-Uh7">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="runNetlist:" target="-1" id="LFw-5U-eP2"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Generate OrCad Netlist" id="Hbq-Yn-Uh7">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="runOrcadNetlist:" target="-1" id="HxN-1L-hcl"/>
+                                    <action selector="runGenericNetlist:" target="-1" id="2Ko-lx-WRG"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Repackage Design" id="j8G-rX-qJ0">
@@ -531,17 +525,6 @@
                 </defaultToolbarItems>
             </toolbar>
             <point key="canvasLocation" x="280" y="211"/>
-        </window>
-        <window title="Window" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" frameAutosaveName="" animationBehavior="default" id="sCY-Ku-vE7">
-            <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
-            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="283" y="305" width="480" height="270"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
-            <view key="contentView" id="YOM-wg-ZcO">
-                <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
-                <autoresizingMask key="autoresizingMask"/>
-            </view>
-            <point key="canvasLocation" x="538" y="446"/>
         </window>
     </objects>
     <resources>

@@ -39,7 +39,6 @@ class ArcTool: Tool
     
     override func mouseDown(location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
-        view.redrawConstruction()
         switch state {
         case 0:
             startPoint = location
@@ -49,12 +48,10 @@ class ArcTool: Tool
         default:
             view.construction = arcFromStartPoint(startPoint, endPoint: endPoint, midPoint: location)
         }
-        view.redrawConstruction()
     }
     
     override func mouseMoved(location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
-        view.redrawConstruction()
         switch state {
         case 0:
             break
@@ -64,12 +61,10 @@ class ArcTool: Tool
         default:
             view.construction = arcFromStartPoint(startPoint, endPoint: endPoint, midPoint: location)
         }
-        view.redrawConstruction()
     }
     
     override func mouseDragged(location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
-        view.redrawConstruction()
         
         switch state {
         case 0:
@@ -79,11 +74,9 @@ class ArcTool: Tool
             mouseMoved(location, view: view)
         }
         
-        view.redrawConstruction()
     }
     
     override func mouseUp(location: CGPoint, view: SchematicView) {
-        view.redrawConstruction()
         switch state {
         case 0:
             state = 1
@@ -96,6 +89,5 @@ class ArcTool: Tool
             //view.setDrawingHint("3 Point Arc: Select start point")
             view.addConstruction()
         }
-        view.redrawConstruction()
     }
 }

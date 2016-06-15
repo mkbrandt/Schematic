@@ -122,6 +122,9 @@ class NetConstructor: Graphic
         }
         
         for p in wayPoints {
+            if p == startNode.origin {
+                continue
+            }
             var endNode = Node(origin: p)
             let el = view.findElementAtPoint(p)
             if let pin = el as? Pin {

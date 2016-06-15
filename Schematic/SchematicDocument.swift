@@ -83,6 +83,8 @@ class SchematicDocument: NSDocument {
     @IBOutlet var pageLayoutAccessory: SchematicPageLayoutController?
     @IBOutlet var libraryManager: LibraryManager?
     @IBOutlet var octopartWindow: OctoPartWindow?
+    @IBOutlet var netlistAccessory: NSView?
+    @IBOutlet var netlistChooser: NSPopUpButton?
     
     var schematic = Schematic()
     

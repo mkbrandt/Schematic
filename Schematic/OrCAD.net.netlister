@@ -1,0 +1,51 @@
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'json'
+require 'pp'
+
+input = $stdin.read
+
+netlist = JSON.parse(input)
+
+pseq = 100
+
+packages = netlist["packages"]
+parts = {}
+for pkg in packages
+	seq = pseq
+	pseq += 1
+	refdes = pkg["refDes"]
+	partnum = pkg["partNumber"]
+	footprint = pkg["footprint"]
+	value = pkg["value"]
+	parts[refdes] = {"seq" => seq, "partnum" => partnum, "refdes" => refdes, "footprint" => footprint, "pins" => {}, "value" => value}
+end
+
+nets = netlist["nets"]
+for netname, net in nets
+	connections = net["connections"]
+	for conn in connections
+		if conn =~ /(.*):(.*)/ then
+			part = $1
+			pin = $2
+			parts[part]["pins"][pin] = netname
+		end
+	end
+end
+
+print "( { OrCAD/PCB II Netlist Format 2000 Time Stamp - }\n"
+for refdes, part in parts
+	seq = part["seq"]
+	fp = part["footprint"]
+	ref = part["refdes"]
+	value = part["value"]
+	partnum = part["partnum"] || value
+	print "    ( E#{seq} #{fp} #{refdes} #{partnum}\n"
+	for pin, net in part["pins"]
+		print "        ( #{pin} #{net} )\n"
+	end
+	print "    )\n"
+end
+
+print ")\n"

@@ -108,7 +108,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     func openLibrariesByBookmark(bookmarks: [NSData]) {
         for bookmark in bookmarks {
             var stale: ObjCBool = false
-            if let url = try? NSURL(byResolvingBookmarkData: bookmark, options: NSURLBookmarkResolutionOptions.WithSecurityScope, relativeToURL: nil, bookmarkDataIsStale: &stale) {
+            if let url = try? NSURL(byResolvingBookmarkData: bookmark, options: .WithSecurityScope, relativeToURL: nil, bookmarkDataIsStale: &stale) {
                 url.startAccessingSecurityScopedResource()
                 openLibraryURL(url)
             }
