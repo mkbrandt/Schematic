@@ -11,12 +11,12 @@ import Cocoa
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate
 {
-    func applicationDidFinishLaunching(aNotification: NSNotification) {
-        Defaults.registerDefaults(initialUserDefaults)
+    func applicationDidFinishLaunching(_ aNotification: Notification) {
+        Defaults.register(initialUserDefaults)
         SchematicDocument.installScripts()
     }
 
-    func applicationWillTerminate(aNotification: NSNotification) {
+    func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
     }
 

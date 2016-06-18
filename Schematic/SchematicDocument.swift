@@ -39,7 +39,7 @@ class Schematic: NSObject, NSCoding
 {
     var pages: [SchematicPage] = [SchematicPage()]
     var currentPage: Int = 0
-    var openLibraries: [NSData] = []
+    var openLibraries: [Data] = []
     var printInfoDict: [String: AnyObject] = [:]
     var savedScale: CGFloat?
     var centeredPoint = CGPoint()
@@ -49,29 +49,29 @@ class Schematic: NSObject, NSCoding
     }
     
     required init?(coder decoder: NSCoder) {
-        pages = decoder.decodeObjectForKey("pages") as? [SchematicPage] ?? [SchematicPage()]
-        currentPage = decoder.decodeIntegerForKey("currentPage")
-        if let libs = decoder.decodeObjectForKey("libraries") as? [NSData] {
+        pages = decoder.decodeObject(forKey: "pages") as? [SchematicPage] ?? [SchematicPage()]
+        currentPage = decoder.decodeInteger(forKey: "currentPage")
+        if let libs = decoder.decodeObject(forKey: "libraries") as? [Data] {
             openLibraries = libs
         }
-        if let printInfo = decoder.decodeObjectForKey("printInfo") as? [String: AnyObject] {
+        if let printInfo = decoder.decodeObject(forKey: "printInfo") as? [String: AnyObject] {
             printInfoDict = printInfo
         }
-        if let scale = decoder.decodeObjectForKey("savedScale") {
-            centeredPoint = decoder.decodePointForKey("centeredPoint")
+        if let scale = decoder.decodeObject(forKey: "savedScale") {
+            centeredPoint = decoder.decodePoint(forKey: "centeredPoint")
             savedScale = CGFloat(scale.doubleValue)
         }
     }
     
-    func encodeWithCoder(encoder: NSCoder) {
-        encoder.encodeObject(pages, forKey: "pages")
-        encoder.encodeInteger(currentPage, forKey: "currentPage")
-        encoder.encodeObject(openLibraries, forKey: "libraries")
-        encoder.encodeObject(printInfoDict, forKey: "printInfo")
+    func encode(with encoder: NSCoder) {
+        encoder.encode(pages, forKey: "pages")
+        encoder.encode(currentPage, forKey: "currentPage")
+        encoder.encode(openLibraries, forKey: "libraries")
+        encoder.encode(printInfoDict, forKey: "printInfo")
         if let savedScale = savedScale {
-            let scale = NSNumber(double: Double(savedScale))
-            encoder.encodeObject(scale, forKey: "savedScale")
-            encoder.encodePoint(centeredPoint, forKey: "centeredPoint")
+            let scale = NSNumber(value: Double(savedScale))
+            encoder.encode(scale, forKey: "savedScale")
+            encoder.encode(centeredPoint, forKey: "centeredPoint")
         }
     }
 }
@@ -127,21 +127,21 @@ class SchematicDocument: NSDocument {
         return "SchematicDocument"
     }
 
-    override func dataOfType(typeName: String) throws -> NSData
+    override func data(ofType typeName: String) throws -> Data
     {
         if let libs = libraryManager?.bookmarks {
             schematic.openLibraries = libs
         }
         schematic.savedScale = drawingView?.scale
         schematic.centeredPoint = drawingView?.centeredPointInDocView ?? CGPoint()
-        let data = NSKeyedArchiver.archivedDataWithRootObject(schematic)
+        let data = NSKeyedArchiver.archivedData(withRootObject: schematic)
         
         return data
     }
     
-    override func readFromData(data: NSData, ofType typeName: String) throws
+    override func read(from data: Data, ofType typeName: String) throws
     {
-        let doc = NSKeyedUnarchiver.unarchiveObjectWithData(data)
+        let doc = NSKeyedUnarchiver.unarchiveObject(with: data)
         if let schematic = doc as? Schematic {
             self.schematic = schematic
             printInfo = NSPrintInfo(dictionary: schematic.printInfoDict)
@@ -152,7 +152,7 @@ class SchematicDocument: NSDocument {
     
     override func awakeFromNib() {
         libraryManager?.openLibrariesByBookmark(schematic.openLibraries)
-        printInColor = Defaults.boolForKey("printColor")
+        printInColor = Defaults.bool(forKey: "printColor")
         if let scale = schematic.savedScale {
             drawingView?.zoomToFit(self)
             drawingView?.zoomByFactor(100)
@@ -164,67 +164,67 @@ class SchematicDocument: NSDocument {
 
     // MARK: Window Delegate
     
-    func windowDidResize(notification: NSNotification) {
+    func windowDidResize(_ notification: Notification) {
         drawingView?.zoomByFactor(2)
         drawingView?.zoomByFactor(0.5)
     }
     
     // MARK: Printing
     
-    override func runPageLayout(sender: AnyObject?) {
-        runModalPageLayoutWithPrintInfo(printInfo, delegate: self, didRunSelector: #selector(SchematicDocument.pageLayoutDone), contextInfo: nil)
+    override func runPageLayout(_ sender: AnyObject?) {
+        runModalPageLayout(with: printInfo, delegate: self, didRun: #selector(SchematicDocument.pageLayoutDone), contextInfo: nil)
     }
     
-    func pageLayoutDone(context: AnyObject?) {
+    func pageLayoutDone(_ context: AnyObject?) {
         if let matchButton = pageLayoutAccessory?.matchDrawingPageToLayout where matchButton.state == NSOnState {
             page.pageSize = printInfo.imageablePageBounds.size * (100.0 / 72.0)
         }
         if let dict = (printInfo.dictionary() as NSDictionary) as? [String: AnyObject] {
             schematic.printInfoDict = dict
             printInColor = (pageLayoutAccessory?.printInColor?.state ?? NSOffState) == NSOnState
-            Defaults.setBool(printInColor, forKey: "printColor")
+            Defaults.set(printInColor, forKey: "printColor")
         }
     }
     
-    override func preparePageLayout(pageLayout: NSPageLayout) -> Bool {
+    override func preparePageLayout(_ pageLayout: NSPageLayout) -> Bool {
         if let pageLayoutAccessory = pageLayoutAccessory {
-            pageLayoutAccessory.printInColor?.state = Defaults.boolForKey("printColor") ? NSOnState : NSOffState
+            pageLayoutAccessory.printInColor?.state = Defaults.bool(forKey: "printColor") ? NSOnState : NSOffState
             pageLayoutAccessory.matchDrawingPageToLayout?.state = NSOffState
             pageLayout.addAccessoryController(pageLayoutAccessory)
         }
         return true
     }
     
-    enum PrinterError: ErrorType {
-        case NoViewError
+    enum PrinterError: ErrorProtocol {
+        case noViewError
     }
     
     var printSaveZoomState = ZoomState(scale: 1, centerPoint: CGPoint())
     var printSavePageNumber = 0
     
-    override func printOperationWithSettings(printSettings: [String : AnyObject]) throws -> NSPrintOperation {
+    override func printOperation(withSettings printSettings: [String : AnyObject]) throws -> NSPrintOperation {
         if let drawingView = drawingView {
             let operation = NSPrintOperation(view: drawingView, printInfo: printInfo)
             return operation
         } else {
-            throw PrinterError.NoViewError
+            throw PrinterError.noViewError
         }
     }
     
-    func document(document: NSDocument, didPrintSuccessfully: Bool,  contextInfo: UnsafeMutablePointer<Void>) {
+    func document(_ document: NSDocument, didPrintSuccessfully: Bool,  contextInfo: UnsafeMutablePointer<Void>) {
         currentPage = printSavePageNumber
         drawingView?.zoomState = printSaveZoomState
         drawingView?.constrainViewToSuperview = true
         drawingView?.needsDisplay = true
     }
     
-    override func printDocument(sender: AnyObject?) {
+    override func print(_ sender: AnyObject?) {
         if let drawingView = drawingView {
             printSavePageNumber = currentPage
             drawingView.constrainViewToSuperview = false        // allow random zooming
             printSaveZoomState = drawingView.zoomState
             drawingView.zoomToAbsoluteScale((72.0 / 100.0) * printInfo.scalingFactor)
-            printDocumentWithSettings([:], showPrintPanel: true, delegate: self, didPrintSelector: #selector(SchematicDocument.document(_:didPrintSuccessfully:contextInfo:)), contextInfo: nil)
+            print(withSettings: [:], showPrintPanel: true, delegate: self, didPrint: #selector(SchematicDocument.document(_:didPrintSuccessfully:contextInfo:)), contextInfo: nil)
         }
     }
     
@@ -240,13 +240,13 @@ class SchematicDocument: NSDocument {
         let placedComponents = Set(allGraphics.flatMap { $0 as? Component })
         let packages = Set(placedComponents.flatMap { $0.package })
         let allComponents = Set(packages.reduce([]) { $0 + $1.components })
-        let unplacedComponents = allComponents.subtract(placedComponents)
+        let unplacedComponents = allComponents.subtracting(placedComponents)
         return unplacedComponents
     }
     
     // MARK: Actions
     
-    @IBAction func newPage(sender: AnyObject) {
+    @IBAction func newPage(_ sender: AnyObject) {
         newPageDialog?.nameField.stringValue = "Page_\(pageSeq)"
         drawingView?.window?.beginSheet(newPageDialog!) { response in
             if response != NSModalResponseOK {
@@ -261,23 +261,23 @@ class SchematicDocument: NSDocument {
         
     }
     
-    @IBAction func deletePage(sender: AnyObject) {
+    @IBAction func deletePage(_ sender: AnyObject) {
         
     }
 
-    @IBAction func openKiCadLibrary(sender: AnyObject) {
+    @IBAction func openKiCadLibrary(_ sender: AnyObject) {
         libraryManager?.openKiCadLibrary(self)
     }
     
-    @IBAction func openLibrary(sender: AnyObject) {
+    @IBAction func openLibrary(_ sender: AnyObject) {
         libraryManager?.openLibrary(self)
     }
     
-    @IBAction func closeLibrary(sender: AnyObject) {
+    @IBAction func closeLibrary(_ sender: AnyObject) {
         libraryManager?.closeLibrary(self)
     }
     
-    @IBAction func populatePartParameters(sender: AnyObject) {
+    @IBAction func populatePartParameters(_ sender: AnyObject) {
         if let selection = drawingView?.selection, let component = selection.first as? Component where selection.count == 1 {
             octopartWindow?.orderFront(self)
             octopartWindow?.prepopulateWithComponent(component)
@@ -295,16 +295,16 @@ class NewPageDialog: NSWindow
 {
     @IBOutlet var nameField: NSTextField!
     
-    override var canBecomeKeyWindow: Bool {
+    override var canBecomeKey: Bool {
         return true
     }
     
-    @IBAction func ok(sender: AnyObject?) {
+    @IBAction func ok(_ sender: AnyObject?) {
         sheetParent?.endSheet(self, returnCode: NSModalResponseOK)
         orderOut(self)
     }
     
-    @IBAction func cancel(sender: AnyObject?) {
+    @IBAction func cancel(_ sender: AnyObject?) {
         sheetParent?.endSheet(self, returnCode: NSModalResponseCancel)
         orderOut(self)
     }

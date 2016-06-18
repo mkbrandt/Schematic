@@ -25,7 +25,7 @@ class AutoComponent: Component
     }
     
     required init?(coder decoder: NSCoder) {
-        text = decoder.decodeObjectForKey("text") as? String ?? ""
+        text = decoder.decodeObject(forKey: "text") as? String ?? ""
         super.init(coder: decoder)
     }
     
@@ -33,19 +33,19 @@ class AutoComponent: Component
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(text, forKey: "text")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(text, forKey: "text")
+        super.encode(with: coder)
     }
     
-    func pinInfo(name: String, text: String) -> [(String, String)] {
+    func pinInfo(_ name: String, text: String) -> [(String, String)] {
         let re = RegularExpression(pattern: name + "[[:space:]]*\\{([^}]*)\\}")
         if re.matchesWithString(text) {
             if let s = re.match(1) {
-                let pins = s.componentsSeparatedByString(",")
+                let pins = s.components(separatedBy: ",")
                 return pins.map { ss in
-                    let fields = ss.componentsSeparatedByString(":")
-                    let sf = fields.map { $0.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet()) }
+                    let fields = ss.components(separatedBy: ":")
+                    let sf = fields.map { $0.trimmingCharacters(in: CharacterSet.whitespaces) }
                     if sf.count == 2 {
                         return (sf[0], sf[1])
                     } else {
@@ -57,7 +57,7 @@ class AutoComponent: Component
         return []
     }
     
-    func distributePins(pins: [Pin], start: CGPoint, offset: CGPoint) {
+    func distributePins(_ pins: [Pin], start: CGPoint, offset: CGPoint) {
         var org = start
         pins.forEach {
             $0.origin = org
@@ -73,10 +73,10 @@ class AutoComponent: Component
         let topPinInfo = pinInfo("top", text: text)
         let bottomPinInfo = pinInfo("bottom", text: text)
         
-        let leftPins = leftPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Left) }
-        let rightPins = rightPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Right) }
-        let topPins = topPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Top) }
-        let bottomPins = bottomPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .Bottom) }
+        let leftPins = leftPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .left) }
+        let rightPins = rightPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .right) }
+        let topPins = topPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .top) }
+        let bottomPins = bottomPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .bottom) }
         
         let leftWidth = ceil(leftPins.reduce(0.0, combine: { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
         let rightWidth = ceil(rightPins.reduce(0.0, combine: { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize

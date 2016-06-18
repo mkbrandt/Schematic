@@ -8,7 +8,7 @@
 
 import Cocoa
 
-func jsonToGraphic(json: JSON) -> Graphic {
+func jsonToGraphic(_ json: JSON) -> Graphic {
     let type = json["__class__"].stringValue
     switch type {
     case "LineGraphic": return LineGraphic.init(json: json)
@@ -59,27 +59,27 @@ class GroupGraphic: Graphic
     }
     
     required init?(coder decoder: NSCoder) {
-        contents = decoder.decodeObjectForKey("contents") as? Set<Graphic> ?? []
+        contents = decoder.decodeObject(forKey: "contents") as? Set<Graphic> ?? []
         super.init(coder: decoder)
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(contents, forKey: "contents")
+    override func encode(with coder: NSCoder) {
+        coder.encode(contents, forKey: "contents")
     }
     
-    override func setPoint(point: CGPoint, index: Int) {
+    override func setPoint(_ point: CGPoint, index: Int) {
         let destRect = boundingRect
         destRect.setPoint(point, index: index)
         scaleFromRect(bounds, toRect: destRect.rect)
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         for g in contents {
             g.rotateByAngle(angle, center: center)
         }
     }
     
-    override func intersectsRect(rect: CGRect) -> Bool {
+    override func intersectsRect(_ rect: CGRect) -> Bool {
         for g in contents {
             if g.intersectsRect(rect) {
                 return true
@@ -88,7 +88,7 @@ class GroupGraphic: Graphic
         return false
     }
     
-    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+    override func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         if let ht = super.hitTest(point, threshold: threshold) {
             return ht
         }
@@ -100,31 +100,31 @@ class GroupGraphic: Graphic
         return nil
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         for g in contents {
             g.moveBy(offset, view: view)
         }
     }
     
-    override func flipHorizontalAroundPoint(center: CGPoint) {
+    override func flipHorizontalAroundPoint(_ center: CGPoint) {
         for g in contents {
             g.flipHorizontalAroundPoint(center)
         }
     }
     
-    override func flipVerticalAroundPoint(center: CGPoint) {
+    override func flipVerticalAroundPoint(_ center: CGPoint) {
         for g in contents {
             g.flipVerticalAroundPoint(center)
         }
     }
     
-    override func scaleFromRect(fromRect: CGRect, toRect: CGRect) {
+    override func scaleFromRect(_ fromRect: CGRect, toRect: CGRect) {
         for g in contents {
             g.scaleFromRect(fromRect, toRect: toRect)
         }
     }
         
-    override func drawInRect(rect: CGRect) {
+    override func drawInRect(_ rect: CGRect) {
         for g in contents {
             g.drawInRect(rect)
         }

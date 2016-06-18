@@ -33,7 +33,7 @@ func /(a: CGPoint, b: CGFloat) -> CGPoint {
     return CGPoint(x: a.x / b, y: a.y / b)
 }
 
-func crossProduct(a: CGPoint, _ b: CGPoint) -> CGFloat {
+func crossProduct(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
     return a.x * b.y - a.y * b.x
 }
 
@@ -41,7 +41,7 @@ prefix func -(a:CGPoint) -> CGPoint {
     return CGPoint(x: -a.x, y: -a.y)
 }
 
-func dotProduct(a: CGPoint, _ b: CGPoint) -> CGFloat {
+func dotProduct(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
     return a.x * b.x + a.y * b.y
 }
 
@@ -72,7 +72,7 @@ func /(a: CGSize, b: CGFloat) -> CGSize {
     return CGSize(width: a.width / b, height: a.height / b)
 }
 
-func rectContainingPoints(array: [CGPoint]) -> CGRect {
+func rectContainingPoints(_ array: [CGPoint]) -> CGRect {
     var x_min = CGFloat.infinity
     var x_max = -CGFloat.infinity
     var y_min = CGFloat.infinity
@@ -93,20 +93,20 @@ func rectContainingPoints(array: [CGPoint]) -> CGRect {
 
 // MARK: utilities
 
-func constrainTo45Degrees(location: CGPoint, relativeToPoint startPoint: CGPoint) -> CGPoint {
+func constrainTo45Degrees(_ location: CGPoint, relativeToPoint startPoint: CGPoint) -> CGPoint {
     let delta = location - startPoint
     let maxoffset = max(abs(delta.x), abs(delta.y))
     return startPoint + CGPoint(x: sign(delta.x) * maxoffset, y: sign(delta.y) * maxoffset)
 }
 
-func sign(f: CGFloat) -> CGFloat {
+func sign(_ f: CGFloat) -> CGFloat {
     if f < 0 {
         return -1
     }
     return 1
 }
 
-func normalizeAngle(angle: CGFloat) -> CGFloat {
+func normalizeAngle(_ angle: CGFloat) -> CGFloat {
     var angle = angle
     while angle > PI {
         angle -= 2 * PI
@@ -169,11 +169,11 @@ extension CGPoint
         }
     }
     
-    func distanceToPoint(point: CGPoint) -> CGFloat {
+    func distanceToPoint(_ point: CGPoint) -> CGFloat {
         return (point - self).length
     }
     
-    mutating func scale(s: CGFloat) {
+    mutating func scale(_ s: CGFloat) {
         x *= s
         y *= s
     }
@@ -191,7 +191,7 @@ extension CGRect
     var topRight: CGPoint       { return CGPoint(x: right, y: top) }
     var bottomRight: CGPoint    { return CGPoint(x: right, y: bottom) }
     
-    func rotatedAroundPoint(point: CGPoint, angle: CGFloat) -> CGRect {
+    func rotatedAroundPoint(_ point: CGPoint, angle: CGFloat) -> CGRect {
         var ov = origin - point
         var trv = topRight - point
         var tlv = topLeft - point
@@ -204,18 +204,18 @@ extension CGRect
         return rectContainingPoints([point + ov, point + tlv, point + trv, point + brv])
     }
     
-    func translateBy(point: CGPoint) -> CGRect {
+    func translateBy(_ point: CGPoint) -> CGRect {
         return CGRect(origin: origin + point, size: size)
     }
 }
 
 extension NSCoder
 {
-    func decodeCGFloatForKey(key: String) -> CGFloat {
-        return CGFloat(decodeDoubleForKey(key))
+    func decodeCGFloatForKey(_ key: String) -> CGFloat {
+        return CGFloat(decodeDouble(forKey: key))
     }
     
-    func encodeCGFloat(v: CGFloat, forKey key: String) {
-        encodeDouble(Double(v), forKey: key)
+    func encodeCGFloat(_ v: CGFloat, forKey key: String) {
+        encode(Double(v), forKey: key)
     }
 }

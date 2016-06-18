@@ -8,7 +8,7 @@
 
 import Cocoa
 
-let AttributeFont =  NSFont(name: "Geneva", size: GridSize - 3) ?? NSFont.systemFontOfSize(GridSize - 3)
+let AttributeFont =  NSFont(name: "Geneva", size: GridSize - 3) ?? NSFont.systemFont(ofSize: GridSize - 3)
 
 class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
 {
@@ -16,7 +16,7 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     var owner: AttributedGraphic? {
         get { return _owner }
         set {
-            _owner?.attributeTexts.remove(self)
+            _ = _owner?.attributeTexts.remove(self)
             _owner = newValue
             _owner?._attributeTexts.insert(self)
         }
@@ -59,11 +59,11 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     override var inspectables: [Inspectable] {
         get {
             return [
-                Inspectable(name: "color", type: .Color),
-                Inspectable(name: "format", type: .String),
-                Inspectable(name: "string", type: .String, displayName: "value"),
-                Inspectable(name: "angle", type: .Angle),
-                Inspectable(name: "overbar", type: .Bool)
+                Inspectable(name: "color", type: .color),
+                Inspectable(name: "format", type: .string),
+                Inspectable(name: "string", type: .string, displayName: "value"),
+                Inspectable(name: "angle", type: .angle),
+                Inspectable(name: "overbar", type: .bool)
             ]
         }
         set {}
@@ -91,7 +91,7 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
 
     var cachedBounds: CGRect?
-    var textSize: CGSize            { return string.sizeWithAttributes(textAttributes) }
+    var textSize: CGSize            { return string.size(withAttributes: textAttributes) }
     var textBounds: CGRect {
         if let bounds = cachedBounds {
             return bounds
@@ -115,7 +115,7 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     
     override var selected: Bool {
         didSet {
-            NSFontPanel.sharedFontPanel().setPanelFont(font, isMultiple: false)
+            NSFontPanel.shared().setPanelFont(font, isMultiple: false)
         }
     }
     
@@ -136,17 +136,17 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
     
     required init?(coder decoder: NSCoder) {
-        format = decoder.decodeObjectForKey("format") as? String ?? ""
+        format = decoder.decodeObject(forKey: "format") as? String ?? ""
         angle = decoder.decodeCGFloatForKey("angle")
-        _owner = decoder.decodeObjectForKey("owner") as? AttributedGraphic
-        overbar = decoder.decodeBoolForKey("overbar")
-        if let fontName = decoder.decodeObjectForKey("fontName") as? String {
+        _owner = decoder.decodeObject(forKey: "owner") as? AttributedGraphic
+        overbar = decoder.decodeBool(forKey: "overbar")
+        if let fontName = decoder.decodeObject(forKey: "fontName") as? String {
             self.fontSize = decoder.decodeCGFloatForKey("fontSize")
             self.fontName = fontName
         }
         super.init(coder: decoder)
         if let fontName = fontName {
-            font = NSFont(name: fontName, size: fontSize) ?? NSFont.systemFontOfSize(fontSize)
+            font = NSFont(name: fontName, size: fontSize) ?? NSFont.systemFont(ofSize: fontSize)
         }
     }
     
@@ -163,28 +163,28 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         super.init(json: json)
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(format, forKey: "format")
+    override func encode(with coder: NSCoder) {
+        coder.encode(format, forKey: "format")
         coder.encodeCGFloat(angle, forKey: "angle")
-        coder.encodeObject(owner, forKey: "owner")
-        coder.encodeBool(overbar, forKey: "overbar")
+        coder.encode(owner, forKey: "owner")
+        coder.encode(overbar, forKey: "overbar")
         if let fontName = fontName {
-            coder.encodeObject(fontName, forKey: "fontName")
+            coder.encode(fontName, forKey: "fontName")
             coder.encodeCGFloat(fontSize, forKey: "fontSize")
         }
-        super.encodeWithCoder(coder)
+        super.encode(with: coder)
     }
     
-    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+    override func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         if bounds.contains(point) {
             return point
         }
         return origin
     }
     
-    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+    override func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         if bounds.contains(point) {
-            return .HitsOn(self)
+            return .hitsOn(self)
         }
         return nil
     }
@@ -202,12 +202,12 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         super.moveBy(offset, view: view)
         invalidateDrawing()
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         self.angle += angle
         if self.angle > PI { self.angle -= 2 * PI }
         if self.angle < -PI { self.angle += 2 * PI }
@@ -215,51 +215,51 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
         
     override func showHandles() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+        let context = NSGraphicsContext.current()?.cgContext
         
-        CGContextSaveGState(context)
-        CGContextSetLineWidth(context, 0.1)
-        setDrawingColor(NSColor.redColor())
-        CGContextStrokeRect(context, textBounds)
+        context?.saveGState()
+        context?.setLineWidth(0.1)
+        setDrawingColor(NSColor.red())
+        context?.stroke(textBounds)
         if let owner = owner {
             let cp = owner.graphicBounds.center
-            CGContextBeginPath(context)
-            CGContextMoveToPoint(context, centerPoint.x, centerPoint.y)
-            CGContextAddLineToPoint(context, cp.x, cp.y)
-            CGContextStrokePath(context)
+            context?.beginPath()
+            context?.moveTo(x: centerPoint.x, y: centerPoint.y)
+            context?.addLineTo(x: cp.x, y: cp.y)
+            context?.strokePath()
         }
-        CGContextRestoreGState(context)
+        context?.restoreGState()
     }
     
     override func draw() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        let size = string.sizeWithAttributes(textAttributes)
+        let context = NSGraphicsContext.current()?.cgContext
+        let size = string.size(withAttributes: textAttributes)
         if angle == 0 {                                                     // this really didn't seem to do much...
-            string.drawAtPoint(origin, withAttributes: textAttributes)
+            string.draw(at: origin, withAttributes: textAttributes)
             if overbar {
                 let l = bounds.topLeft
                 let r = bounds.topRight
-                CGContextBeginPath(context)
-                CGContextMoveToPoint(context, l.x, l.y)
-                CGContextAddLineToPoint(context, r.x, r.y)
-                CGContextStrokePath(context)
+                context?.beginPath()
+                context?.moveTo(x: l.x, y: l.y)
+                context?.addLineTo(x: r.x, y: r.y)
+                context?.strokePath()
             }
         } else {
-            CGContextSaveGState(context)
-            CGContextTranslateCTM(context, origin.x, origin.y)
-            CGContextRotateCTM(context, angle)
+            context?.saveGState()
+            context?.translate(x: origin.x, y: origin.y)
+            context?.rotate(byAngle: angle)
 
-            string.drawAtPoint(CGPoint(), withAttributes: textAttributes)
+            string.draw(at: CGPoint(), withAttributes: textAttributes)
             
             if overbar {
                 
-                CGContextBeginPath(context)
-                CGContextSetLineWidth(context, 1.0)
-                CGContextMoveToPoint(context, 0, size.height)
-                CGContextAddLineToPoint(context, size.width, size.height)
-                CGContextStrokePath(context)
+                context?.beginPath()
+                context?.setLineWidth(1.0)
+                context?.moveTo(x: 0, y: size.height)
+                context?.addLineTo(x: size.width, y: size.height)
+                context?.strokePath()
             }
-            CGContextRestoreGState(context)
+            context?.restoreGState()
         }
     }
 }

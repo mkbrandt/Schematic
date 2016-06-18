@@ -91,7 +91,7 @@ class ArcGraphic: CircleGraphic
     required init?(coder decoder: NSCoder) {
         startAngle = decoder.decodeCGFloatForKey("startAngle")
         endAngle = decoder.decodeCGFloatForKey("endAngle")
-        clockwise = decoder.decodeBoolForKey("clockwise")
+        clockwise = decoder.decodeBool(forKey: "clockwise")
         super.init(coder: decoder)
     }
     
@@ -106,14 +106,14 @@ class ArcGraphic: CircleGraphic
         return nil
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
+    override func encode(with coder: NSCoder) {
         coder.encodeCGFloat(startAngle, forKey: "startAngle")
         coder.encodeCGFloat(endAngle, forKey: "endAngle")
-        coder.encodeBool(clockwise, forKey: "clockwise")
-        super.encodeWithCoder(coder)
+        coder.encode(clockwise, forKey: "clockwise")
+        super.encode(with: coder)
     }
     
-    func setParametersFromStartPoint(startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) {
+    func setParametersFromStartPoint(_ startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) {
         let mp1 = (startPoint + midPoint) / 2
         let mp2 = (endPoint + midPoint) / 2
         let ang1 = (midPoint - startPoint).angle + PI / 2
@@ -133,7 +133,7 @@ class ArcGraphic: CircleGraphic
         }
     }
     
-    override func setPoint(point: CGPoint, index: Int) {
+    override func setPoint(_ point: CGPoint, index: Int) {
         var startPoint = self.startPoint
         var endPoint = self.endPoint
         var midPoint = self.midPoint
@@ -147,14 +147,14 @@ class ArcGraphic: CircleGraphic
     }
     
     override func draw() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+        let context = NSGraphicsContext.current()?.cgContext
         
-        CGContextBeginPath(context)
-        CGContextAddArc(context, origin.x, origin.y, radius, startAngle, endAngle, clockwise ? 1 : 0)
-        CGContextStrokePath(context)
+        context?.beginPath()
+        context?.addArc(centerX: origin.x, y: origin.y, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: clockwise ? 1 : 0)
+        context?.strokePath()
     }
     
-    func pointOnArc(point: CGPoint) -> Bool {
+    func pointOnArc(_ point: CGPoint) -> Bool {
         if point.distanceToPoint(origin) > radius + 0.001 {
             //print("point \(point) too far: distance = \(point.distanceToPoint(center)), radius = \(radius)")
             return false
@@ -175,17 +175,17 @@ class ArcGraphic: CircleGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         origin = origin + offset
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         origin = rotatePoint(origin, angle: angle, center: center)
         startAngle = normalizeAngle(startAngle + angle)
         endAngle = normalizeAngle(endAngle + angle)
     }
 
-    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+    override func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         let scp = super.closestPointToPoint(point)
         let v = point - origin
         let cp = CGPoint(length: radius, angle: v.angle)
@@ -196,7 +196,7 @@ class ArcGraphic: CircleGraphic
         }
     }
     
-    override func intersectionsWithLine(line: Line) -> [CGPoint] {
+    override func intersectionsWithLine(_ line: Line) -> [CGPoint] {
         return super.intersectionsWithLine(line).filter { pointOnArc($0) }
     }
 }

@@ -35,12 +35,12 @@ class Line
         self.endPoint = origin + vector
     }
     
-    func isParallelWith(line: Line) -> Bool {
+    func isParallelWith(_ line: Line) -> Bool {
         return abs(line.angle - angle) < 0.00001
             || abs(line.angle + angle) < 0.00001
     }
     
-    func intersectionWithLine(line: Line, extendSelf: Bool, extendOther: Bool) -> CGPoint? {
+    func intersectionWithLine(_ line: Line, extendSelf: Bool, extendOther: Bool) -> CGPoint? {
         if isParallelWith(line) {
             return nil
         }
@@ -63,7 +63,7 @@ class Line
         return p + t * r
     }
     
-    func closestPointToPoint(point: CGPoint, extended: Bool = false) -> CGPoint {
+    func closestPointToPoint(_ point: CGPoint, extended: Bool = false) -> CGPoint {
         let v2 = point - origin;
         
         let len = dotProduct(vector, v2) / vector.length
@@ -88,25 +88,25 @@ class Line
         return origin + v;
     }
     
-    func distanceToPoint(p: CGPoint, extended: Bool = false) -> CGFloat {
+    func distanceToPoint(_ p: CGPoint, extended: Bool = false) -> CGFloat {
         let v = closestPointToPoint(p, extended: extended)
         
         return (p - v).length
     }
     
-    func containsPoint(point: CGPoint) -> Bool {
+    func containsPoint(_ point: CGPoint) -> Bool {
         return distanceToPoint(point) < 0.0001
     }
     
-    func intersectionWithLine(line: Line) -> CGPoint? {
+    func intersectionWithLine(_ line: Line) -> CGPoint? {
         return intersectionWithLine(line, extendSelf: false, extendOther: false)
     }
     
-    func intersectsLine(line: Line) -> Bool {
+    func intersectsLine(_ line: Line) -> Bool {
         return intersectionWithLine(line) != nil
     }
     
-    func intersectsRect(rect: CGRect) -> Bool {
+    func intersectsRect(_ rect: CGRect) -> Bool {
         let r = CGRect(origin: rect.origin, size: rect.size)
         return rect.contains(origin) || rect.contains(endPoint) || r.lines.reduce(false, combine: { $0 || $1.intersectsLine(self) })
     }
@@ -124,7 +124,7 @@ extension CGRect
         ]
     }
     
-    func intersectionsWithLine(line: Line) -> [CGPoint] {
+    func intersectionsWithLine(_ line: Line) -> [CGPoint] {
         return lines.flatMap { $0.intersectionWithLine(line) }
     }
 }

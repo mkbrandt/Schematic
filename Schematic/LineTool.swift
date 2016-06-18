@@ -10,13 +10,13 @@ import Cocoa
 
 class LineTool: Tool
 {
-    override func mouseDown(location: CGPoint, view: SchematicView) {
+    override func mouseDown(_ location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
         
         view.construction = LineGraphic(origin: location, endPoint: location)
     }
     
-    override func mouseDragged(location: CGPoint, view: SchematicView) {
+    override func mouseDragged(_ location: CGPoint, view: SchematicView) {
         if let line = view.construction as? LineGraphic {
             let location = view.snapToGrid(location)
             
@@ -24,7 +24,7 @@ class LineTool: Tool
         }
     }
     
-    override func mouseUp(location: CGPoint, view: SchematicView) {
+    override func mouseUp(_ location: CGPoint, view: SchematicView) {
         if let line = view.construction as? LineGraphic where line.origin != line.endPoint {
             view.addConstruction()
         } else {

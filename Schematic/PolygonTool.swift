@@ -10,7 +10,7 @@ import Cocoa
 
 class PolygonTool: Tool
 {
-    override func keyDown(theEvent: NSEvent, view: SchematicView) {
+    override func keyDown(_ theEvent: NSEvent, view: SchematicView) {
         if theEvent.keyCode == 36 {     // return key
             if let poly = view.construction as? PolygonGraphic {
                 poly.filled = true
@@ -21,11 +21,11 @@ class PolygonTool: Tool
         }
     }
     
-    override func unselectedTool(view: SchematicView) {
+    override func unselectedTool(_ view: SchematicView) {
         view.construction = nil
     }
     
-    override func mouseDown(location: CGPoint, view: SchematicView) {
+    override func mouseDown(_ location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
         
         if let poly = view.construction as? PolygonGraphic {
@@ -42,7 +42,7 @@ class PolygonTool: Tool
         }
     }
     
-    override func mouseDragged(location: CGPoint, view: SchematicView) {
+    override func mouseDragged(_ location: CGPoint, view: SchematicView) {
         if let line = view.construction as? LineGraphic {
             let location = view.snapToGrid(location)
             
@@ -52,6 +52,6 @@ class PolygonTool: Tool
         }
     }
     
-    override func mouseUp(location: CGPoint, view: SchematicView) {
+    override func mouseUp(_ location: CGPoint, view: SchematicView) {
     }
 }

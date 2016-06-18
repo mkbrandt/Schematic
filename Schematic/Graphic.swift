@@ -11,12 +11,12 @@ import Cocoa
 let SchematicElementUTI = "net.walkingdog.schematic"
 
 enum HitTestResult {
-    case HitsPoint(Graphic, Int)
-    case HitsOn(Graphic)
+    case hitsPoint(Graphic, Int)
+    case hitsOn(Graphic)
 }
 
 enum InspectionType {
-    case String, Int, Float, Bool, Angle, Color
+    case string, int, float, bool, angle, color
 }
 
 class Inspectable: NSObject {
@@ -75,55 +75,55 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     }
     
     required init?(coder decoder: NSCoder) {
-        origin = decoder.decodePointForKey("origin")
+        origin = decoder.decodePoint(forKey: "origin")
         graphicID = nextGraphicID
         super.init()
     }
     
-    func encodeWithCoder(coder: NSCoder) {
-        coder.encodePoint(origin, forKey: "origin")
+    func encode(with coder: NSCoder) {
+        coder.encode(origin, forKey: "origin")
     }
     
     required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
         fatalError("fuck me")
     }
     
-    static func readableTypesForPasteboard(pasteboard: NSPasteboard) -> [String] {
+    static func readableTypes(for pasteboard: NSPasteboard) -> [String] {
         return [SchematicElementUTI]
     }
     
-    func writableTypesForPasteboard(pasteboard: NSPasteboard) -> [String] {
+    func writableTypes(for pasteboard: NSPasteboard) -> [String] {
         return [SchematicElementUTI]
     }
     
-    func pasteboardPropertyListForType(type: String) -> AnyObject? {
-        return NSKeyedArchiver.archivedDataWithRootObject(self)
+    func pasteboardPropertyList(forType type: String) -> AnyObject? {
+        return NSKeyedArchiver.archivedData(withRootObject: self)
     }
     
-    static func readingOptionsForType(type: String, pasteboard: NSPasteboard) -> NSPasteboardReadingOptions {
-        return NSPasteboardReadingOptions.AsKeyedArchive
+    static func readingOptions(forType type: String, pasteboard: NSPasteboard) -> NSPasteboardReadingOptions {
+        return NSPasteboardReadingOptions.asKeyedArchive
     }
     
-    override func valueForUndefinedKey(key: String) -> AnyObject? {
+    override func value(forUndefinedKey key: String) -> AnyObject? {
         switch key {
         case "inspectables": return inspectables
         default: return nil
         }
     }
     
-    func isSettable(key: String) -> Bool {
+    func isSettable(_ key: String) -> Bool {
         return true
     }
     
     // MARK: Setting Points
     
-    func setPoint(point: CGPoint, index: Int) {
+    func setPoint(_ point: CGPoint, index: Int) {
         if index == 0 {
             origin = point
         }
     }
     
-    func setPoint(point: CGPoint, index: Int, view: SchematicView) {
+    func setPoint(_ point: CGPoint, index: Int, view: SchematicView) {
         let p = points[index]
         setPoint(point, index: index)
         view.undoManager?.registerUndoWithTarget(self) { (g) in
@@ -132,7 +132,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
-    func scalePoint(point: CGPoint, fromRect: CGRect, toRect: CGRect) -> CGPoint {
+    func scalePoint(_ point: CGPoint, fromRect: CGRect, toRect: CGRect) -> CGPoint {
         let hscale = toRect.size.width / fromRect.size.width
         let vscale = toRect.size.height / fromRect.size.height
         let offset = point - fromRect.origin
@@ -141,7 +141,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         return toRect.origin + scaledOffset
     }
     
-    func scaleFromRect(fromRect: CGRect, toRect: CGRect) {
+    func scaleFromRect(_ fromRect: CGRect, toRect: CGRect) {
         for i in 0 ..< points.count {
             let p = scalePoint(points[i], fromRect: fromRect, toRect: toRect)
             
@@ -149,19 +149,19 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
-    func rotatePoint(point: CGPoint, angle: CGFloat, center: CGPoint) -> CGPoint {
+    func rotatePoint(_ point: CGPoint, angle: CGFloat, center: CGPoint) -> CGPoint {
         let v = point - center
         return center + CGPoint(length: v.length, angle: v.angle + angle)
     }
     
-    func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         let pts = points.map { rotatePoint($0, angle: angle, center: center) }
         for i in 0 ..< points.count {
             setPoint(pts[i], index: i)
         }
     }
     
-    func flipHorizontalAroundPoint(center: CGPoint) {
+    func flipHorizontalAroundPoint(_ center: CGPoint) {
         let pv = points.map { $0 - center }
         let fv = pv.map { return CGPoint(x: -$0.x, y: $0.y) }
         for i in 0 ..< points.count {
@@ -169,7 +169,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
-    func flipVerticalAroundPoint(center: CGPoint) {
+    func flipVerticalAroundPoint(_ center: CGPoint) {
         let pv = points.map { $0 - center }
         let fv = pv.map { return CGPoint(x: $0.x, y: -$0.y) }
         for i in 0 ..< points.count {
@@ -177,12 +177,12 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
-    func designCheck(view: SchematicView) {
+    func designCheck(_ view: SchematicView) {
     }
     
     // MARK: Selection
     
-    func intersectsRect(rect: CGRect) -> Bool {
+    func intersectsRect(_ rect: CGRect) -> Bool {
         for el in elements {
             if el.intersectsRect(rect) {
                 return true
@@ -191,13 +191,13 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         return bounds.intersects(rect)
     }
     
-    func moveBy(offset: CGPoint, view: SchematicView) {
-        view.setNeedsDisplayInRect(bounds)
+    func moveBy(_ offset: CGPoint, view: SchematicView) {
+        view.setNeedsDisplay(bounds)
         origin = origin + offset
-       view.setNeedsDisplayInRect(bounds)
+       view.setNeedsDisplay(bounds)
     }
         
-    func moveTo(location: CGPoint, view: SchematicView) {
+    func moveTo(_ location: CGPoint, view: SchematicView) {
         let p = origin
         let offset = location - origin
         moveBy(offset, view: view)
@@ -207,7 +207,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         }
     }
     
-    func elementAtPoint(point: CGPoint) -> Graphic? {
+    func elementAtPoint(_ point: CGPoint) -> Graphic? {
         for el in elements {
             if el.selectBounds.contains(point) {
                 return el.elementAtPoint(point)
@@ -219,34 +219,34 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         return nil
     }
     
-    func closestPointToPoint(point: CGPoint) -> CGPoint {
+    func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         return origin
     }
     
-    func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+    func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         for index in 0 ..< points.count {
             let p = points[index]
             if p.distanceToPoint(point) < threshold {
-                return .HitsPoint(self, index)
+                return .hitsPoint(self, index)
             }
         }
         return nil
     }
     
-    func unlink(view: SchematicView) {
+    func unlink(_ view: SchematicView) {
         // do anything necessary to delete the graphic from the drawing
     }
     
     // MARK: Drawing
     
-    func drawInRect(rect: CGRect) {
+    func drawInRect(_ rect: CGRect) {
         draw()
         if selected {
             showHandles()
         }
     }
     
-    func setDrawingColor(color: NSColor) {
+    func setDrawingColor(_ color: NSColor) {
         if printInColor || NSGraphicsContext.currentContextDrawingToScreen() {
             color.set()
         } else {
@@ -257,30 +257,30 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     func draw() {
     }
     
-    func drawPoint(point: CGPoint, color: NSColor) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        let unit = CGContextConvertSizeToDeviceSpace(context, CGSize(width: 1, height: 1))
-        let hsize = 8.0 / unit.width
-        let isize = 6.0 / unit.width
+    func drawPoint(_ point: CGPoint, color: NSColor) {
+        let context = NSGraphicsContext.current()?.cgContext
+        let unit = context?.convertToDeviceSpace(CGSize(width: 1, height: 1))
+        let hsize = 8.0 / (unit?.width)!
+        let isize = 6.0 / (unit?.width)!
         let rect = CGRect(x: point.x - hsize / 2, y: point.y - hsize / 2, width: hsize, height: hsize)
         let irect = CGRect(x: point.x - isize / 2, y: point.y - isize / 2, width: isize, height: isize)
         
-        CGContextSaveGState(context)
-        if unit.width > 1 {
-            NSColor.whiteColor().set()
-            CGContextFillRect(context, rect)
+        context?.saveGState()
+        if unit?.width > 1 {
+            NSColor.white().set()
+            context?.fill(rect)
             setDrawingColor(color)
-            CGContextFillRect(context, irect)
+            context?.fill(irect)
         } else {
             setDrawingColor(color)
-            CGContextFillRect(context, irect)
+            context?.fill(irect)
         }
-        CGContextRestoreGState(context)
+        context?.restoreGState()
     }
     
     func showHandles() {
         points.forEach {
-            drawPoint($0, color: NSColor.blackColor())
+            drawPoint($0, color: NSColor.black())
         }
     }
 }

@@ -26,13 +26,13 @@ class SchematicView: ZoomView
     
     var selection: Set<Graphic> = [] {
         willSet {
-            willChangeValueForKey("selection")
+            willChangeValue(forKey: "selection")
             for g in selection {
                 g.selected = false
             }
         }
         didSet {
-            didChangeValueForKey("selection")
+            didChangeValue(forKey: "selection")
             for g in selection {
                 g.selected = true
             }
@@ -81,14 +81,14 @@ class SchematicView: ZoomView
     }
     
     func viewSetup() {
-        registerForDraggedTypes([SchematicElementUTI])
+        register(forDraggedTypes: [SchematicElementUTI])
     }
     
-    func scaleFloat(f: CGFloat) -> CGFloat {
+    func scaleFloat(_ f: CGFloat) -> CGFloat {
         return f / scale
     }
     
-    func snapToGrid(point: CGPoint) -> CGPoint {
+    func snapToGrid(_ point: CGPoint) -> CGPoint {
         if shouldSnapToGrid {
             let x = round(point.x / GridSize) * GridSize
             let y = round(point.y / GridSize) * GridSize
@@ -107,12 +107,12 @@ class SchematicView: ZoomView
         window?.acceptsMouseMovedEvents = true
         tool.selectedTool(self)
         updateTrackingAreas()
-        registerForDraggedTypes([SchematicElementUTI])
+        register(forDraggedTypes: [SchematicElementUTI])
     }
     
     override func updateTrackingAreas()
     {
-        let options: NSTrackingAreaOptions = [.MouseMoved, .MouseEnteredAndExited, .ActiveAlways]
+        let options: NSTrackingAreaOptions = [.mouseMoved, .mouseEnteredAndExited, .activeAlways]
         
         if _trackingArea != nil {
             removeTrackingArea(_trackingArea!)
@@ -127,18 +127,18 @@ class SchematicView: ZoomView
         addCursorRect(visibleRect, cursor: tool.cursor)
     }
 
-    func drawBorder(dirtyRect: CGRect) {
+    func drawBorder(_ dirtyRect: CGRect) {
         let borderWidth: CGFloat = 10
         let outsideBorderRect = pageRect.insetBy(dx: 10, dy: 10)
         let insideBorderRect = outsideBorderRect.insetBy(dx: borderWidth, dy: borderWidth)
         NSBezierPath.setDefaultLineWidth(2.0)
-        NSBezierPath.strokeRect(insideBorderRect)
+        NSBezierPath.stroke(insideBorderRect)
         NSBezierPath.setDefaultLineWidth(0.5)
-        NSBezierPath.strokeRect(outsideBorderRect)
-        NSBezierPath.strokeLineFromPoint(insideBorderRect.topLeft, toPoint: outsideBorderRect.topLeft)
-        NSBezierPath.strokeLineFromPoint(insideBorderRect.bottomLeft, toPoint: outsideBorderRect.bottomLeft)
-        NSBezierPath.strokeLineFromPoint(insideBorderRect.topRight, toPoint: outsideBorderRect.topRight)
-        NSBezierPath.strokeLineFromPoint(insideBorderRect.bottomRight, toPoint: outsideBorderRect.bottomRight)
+        NSBezierPath.stroke(outsideBorderRect)
+        NSBezierPath.strokeLine(from: insideBorderRect.topLeft, to: outsideBorderRect.topLeft)
+        NSBezierPath.strokeLine(from: insideBorderRect.bottomLeft, to: outsideBorderRect.bottomLeft)
+        NSBezierPath.strokeLine(from: insideBorderRect.topRight, to: outsideBorderRect.topRight)
+        NSBezierPath.strokeLine(from: insideBorderRect.bottomRight, to: outsideBorderRect.bottomRight)
         let horizontalDivisions = Int(insideBorderRect.size.width / 200 )
         let verticalDivisions = Int(insideBorderRect.size.height / 200)
         let horizontalGridSize = insideBorderRect.size.width / CGFloat(horizontalDivisions)
@@ -146,25 +146,25 @@ class SchematicView: ZoomView
         
         for i in 1 ..< horizontalDivisions {
             let x = CGFloat(i) * horizontalGridSize + insideBorderRect.left
-            NSBezierPath.strokeLineFromPoint(CGPoint(x: x, y: insideBorderRect.top), toPoint: CGPoint(x: x, y: outsideBorderRect.top))
-            NSBezierPath.strokeLineFromPoint(CGPoint(x: x, y: insideBorderRect.bottom), toPoint: CGPoint(x: x, y: outsideBorderRect.bottom))
+            NSBezierPath.strokeLine(from: CGPoint(x: x, y: insideBorderRect.top), to: CGPoint(x: x, y: outsideBorderRect.top))
+            NSBezierPath.strokeLine(from: CGPoint(x: x, y: insideBorderRect.bottom), to: CGPoint(x: x, y: outsideBorderRect.bottom))
         }
         
-        let font = NSFont.systemFontOfSize(borderWidth * 0.8)
+        let font = NSFont.systemFont(ofSize: borderWidth * 0.8)
         let attributes = [NSFontAttributeName: font]
         
         for i in 0 ..< horizontalDivisions {
             let label = "\(i)" as NSString
-            let labelWidth = label.sizeWithAttributes(attributes).width
+            let labelWidth = label.size(withAttributes: attributes).width
             let x = CGFloat(i) * horizontalGridSize + insideBorderRect.left + horizontalGridSize / 2 - labelWidth / 2
-            label.drawAtPoint(CGPoint(x: x, y: insideBorderRect.top + borderWidth * 0.1), withAttributes: attributes)
-            label.drawAtPoint(CGPoint(x: x, y: outsideBorderRect.bottom + borderWidth * 0.1), withAttributes: attributes)
+            label.draw(at: CGPoint(x: x, y: insideBorderRect.top + borderWidth * 0.1), withAttributes: attributes)
+            label.draw(at: CGPoint(x: x, y: outsideBorderRect.bottom + borderWidth * 0.1), withAttributes: attributes)
         }
         
         for i in 1 ..< verticalDivisions {
             let y = CGFloat(i) * verticalGridSize + insideBorderRect.bottom
-            NSBezierPath.strokeLineFromPoint(CGPoint(x: outsideBorderRect.left, y: y), toPoint: CGPoint(x: insideBorderRect.left, y: y))
-            NSBezierPath.strokeLineFromPoint(CGPoint(x: outsideBorderRect.right, y: y), toPoint: CGPoint(x: insideBorderRect.right, y: y))
+            NSBezierPath.strokeLine(from: CGPoint(x: outsideBorderRect.left, y: y), to: CGPoint(x: insideBorderRect.left, y: y))
+            NSBezierPath.strokeLine(from: CGPoint(x: outsideBorderRect.right, y: y), to: CGPoint(x: insideBorderRect.right, y: y))
         }
         
         let charLabels: [NSString] = ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
@@ -172,15 +172,15 @@ class SchematicView: ZoomView
             let labelIndex = verticalDivisions - i - 1
             if labelIndex < charLabels.count {
                 let label = charLabels[labelIndex]
-                let labelSize = label.sizeWithAttributes(attributes)
+                let labelSize = label.size(withAttributes: attributes)
                 let y = CGFloat(i) * verticalGridSize + insideBorderRect.bottom + verticalGridSize / 2 - labelSize.height / 2
-                label.drawAtPoint(CGPoint(x: outsideBorderRect.left + borderWidth / 2 - labelSize.width / 2, y: y), withAttributes: attributes)
-                label.drawAtPoint(CGPoint(x: insideBorderRect.right + borderWidth / 2 - labelSize.width / 2, y: y), withAttributes: attributes)
+                label.draw(at: CGPoint(x: outsideBorderRect.left + borderWidth / 2 - labelSize.width / 2, y: y), withAttributes: attributes)
+                label.draw(at: CGPoint(x: insideBorderRect.right + borderWidth / 2 - labelSize.width / 2, y: y), withAttributes: attributes)
             }
         }
     }
     
-    func drawGridInRect(dirtyRect: CGRect)
+    func drawGridInRect(_ dirtyRect: CGRect)
     {
         if NSGraphicsContext.currentContextDrawingToScreen() {
             let divsPerMajor: CGFloat = 10
@@ -193,14 +193,14 @@ class SchematicView: ZoomView
             let left = dirtyRect.origin.x - GridSize
             let right = dirtyRect.origin.x + dirtyRect.size.width + GridSize
             
-            NSColor.blueColor().colorWithAlphaComponent(0.5).set()
+            NSColor.blue().withAlphaComponent(0.5).set()
             var x = xs
             while x <= right {
                 let isMajor = fmod((x / GridSize), divsPerMajor) == 0
                 let linewidth = CGFloat(isMajor ? 0.25 : 0.1)
                 if drawMajor && isMajor || drawMinor {
                     NSBezierPath.setDefaultLineWidth(scaleFloat(linewidth))
-                    NSBezierPath.strokeLineFromPoint(CGPoint(x: x, y: top), toPoint: CGPoint(x: x, y: bottom))
+                    NSBezierPath.strokeLine(from: CGPoint(x: x, y: top), to: CGPoint(x: x, y: bottom))
                 }
                 x += GridSize
             }
@@ -211,18 +211,18 @@ class SchematicView: ZoomView
                 let linewidth = CGFloat(isMajor ? 0.25 : 0.1)
                 if drawMajor && isMajor || drawMinor {
                     NSBezierPath.setDefaultLineWidth(scaleFloat(linewidth))
-                    NSBezierPath.strokeLineFromPoint(CGPoint(x: left, y: y), toPoint: CGPoint(x: right, y: y))
+                    NSBezierPath.strokeLine(from: CGPoint(x: left, y: y), to: CGPoint(x: right, y: y))
                 }
                 y += GridSize
             }
         }
     }
 
-    override func drawRect(dirtyRect: NSRect) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+    override func draw(_ dirtyRect: NSRect) {
+        let context = NSGraphicsContext.current()?.cgContext
         
-        CGContextSetLineJoin(context, .Round)
-        CGContextSetLineCap(context, .Round)
+        context?.setLineJoin(.round)
+        context?.setLineCap(.round)
         NSEraseRect(dirtyRect)
         drawBorder(dirtyRect)
         drawGridInRect(dirtyRect)
@@ -245,36 +245,36 @@ class SchematicView: ZoomView
     
     func redrawConstruction() {
         if let construction = construction {
-            setNeedsDisplayInRect(construction.bounds.insetBy(dx: -5, dy: -5))
+            setNeedsDisplay(construction.bounds.insetBy(dx: -5, dy: -5))
         }
     }
 
 // MARK: Adding and Deleting elements
     
-    func addGraphics(graphics: Set<Graphic>) {
-        document.willChangeValueForKey("unplacedComponents")
-        displayList.appendContentsOf(graphics)
-        document.didChangeValueForKey("unplacedComponents")
-        undoManager?.prepareWithInvocationTarget(self).deleteGraphics(graphics)
+    func addGraphics(_ graphics: Set<Graphic>) {
+        document.willChangeValue(forKey: "unplacedComponents")
+        displayList.append(contentsOf: graphics)
+        document.didChangeValue(forKey: "unplacedComponents")
+        undoManager?.prepare(withInvocationTarget: self).deleteGraphics(graphics)
         needsDisplay = true
     }
     
-    func addGraphic(graphic: Graphic) {
+    func addGraphic(_ graphic: Graphic) {
         addGraphics([graphic])
     }
     
-    func deleteGraphics(graphics: Set<Graphic>) {
+    func deleteGraphics(_ graphics: Set<Graphic>) {
         let attrs = selection.flatMap { $0 as? AttributeText }
         removeAttributes(attrs)
-        document.willChangeValueForKey("unplacedComponents")
+        document.willChangeValue(forKey: "unplacedComponents")
         graphics.forEach { $0.unlink(self) }
         displayList = displayList.filter { !graphics.contains($0) }
-        undoManager?.prepareWithInvocationTarget(self).addGraphics(graphics)
-        document.didChangeValueForKey("unplacedComponents")
+        undoManager?.prepare(withInvocationTarget: self).addGraphics(graphics)
+        document.didChangeValue(forKey: "unplacedComponents")
         needsDisplay = true
     }
     
-    func deleteGraphic(graphic: Graphic) {
+    func deleteGraphic(_ graphic: Graphic) {
         //if graphic is Net { Swift.print("deleting NET \(graphic.graphicID)") }
         deleteGraphics([graphic])
     }
@@ -287,7 +287,7 @@ class SchematicView: ZoomView
         }
     }
     
-    func addAttributes(attrs: [AttributeText], owners: [AttributedGraphic?]) {
+    func addAttributes(_ attrs: [AttributeText], owners: [AttributedGraphic?]) {
         undoManager?.registerUndoWithTarget(self, handler: { (_) in
             self.removeAttributes(attrs)
         })
@@ -298,7 +298,7 @@ class SchematicView: ZoomView
         }
     }
     
-    func removeAttributes(attrs: [AttributeText]) {
+    func removeAttributes(_ attrs: [AttributeText]) {
         let owners = attrs.map { $0.owner }
         undoManager?.registerUndoWithTarget(self, handler: { (_) in
             self.addAttributes(attrs, owners: owners)
@@ -310,11 +310,11 @@ class SchematicView: ZoomView
 
 // MARK: Selection
     
-    func selectionRectAtPoint(point: CGPoint) -> CGRect {
+    func selectionRectAtPoint(_ point: CGPoint) -> CGRect {
         return CGRect(x: point.x - selectRadius, y: point.y - selectRadius, width: selectRadius * 2, height: selectRadius * 2)
     }
     
-    func findGraphicAtPoint(location: CGPoint, selectionFirst: Bool = true) -> Graphic? {
+    func findGraphicAtPoint(_ location: CGPoint, selectionFirst: Bool = true) -> Graphic? {
         let srect = selectionRectAtPoint(location)
         if selectionFirst {
             for g in selection {
@@ -332,26 +332,26 @@ class SchematicView: ZoomView
         return nil
     }
     
-    func findElementAtPoint(location: CGPoint) -> Graphic? {
+    func findElementAtPoint(_ location: CGPoint) -> Graphic? {
         if let g = findGraphicAtPoint(location, selectionFirst: false) {
             return g.elementAtPoint(location)
         }
         return nil
     }
     
-    func findElementsAtPoint(location: CGPoint) -> [Graphic] {
+    func findElementsAtPoint(_ location: CGPoint) -> [Graphic] {
         let graphics = Set(displayList.filter {$0.intersectsRect(selectionRectAtPoint(location)) })
         return graphics.flatMap { $0.elementAtPoint(location) }
     }
     
-    func selectInRect(rect: CGRect) {
+    func selectInRect(_ rect: CGRect) {
         selection = Set(displayList.filter { $0.intersectsRect(rect) })
     }
     
-    override func changeFont(sender: AnyObject?) {
+    override func changeFont(_ sender: AnyObject?) {
         for g in selection {
             if let text = g as? AttributeText {
-                text.font = NSFontPanel.sharedFontPanel().panelConvertFont(text.font)
+                text.font = NSFontPanel.shared().convert(text.font)
             }
         }
         needsDisplay = true
@@ -361,8 +361,8 @@ class SchematicView: ZoomView
     
     var dragOrigin = CGPoint()
     
-    override func mouseDown(theEvent: NSEvent) {
-        let location = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+    override func mouseDown(_ theEvent: NSEvent) {
+        let location = self.convert(theEvent.locationInWindow, from: nil)
         if selection.count == 0 {
             pasteOrigin = snapToGrid(location)
         }
@@ -375,35 +375,35 @@ class SchematicView: ZoomView
         redrawConstruction()
     }
     
-    override func mouseDragged(theEvent: NSEvent) {
-        let location = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+    override func mouseDragged(_ theEvent: NSEvent) {
+        let location = self.convert(theEvent.locationInWindow, from: nil)
         
         redrawConstruction()
         tool.mouseDragged(location, view: self)
         redrawConstruction()
     }
     
-    override func mouseMoved(theEvent: NSEvent) {
-        let location = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+    override func mouseMoved(_ theEvent: NSEvent) {
+        let location = self.convert(theEvent.locationInWindow, from: nil)
         
         redrawConstruction()
         tool.mouseMoved(location, view: self)
         redrawConstruction()
     }
     
-    override func mouseUp(theEvent: NSEvent) {
-        let location = self.convertPoint(theEvent.locationInWindow, fromView: nil)
+    override func mouseUp(_ theEvent: NSEvent) {
+        let location = self.convert(theEvent.locationInWindow, from: nil)
         
         redrawConstruction()
         tool.mouseUp(location, view: self)
         redrawConstruction()
     }
     
-    override func flagsChanged(theEvent: NSEvent) {
-        controlKeyDown = theEvent.modifierFlags.contains(.ControlKeyMask)
+    override func flagsChanged(_ theEvent: NSEvent) {
+        controlKeyDown = theEvent.modifierFlags.contains(.control)
     }
     
-    override func keyDown(theEvent: NSEvent) {
+    override func keyDown(_ theEvent: NSEvent) {
         if tool is SelectTool {
             switch theEvent.keyCode {
             case 51, 117:
@@ -418,7 +418,7 @@ class SchematicView: ZoomView
 
 // MARK: Drag and Drop
     
-    func adjustPosition(g: Graphic) {
+    func adjustPosition(_ g: Graphic) {
         if let comp = g as? Component {
             if let p1 = comp.pins.first?.origin {
                 let p2 = self.snapToGrid(p1)
@@ -427,59 +427,59 @@ class SchematicView: ZoomView
         }
     }
     
-    override func draggingEntered(sender: NSDraggingInfo) -> NSDragOperation {
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         // this is a kludge because enumerateDraggingItems doesn't seem to find anything
         if let source = sender.draggingSource() as? PinInspectorPreview {
             let pin = source.pinCopy
-            let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
+            let location = snapToGrid(convert(sender.draggingLocation(), from: nil))
             source.updatePinAttributes(self)
             pin.moveTo(location, view: self)
             construction = pin
             needsDisplay = true
-            return .Copy
-        } else if let table = sender.draggingSource() as? NSTableView, let source = table.dataSource() as? UnplacedcomponentsTableViewDataSource {
+            return .copy
+        } else if let table = sender.draggingSource() as? NSTableView, let source = table.dataSource as? UnplacedcomponentsTableViewDataSource {
             if let g = source.draggedComponent {
                 //Swift.print("Got graphic: \(g)")
                 construction = g
-                let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
+                let location = snapToGrid(convert(sender.draggingLocation(), from: nil))
                 construction?.moveTo(location, view: self)
                 needsDisplay = true
-                sender.enumerateDraggingItemsWithOptions(.ClearNonenumeratedImages, forView: self, classes: [], searchOptions: [:]) { _ in }
-                return .Move
+                sender.enumerateDraggingItems(.clearNonenumeratedImages, for: self, classes: [], searchOptions: [:]) { _ in }
+                return .move
             }
         }
-        sender.enumerateDraggingItemsWithOptions(.ClearNonenumeratedImages, forView: self, classes: [Graphic.self], searchOptions: [:]) { (item, n, stop) in
+        sender.enumerateDraggingItems(.clearNonenumeratedImages, for: self, classes: [Graphic.self], searchOptions: [:]) { (item, n, stop) in
             if let g = item.item as? Graphic {
                 let fr = item.draggingFrame
                 let image = NSImage(size: CGSize(width: 1, height: 1))
                 item.setDraggingFrame(fr, contents: image)
                 self.construction = g
-                let location = self.snapToGrid(self.convertPoint(sender.draggingLocation(), fromView: nil))
+                let location = self.snapToGrid(self.convert(sender.draggingLocation(), from: nil))
                 g.moveTo(location, view: self)
                 self.adjustPosition(g)
                 self.needsDisplay = true
                 return
             }
         }
-        return .None
+        return NSDragOperation()
     }
     
-    override func draggingUpdated(sender: NSDraggingInfo) -> NSDragOperation {
-        let location = snapToGrid(convertPoint(sender.draggingLocation(), fromView: nil))
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
+        let location = snapToGrid(convert(sender.draggingLocation(), from: nil))
         if let g = construction {
             g.moveTo(location, view: self)
             adjustPosition(g)
         }
         needsDisplay = true
-        return .Copy
+        return .copy
     }
     
-    override func draggingExited(sender: NSDraggingInfo?) {
+    override func draggingExited(_ sender: NSDraggingInfo?) {
         construction = nil
         needsDisplay = true
     }
     
-    override func performDragOperation(sender: NSDraggingInfo) -> Bool {
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         if let component = construction as? Component {
             component.package?.assignReference(document)
             adjustPosition(component)
@@ -499,16 +499,16 @@ class SchematicView: ZoomView
         return NSSize(width: width, height: height)
     }
     
-    override func knowsPageRange(range: NSRangePointer) -> Bool {
+    override func knowsPageRange(_ range: NSRangePointer) -> Bool {
         let hcount = ceil(pageRect.size.width / printSize.width)
         let vcount = ceil(pageRect.size.height / printSize.height)
         let numPages = document.pages.count
-        let r = NSRange(1...Int(hcount * vcount * CGFloat(numPages)))
-        range.memory = r
+        //let r = NSRange(1...Int(hcount * vcount * CGFloat(numPages)))
+        range.pointee = NSMakeRange(1, Int(hcount * vcount * CGFloat(numPages)))
         return true
     }
     
-    override func rectForPage(page: Int) -> NSRect {
+    override func rectForPage(_ page: Int) -> NSRect {
         let pageIndex = page - 1
         let hcount = ceil(pageRect.size.width / printSize.width)
         let vcount = ceil(pageRect.size.height / printSize.height)
@@ -536,71 +536,71 @@ class SchematicView: ZoomView
         }
     }
 
-    @IBAction func showFontPanel(sender: AnyObject) {
-        NSFontPanel.sharedFontPanel().orderFront(self)
+    @IBAction func showFontPanel(_ sender: AnyObject) {
+        NSFontPanel.shared().orderFront(self)
     }
     
-    @IBAction func selectLineTool(sender: NSButton) {
+    @IBAction func selectLineTool(_ sender: NSButton) {
         tool = LineTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectRectTool(sender: NSButton) {
+    @IBAction func selectRectTool(_ sender: NSButton) {
         tool = RectTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectArrowTool(sender: NSButton) {
+    @IBAction func selectArrowTool(_ sender: NSButton) {
         tool = SelectTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectArcTool(sender: NSButton) {
+    @IBAction func selectArcTool(_ sender: NSButton) {
         tool = ArcTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectCircleTool(sender: NSButton) {
+    @IBAction func selectCircleTool(_ sender: NSButton) {
         tool = CircleTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectPolygonTool(sender: NSButton) {
+    @IBAction func selectPolygonTool(_ sender: NSButton) {
         tool = PolygonTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectTextTool(sender: NSButton) {
+    @IBAction func selectTextTool(_ sender: NSButton) {
         tool = TextTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectNetNameTool(sender: NSButton) {
+    @IBAction func selectNetNameTool(_ sender: NSButton) {
         tool = NetNameTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func selectNetTool(sender: NSButton) {
+    @IBAction func selectNetTool(_ sender: NSButton) {
         tool = NetTool()
         clearButtonStates()
         sender.state = NSOnState
     }
     
-    @IBAction func cut(sender: AnyObject) {
+    @IBAction func cut(_ sender: AnyObject) {
         copy(sender)
         delete(sender)
     }
     
-    @IBAction func copy(sender: AnyObject) {
-        let pasteBoard = NSPasteboard.generalPasteboard()
+    @IBAction func copy(_ sender: AnyObject) {
+        let pasteBoard = NSPasteboard.general()
         
         pasteBoard.clearContents()
         let group = GroupGraphic(contents: selection)
@@ -609,11 +609,11 @@ class SchematicView: ZoomView
         pasteBoard.writeObjects(Array(selection))
     }
     
-    @IBAction func paste(sender: AnyObject) {
-        let pasteBoard = NSPasteboard.generalPasteboard()
+    @IBAction func paste(_ sender: AnyObject) {
+        let pasteBoard = NSPasteboard.general()
         let classes = [Graphic.self]
-        if pasteBoard.canReadObjectForClasses(classes, options: [:]) {
-            if let graphics = pasteBoard.readObjectsForClasses([Graphic.self], options:[:]) as? [Graphic] {
+        if pasteBoard.canReadObject(forClasses: classes, options: [:]) {
+            if let graphics = pasteBoard.readObjects(forClasses: [Graphic.self], options:[:]) as? [Graphic] {
                 let graphicSet = Set(graphics)
                 let group = GroupGraphic(contents: graphicSet)
                 group.moveTo(pasteOrigin + pasteOffset, view: self)
@@ -631,11 +631,11 @@ class SchematicView: ZoomView
         }
     }
     
-    @IBAction func delete(sender: AnyObject) {
+    @IBAction func delete(_ sender: AnyObject) {
         deleteSelection()
     }
     
-    @IBAction func group(sender: AnyObject) {
+    @IBAction func group(_ sender: AnyObject) {
         guard selection.count > 1 else { return }
         let g = GroupGraphic(contents: selection)
         deleteSelection()
@@ -644,11 +644,11 @@ class SchematicView: ZoomView
         needsDisplay = true
     }
     
-    @IBAction func ungroup(sender: AnyObject) {
+    @IBAction func ungroup(_ sender: AnyObject) {
         var newSelection: Set<Graphic> = []
         for g in selection {
             if let g = g as? GroupGraphic {
-                newSelection.unionInPlace(g.contents)
+                newSelection.formUnion(g.contents)
                 deleteGraphic(g)
                 addGraphics(g.contents)
             } else {
@@ -659,21 +659,21 @@ class SchematicView: ZoomView
         needsDisplay = true
     }
     
-    @IBAction func flipHorizontal(sender: AnyObject) {
+    @IBAction func flipHorizontal(_ sender: AnyObject) {
         guard selection.count > 0 else { return }
         let g = GroupGraphic(contents: selection)
         g.flipHorizontalAroundPoint(g.centerPoint)
         needsDisplay = true
     }
 
-    @IBAction func flipVertical(sender: AnyObject) {
+    @IBAction func flipVertical(_ sender: AnyObject) {
         guard selection.count > 0 else { return }
         let g = GroupGraphic(contents: selection)
         g.flipVerticalAroundPoint(g.centerPoint)
         needsDisplay = true
     }
     
-    @IBAction func rotateSelection(sender: AnyObject) {
+    @IBAction func rotateSelection(_ sender: AnyObject) {
         guard selection.count > 0 else { return }
         let g = GroupGraphic(contents: selection)
         g.rotateByAngle(PI / 2, center: g.centerPoint)
@@ -681,7 +681,7 @@ class SchematicView: ZoomView
         needsDisplay = true
     }
     
-    @IBAction func createComponent(sender: AnyObject) {
+    @IBAction func createComponent(_ sender: AnyObject) {
         guard selection.count > 0 else { return }
         window?.beginSheet(componentSheet) { response in
             self.componentSheet.orderOut(self)
@@ -707,17 +707,17 @@ class SchematicView: ZoomView
         }
     }
     
-    @IBAction func ungroupComponents(sender: AnyObject) {
+    @IBAction func ungroupComponents(_ sender: AnyObject) {
         var newSelection: Set<Graphic> = []
         for g in selection {
             if let comp = g as? Component {
                 if let group = comp.outline as? GroupGraphic {
                     comp.outline = nil
-                    newSelection.unionInPlace(group.contents)
+                    newSelection.formUnion(group.contents)
                 }
                 let pins: Set<Graphic> = comp.pins
                 comp.pins = []
-                newSelection.unionInPlace(pins)
+                newSelection.formUnion(pins)
                 addGraphics(Set(newSelection))
                 deleteGraphic(comp)
             } else {
@@ -728,7 +728,7 @@ class SchematicView: ZoomView
         needsDisplay = true
     }
     
-    @IBAction func createPackage(sender: AnyObject) {
+    @IBAction func createPackage(_ sender: AnyObject) {
         let components = selection.filter { $0 is Component } as! [Component]
         if components.count > 0 {
             window?.beginSheet(packagingSheet) { response in
@@ -741,7 +741,7 @@ class SchematicView: ZoomView
         }
     }
     
-    func performPackaging(components: Set<Component>) {
+    func performPackaging(_ components: Set<Component>) {
         let package = Package(components: components)
         package.prefix = packagingSheet.prefixField.stringValue
         package.partNumber = packagingSheet.partNumberField.stringValue
@@ -755,7 +755,7 @@ class SchematicView: ZoomView
         }
     }
     
-    @IBAction func ungroupPackages(sender: AnyObject) {
+    @IBAction func ungroupPackages(_ sender: AnyObject) {
         let components = selection.flatMap { $0 as? Component }
         let packages = Set(components.flatMap { $0.package })
         for pkg in packages {

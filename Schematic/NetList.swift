@@ -36,7 +36,7 @@ class NetList: NSObject
 
 extension SchematicDocument
 {
-    @IBAction func repackage(sender: AnyObject) {
+    @IBAction func repackage(_ sender: AnyObject) {
         var prefixes: [String: Int] = [:]
         let packages = Set(self.components.flatMap { $0.package })
 
@@ -67,7 +67,7 @@ extension SchematicDocument
             } else {
                 netList.nets = net.physicallyConnectedNets([])
             }
-            allNets.subtractInPlace(netList.nets)
+            allNets.subtract(netList.nets)
             netLists.append(netList)
         }
         return Set(netLists)
@@ -154,7 +154,7 @@ extension SchematicDocument
                 autoRef += 1
                 nets.forEach { $0.attributes["autoNetName"] = netName }
             }
-            allNets.subtractInPlace(nets)
+            allNets.subtract(nets)
         }
         
         var netlist = "( { OrCAD/PCB II Netlist Format 2000 Time Stamp - }\n"
@@ -163,9 +163,9 @@ extension SchematicDocument
             let id = pkg.graphicID
             let footprint = pkg.footprint ?? "NONE"
             let refDes = pkg.refDes ?? "NONE"
-            let value = (pkg.components.first?.value ?? "value").stringByReplacingOccurrencesOfString(" ", withString: "/")
+            let value = (pkg.components.first?.value ?? "value").replacingOccurrences(of: " ", with: "/")
             netlist += "\t( E\(id) \(footprint) \(refDes) \(value)\n"
-            let pins = Set(pkg.components.reduce([]) { $0 + $1.pins }).sort { $0.pinNumber < $1.pinNumber }
+            let pins = Set(pkg.components.reduce([]) { $0 + $1.pins }).sorted { $0.pinNumber < $1.pinNumber }
             for pin in pins {
                 if let net = pin.node?.attachments.first {
                     let netName = net.name ?? net.attributes["autoNetName"] ?? "BAD"
@@ -179,15 +179,15 @@ extension SchematicDocument
         return netlist
     }
     
-    @IBAction func runGenericNetlist(sender: AnyObject) {
+    @IBAction func runGenericNetlist(_ sender: AnyObject) {
         let netlisters = self.netlisters
         let savePanel = NSSavePanel()
         savePanel.accessoryView = netlistAccessory
         netlistChooser?.removeAllItems()
         let netlisterFileNames = netlisters.flatMap { $0.lastPathComponent }
-        let netlisterExtensions = netlisterFileNames.map { $0.componentsSeparatedByString(".").last ?? "" }
-        let netListerNames = netlisterFileNames.map { $0.componentsSeparatedByString(".").first ?? "--error--" }
-        netlistChooser?.addItemsWithTitles(netListerNames)
+        let netlisterExtensions = netlisterFileNames.map { $0.components(separatedBy: ".").last ?? "" }
+        let netListerNames = netlisterFileNames.map { $0.components(separatedBy: ".").first ?? "--error--" }
+        netlistChooser?.addItems(withTitles: netListerNames)
         netlistChooser?.block_setAction { (sender: AnyObject?) -> () in
             let sender = sender as! NSPopUpButton
             let index = sender.indexOfSelectedItem
@@ -198,15 +198,15 @@ extension SchematicDocument
         savePanel.allowsOtherFileTypes = true
         if savePanel.runModal() == NSFileHandlingPanelOKButton {
             let netlister = netlisters[netlistChooser?.indexOfSelectedItem ?? 0]
-            if let url = savePanel.URL {
+            if let url = savePanel.url {
                 if let netlist = runNetlister(netlister) {
-                    _ = try? netlist.writeToURL(url, atomically: true, encoding: NSUTF8StringEncoding)
+                    _ = try? netlist.write(to: url, atomically: true, encoding: String.Encoding.utf8)
                 }
             }
         }
     }
     
-    @IBAction func runNetlist(sender: AnyObject) {
+    @IBAction func runNetlist(_ sender: AnyObject) {
         let netlist = jsonNetList()
         let errors = netlist["errors"].arrayValue
         let warnings = netlist["warnings"].arrayValue
@@ -215,8 +215,8 @@ extension SchematicDocument
             let alert = NSAlert()
             var infoText = ""
             alert.messageText = "Netlist complete, \(errors.count) errors, \(warnings.count) warnings"
-            infoText += (errors.map { $0.stringValue }).joinWithSeparator("\n")
-            infoText += (warnings.map { $0.stringValue }).joinWithSeparator("\n")
+            infoText += (errors.map { $0.stringValue }).joined(separator: "\n")
+            infoText += (warnings.map { $0.stringValue }).joined(separator: "\n")
             alert.informativeText = infoText
             alert.runModal()
         }
@@ -226,40 +226,40 @@ extension SchematicDocument
             savePanel.allowedFileTypes = ["json"]
             savePanel.allowsOtherFileTypes = true
             if savePanel.runModal() == NSFileHandlingPanelOKButton {
-                if let url = savePanel.URL {
+                if let url = savePanel.url {
                     if let json = netlist.rawString() {
-                        _ = try? json.writeToURL(url, atomically: true, encoding: NSUTF8StringEncoding)
+                        _ = try? json.write(to: url, atomically: true, encoding: String.Encoding.utf8)
                     }
                 }
             }
         }
     }
     
-    @IBAction func runOrcadNetlist(sender: AnyObject) {
+    @IBAction func runOrcadNetlist(_ sender: AnyObject) {
         let netlist = orcadNetlist()
         
         let savePanel = NSSavePanel()
         savePanel.allowedFileTypes = ["net"]
         savePanel.allowsOtherFileTypes = true
         if savePanel.runModal() == NSFileHandlingPanelOKButton {
-            if let url = savePanel.URL {
-                _ = try? netlist.writeToURL(url, atomically: true, encoding: NSUTF8StringEncoding)
+            if let url = savePanel.url {
+                _ = try? netlist.write(to: url, atomically: true, encoding: String.Encoding.utf8)
             }
         }
     }
     
-    var netlisters: [NSURL] {
-        let fileManager = NSFileManager.defaultManager()
-        let libURLs = fileManager.URLsForDirectory(.ApplicationScriptsDirectory, inDomains: .UserDomainMask)
+    var netlisters: [URL] {
+        let fileManager = FileManager.default()
+        let libURLs = fileManager.urlsForDirectory(.applicationScriptsDirectory, inDomains: .userDomainMask)
         
-        var netlisters: [NSURL] = []
+        var netlisters: [URL] = []
         for url in libURLs {
             do {
-                let fileManager = NSFileManager.defaultManager()
-                let contents = try fileManager.contentsOfDirectoryAtURL(url, includingPropertiesForKeys: [NSURLIsExecutableKey], options: [])
+                let fileManager = FileManager.default()
+                let contents = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: [URLResourceKey.isExecutableKey.rawValue], options: [])
                 for item in contents {
                     var exec: AnyObject? = nil
-                    try item.getResourceValue(&exec, forKey: NSURLIsExecutableKey)
+                    try (item as NSURL).getResourceValue(&exec, forKey: URLResourceKey.isExecutableKey)
                     if let exec = exec as? NSNumber where exec.boolValue == true {
                         netlisters.append(item)
                     }
@@ -271,39 +271,39 @@ extension SchematicDocument
         return netlisters
     }
     
-    func runNetlister(url: NSURL) -> String? {
+    func runNetlister(_ url: URL) -> String? {
         do {
-            let script = try NSUserUnixTask(URL: url)
-            let inpipe = NSPipe()
-            let outpipe = NSPipe()
+            let script = try NSUserUnixTask(url: url)
+            let inpipe = Pipe()
+            let outpipe = Pipe()
             let json = jsonNetList()
             let jsonData = try json.rawData()
             script.standardInput = inpipe.fileHandleForReading
             script.standardOutput = outpipe.fileHandleForWriting
-            script.executeWithArguments(nil, completionHandler: nil)
-            inpipe.fileHandleForWriting.writeData(jsonData)
+            script.execute(withArguments: nil, completionHandler: nil)
+            inpipe.fileHandleForWriting.write(jsonData)
             script.standardInput?.closeFile()
             inpipe.fileHandleForWriting.closeFile()
             let netlist = outpipe.fileHandleForReading.readDataToEndOfFile()
             script.standardOutput?.closeFile()
             outpipe.fileHandleForReading.closeFile()
-            return String(data: netlist, encoding: NSUTF8StringEncoding)
+            return String(data: netlist, encoding: String.Encoding.utf8)
         } catch (let err) {
-            print("error: \(err)")
+            Swift.print("error: \(err)")
         }
         return nil
     }
     
     class func installScripts() {
-        let fileManager = NSFileManager.defaultManager()
-        let scriptDirURLs = fileManager.URLsForDirectory(.ApplicationScriptsDirectory, inDomains: .UserDomainMask)
+        let fileManager = FileManager.default()
+        let scriptDirURLs = fileManager.urlsForDirectory(.applicationScriptsDirectory, inDomains: .userDomainMask)
         
         if let scriptDirURL = scriptDirURLs.first {
-            if let contents = try?fileManager.contentsOfDirectoryAtURL(scriptDirURL, includingPropertiesForKeys: nil, options: .SkipsHiddenFiles) where contents.count > 0 {
+            if let contents = try?fileManager.contentsOfDirectory(at: scriptDirURL, includingPropertiesForKeys: nil, options: .skipsHiddenFiles) where contents.count > 0 {
                 return
             }
             do {
-                let _ = try? fileManager.createDirectoryAtURL(scriptDirURL, withIntermediateDirectories: true, attributes: nil)
+                let _ = try? fileManager.createDirectory(at: scriptDirURL, withIntermediateDirectories: true, attributes: nil)
                 let panel = NSOpenPanel()
                 panel.canCreateDirectories = true
                 panel.directoryURL = scriptDirURL
@@ -315,19 +315,19 @@ extension SchematicDocument
                 if panel.runModal() != NSFileHandlingPanelOKButton {
                     return
                 }
-                if let bookmark = try panel.URL?.bookmarkDataWithOptions(.WithSecurityScope, includingResourceValuesForKeys: nil, relativeToURL: nil) {
-                    if let srcURLs = NSBundle.mainBundle().URLsForResourcesWithExtension("netlister", subdirectory: nil) {
+                if let bookmark = try (panel.url as NSURL?)?.bookmarkData(.withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil) {
+                    if let srcURLs = Bundle.main().urlsForResources(withExtension: "netlister", subdirectory: nil) {
                         for srcURL in srcURLs {
-                            if let baseName = srcURL.lastPathComponent?.stringByReplacingOccurrencesOfString(".netlister", withString: "") {
+                            if let baseName = srcURL.lastPathComponent?.replacingOccurrences(of: ".netlister", with: "") {
                                 var stale: ObjCBool = false
-                                let destURL = try NSURL(byResolvingBookmarkData: bookmark, options: .WithSecurityScope, relativeToURL: nil, bookmarkDataIsStale: &stale).URLByAppendingPathComponent(baseName)
-                                try fileManager.copyItemAtURL(srcURL, toURL: destURL)
+                                let destURL = try (NSURL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &stale) as URL).appendingPathComponent(baseName)
+                                try fileManager.copyItem(at: srcURL, to: destURL)
                             }
                         }
                     }
                 }
             } catch(let err) {
-                print("directory exists, error is \(err)")
+                Swift.print("directory exists: \(err)")
             }
             
         }

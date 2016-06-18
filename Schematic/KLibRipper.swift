@@ -8,17 +8,16 @@
 
 import Cocoa
 
-func runRipper(document: SchematicDocument) {
+func runRipper(_ document: SchematicDocument) {
     
     let openPanel = NSOpenPanel()
     openPanel.runModal()
-    let urls = openPanel.URLs
+    let urls = openPanel.urls
     openPanel.orderOut(document)
     for url in urls {
         let ripper = KLibRipper()
-        if let text = try? String(contentsOfURL: url, encoding: NSUTF8StringEncoding) {
-            ripper.ripString(text, document: document)
-        }
+        let text = String(contentsOfURL: url, encoding: String.Encoding.utf8)
+        ripper.ripString(text, document: document)
     }
 }
 
@@ -45,17 +44,17 @@ class KLibRipper: NSObject
     var footprint: String?
     var group: GroupGraphic?
     
-    func scaledNumber(s: String) -> CGFloat {
+    func scaledNumber(_ s: String) -> CGFloat {
         if let n = Double(s) {
             return CGFloat(n / 10)
         }
         return 0
     }
     
-    func processComponent(lines: [String]) {
+    func processComponent(_ lines: [String]) {
         footprint = nil
         for line in lines {
-            let fields = line.componentsSeparatedByCharactersInSet(NSCharacterSet.whitespaceCharacterSet()) // should account for quotes
+            let fields = line.components(separatedBy: CharacterSet.whitespaces) // should account for quotes
             switch fields[0] {
             case "DEF":
                 value = fields[1]
@@ -123,7 +122,7 @@ class KLibRipper: NSObject
                 let angle = fields[1] == "0" ? 0 : PI
                 let x = scaledNumber(fields[2])
                 let y = scaledNumber(fields[3])
-                let t = fields[7 ..< fields.count].joinWithSeparator(" ")
+                let t = fields[7 ..< fields.count].joined(separator: " ")
                 let attr = AttributeText(origin: CGPoint(x: x, y: y), format: t, angle: angle, owner: comp)
                 comp?.attributeTexts.insert(attr)
             case "X":
@@ -132,19 +131,19 @@ class KLibRipper: NSObject
                 var x = scaledNumber(fields[3])
                 var y = scaledNumber(fields[4])
                 let length = scaledNumber(fields[5])
-                var orientation: PinOrientation = .Right
+                var orientation: PinOrientation = .right
                 switch fields[6] {
                 case "R":
-                    orientation = .Left
+                    orientation = .left
                     x += length
                 case "L":
-                    orientation = .Right
+                    orientation = .right
                     x -= length
                 case "D":
-                    orientation = .Top
+                    orientation = .top
                     y -= length
                 case "U":
-                    orientation = .Bottom
+                    orientation = .bottom
                     y += length
                 default: break
                 }
@@ -167,13 +166,13 @@ class KLibRipper: NSObject
                 origin.y += 100
                 origin.x = 100
             }
-            page.displayList.insert(comp, atIndex: 0)
+            page.displayList.insert(comp, at: 0)
         }
     }
     
-    func ripString(text: String, document: SchematicDocument) {
+    func ripString(_ text: String, document: SchematicDocument) {
         self.document = document
-        let lines = text.componentsSeparatedByCharactersInSet(NSCharacterSet.newlineCharacterSet())
+        let lines = text.components(separatedBy: CharacterSet.newlines)
         
         var ripLines: [String] = []
         for line in lines {

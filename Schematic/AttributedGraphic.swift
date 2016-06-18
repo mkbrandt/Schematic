@@ -14,8 +14,8 @@ class AttributedGraphic: Graphic
     var attributeTexts: Set<AttributeText> {
         get { return _attributeTexts }
         set {
-            let removed = _attributeTexts.subtract(newValue)
-            let added = newValue.subtract(_attributeTexts)
+            let removed = _attributeTexts.subtracting(newValue)
+            let added = newValue.subtracting(_attributeTexts)
             _attributeTexts = newValue
             removed.forEach { $0._owner = nil }
             added.forEach { $0._owner = self }
@@ -52,16 +52,16 @@ class AttributedGraphic: Graphic
     }
     
     required init?(coder decoder: NSCoder) {
-        _attributeTexts = decoder.decodeObjectForKey("attributeTexts") as? Set<AttributeText> ?? []
-        attributes = decoder.decodeObjectForKey("attributes") as? [String : String] ?? [:]
+        _attributeTexts = decoder.decodeObject(forKey: "attributeTexts") as? Set<AttributeText> ?? []
+        attributes = decoder.decodeObject(forKey: "attributes") as? [String : String] ?? [:]
         super.init(coder: decoder)
         _attributeTexts.forEach { $0._owner = self }
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(attributeTexts, forKey: "attributeTexts")
-        coder.encodeObject(attributes, forKey: "attributes")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(attributeTexts, forKey: "attributeTexts")
+        coder.encode(attributes, forKey: "attributes")
+        super.encode(with: coder)
     }
 
     override var inspectionName: String         { return "AttributedGraphic" }
@@ -77,27 +77,28 @@ class AttributedGraphic: Graphic
         attributeTexts = Set(json["attributeTexts"].arrayValue.flatMap { jsonToGraphic($0) as? AttributeText })
     }
     
-    func stripPrefix(name: String) -> String {
-        return name.stringByReplacingCharactersInRange(name.startIndex...name.startIndex, withString: "")
+    func stripPrefix(_ name: String) -> String {
+        let range: Range = name.startIndex ..< name.index(after: name.startIndex)
+        return name.replacingCharacters(in: range, with: "")
     }
     
-    func attributeTextsForAttribute(name: String) -> [AttributeText] {
+    func attributeTextsForAttribute(_ name: String) -> [AttributeText] {
         return attributeTexts.filter { $0.format == "=\(name)" }
     }
     
     var attributeNames: [String] {
-        return attributes.keys.sort { $0 < $1 }
+        return attributes.keys.sorted { $0 < $1 }
     }
     
-    func attributeValue(name: String) -> String {
+    func attributeValue(_ name: String) -> String {
         return attributes[name] ?? "=\(name)"
     }
     
-    func setAttribute(value: String, name: String) {
+    func setAttribute(_ value: String, name: String) {
         attributes[name] = value
     }
     
-    func formatAttribute(format: String) -> String {
+    func formatAttribute(_ format: String) -> String {
         if format.hasPrefix("=") {
             return attributeValue(stripPrefix(format))
         } else {
@@ -105,29 +106,29 @@ class AttributedGraphic: Graphic
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         attributeTexts.forEach({ $0.moveBy(offset, view: view) })
         cachedBounds = nil
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         attributeTexts.forEach({ $0.rotateByAngle(angle, center: center) })
         cachedBounds = nil
     }
     
-    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+    override func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         if let ht = super.hitTest(point, threshold: threshold) {
             return ht
         }
         if closestPointToPoint(point).distanceToPoint(point) < threshold {
-            return .HitsOn(self)
+            return .hitsOn(self)
         }
         return nil
     }
         
 // MARK: Drawing
     
-    override func drawInRect(rect: CGRect) {
+    override func drawInRect(_ rect: CGRect) {
         if bounds.intersects(rect) {
             for attr in attributeTexts {
                 attr.drawInRect(rect);

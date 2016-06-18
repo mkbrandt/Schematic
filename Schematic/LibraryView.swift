@@ -25,23 +25,23 @@ class LibraryPreview: NSView, NSDraggingSource
         }
     }
     
-    override func drawRect(dirtyRect: NSRect) {
+    override func draw(_ dirtyRect: NSRect) {
         NSEraseRect(dirtyRect)
         component?.drawInRect(bounds)
     }
     
     // Dragging
     
-    override func mouseDown(theEvent: NSEvent) {
+    override func mouseDown(_ theEvent: NSEvent) {
         if let component = component {
             let item = NSDraggingItem(pasteboardWriter: component)
             item.setDraggingFrame(component.bounds, contents: component.image)
-            beginDraggingSessionWithItems([item], event: theEvent, source: self)
+            beginDraggingSession(with: [item], event: theEvent, source: self)
         }
     }
     
-    func draggingSession(session: NSDraggingSession, sourceOperationMaskForDraggingContext context: NSDraggingContext) -> NSDragOperation {
-        return .Copy
+    func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        return .copy
     }
 }
 
@@ -63,12 +63,12 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     
     var components: Set<Component>  { return currentLib?.components ?? [] }
     var sortedComponents: [Component] {
-        return components.sort { $0.sortName < $1.sortName }
+        return components.sorted { $0.sortName < $1.sortName }
     }
     
-    var bookmarks: [NSData] {
-        let answer: [NSData] = openLibs.flatMap { (lib: SchematicDocument) in
-            let bookmark = try? lib.fileURL?.bookmarkDataWithOptions(NSURLBookmarkCreationOptions.WithSecurityScope, includingResourceValuesForKeys: nil, relativeToURL: nil)
+    var bookmarks: [Data] {
+        let answer: [Data] = openLibs.flatMap { (lib: SchematicDocument) in
+            let bookmark = try? lib.fileURL?.bookmarkData(NSURL.BookmarkCreationOptions.withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
             if let bookmark = bookmark {
                 return bookmark
             }
@@ -82,9 +82,9 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     
     func setViewState() {
         if openLibs.count == 0 {
-            librarySplitView.hidden = true
+            librarySplitView.isHidden = true
         } else {
-            librarySplitView.hidden = false
+            librarySplitView.isHidden = false
         }
     }
     
@@ -92,9 +92,9 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         setViewState()
     }
     
-    func openLibraryURL(url: NSURL) {
+    func openLibraryURL(_ url: URL) {
         do {
-            let lib = try SchematicDocument(contentsOfURL: url, ofType: "")
+            let lib = try SchematicDocument(contentsOf: url, ofType: "")
             openLibs.append(lib)
             currentIndex = openLibs.count - 1
             componentsTable.reloadData()
@@ -105,33 +105,33 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         setViewState()
     }
     
-    func openLibrariesByBookmark(bookmarks: [NSData]) {
+    func openLibrariesByBookmark(_ bookmarks: [Data]) {
         for bookmark in bookmarks {
             var stale: ObjCBool = false
-            if let url = try? NSURL(byResolvingBookmarkData: bookmark, options: .WithSecurityScope, relativeToURL: nil, bookmarkDataIsStale: &stale) {
-                url.startAccessingSecurityScopedResource()
+            if let url = try? (NSURL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &stale) as URL) {
+                _ = url.startAccessingSecurityScopedResource()
                 openLibraryURL(url)
             }
         }
     }
     
-    func openLibrarysByURL(urls: [NSURL]) {
+    func openLibrarysByURL(_ urls: [URL]) {
         for url in urls {
             openLibraryURL(url)
         }
     }
     
-    @IBAction func openLibrary(sender: AnyObject) {
+    @IBAction func openLibrary(_ sender: AnyObject) {
         let openPanel = NSOpenPanel()
         openPanel.allowedFileTypes = ["sch"]
         openPanel.runModal()
-        let urls = openPanel.URLs
+        let urls = openPanel.urls
         openLibrarysByURL(urls)
     }
     
-    @IBAction func closeLibrary(sender: AnyObject) {
+    @IBAction func closeLibrary(_ sender: AnyObject) {
         if currentIndex >= 0 && currentIndex < openLibs.count {
-            let lib = openLibs.removeAtIndex(currentIndex)
+            let lib = openLibs.remove(at: currentIndex)
             lib.close()
         }
         setViewState()
@@ -140,27 +140,26 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         componentsTable.reloadData()
     }
     
-    @IBAction func openKiCadLibrary(sender: AnyObject) {
+    @IBAction func openKiCadLibrary(_ sender: AnyObject) {
         let openPanel = NSOpenPanel()
         openPanel.allowedFileTypes = ["lib"]
         openPanel.runModal()
-        let urls = openPanel.URLs
+        let urls = openPanel.urls
         for url in urls {
             let lib = SchematicDocument()
             let ripper = KLibRipper()
-            if let text = try? String(contentsOfURL: url, encoding: NSUTF8StringEncoding) {
-                ripper.ripString(text, document: lib)
-                openLibs.append(lib)
-                currentIndex = openLibs.count - 1
-                componentsTable.reloadData()
-                librariesTable.reloadData()
-            }
+            let text = String(contentsOfURL: url, encoding: String.Encoding.utf8)
+            ripper.ripString(text, document: lib)
+            openLibs.append(lib)
+            currentIndex = openLibs.count - 1
+            componentsTable.reloadData()
+            librariesTable.reloadData()
         }
     }
 
 // MARK: TableView Data and Delegate
     
-    func numberOfRowsInTableView(tableView: NSTableView) -> Int {
+    func numberOfRows(in tableView: NSTableView) -> Int {
         if tableView == librariesTable {
             return openLibs.count
         } else if tableView == componentsTable {
@@ -169,7 +168,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return 0
     }
     
-    func tableView(tableView: NSTableView, objectValueForTableColumn tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
         if tableView == librariesTable {
             return openLibs[row]
         } else {
@@ -178,7 +177,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         }
     }
     
-    func tableView(tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
+    func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
         if tableView == librariesTable {
             currentIndex = row
             componentsTable.reloadData()
@@ -190,7 +189,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
 
 // MARK: Outline View Data and Delegate
     
-    func outlineView(outlineView: NSOutlineView, child index: Int, ofItem item: AnyObject?) -> AnyObject {
+    func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: AnyObject?) -> AnyObject {
         if let currentLib = currentLib where item == nil {
             return currentLib.pages[index]
         } else if let page = item as? SchematicPage {
@@ -201,7 +200,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return "---"
     }
     
-    func outlineView(outlineView: NSOutlineView, numberOfChildrenOfItem item: AnyObject?) -> Int {
+    func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: AnyObject?) -> Int {
         if item == nil {
             return currentLib?.pages.count ?? 0
         } else if let page = item as? SchematicPage {
@@ -212,11 +211,11 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return 0
     }
     
-    func outlineView(outlineView: NSOutlineView, isItemExpandable item: AnyObject) -> Bool {
+    func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: AnyObject) -> Bool {
         return item is SchematicPage
     }
     
-    func outlineView(outlineView: NSOutlineView, objectValueForTableColumn tableColumn: NSTableColumn?, byItem item: AnyObject?) -> AnyObject? {
+    func outlineView(_ outlineView: NSOutlineView, objectValueFor tableColumn: NSTableColumn?, byItem item: AnyObject?) -> AnyObject? {
         if let page = item as? SchematicPage {
             return page.name
         } else if let package = item as? Package {
@@ -227,7 +226,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return "-"
     }
     
-    func outlineView(outlineView: NSOutlineView, shouldSelectItem item: AnyObject) -> Bool {
+    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: AnyObject) -> Bool {
         if let package = item as? Package, let component = package.components.first {
             preview.component = component
         } else if let component = item as? Component {

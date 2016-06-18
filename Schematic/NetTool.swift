@@ -43,7 +43,7 @@ class NetConstructor: Graphic
     
     let TiltThreshold = GridSize * 2
     
-    func addPoint(point: CGPoint) {
+    func addPoint(_ point: CGPoint) {
         let previousPoint = points[points.count - 2]
         let delta = endPoint - previousPoint
         if preferHorizontal && abs(delta.x) > TiltThreshold || !preferVertical && abs(delta.x) > abs(delta.y) {
@@ -59,16 +59,16 @@ class NetConstructor: Graphic
     }
     
     override func draw() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+        let context = NSGraphicsContext.current()?.cgContext
         var sp = origin
-        NSColor.blackColor().set()
-        CGContextSetLineWidth(context, 1)
-        CGContextBeginPath(context)
-        CGContextMoveToPoint(context, sp.x, sp.y)
+        NSColor.black().set()
+        context?.setLineWidth(1)
+        context?.beginPath()
+        context?.moveTo(x: sp.x, y: sp.y)
         for wp in wayPoints {
             let delta = wp - sp
             if delta.x == 0 || delta.y == 0 {
-                CGContextAddLineToPoint(context, wp.x, wp.y)
+                context?.addLineTo(x: wp.x, y: wp.y)
             } else {
                 if abs(delta.x) < TiltThreshold {
                     if preferHorizontal && wayPoints.count > 1 {
@@ -86,13 +86,13 @@ class NetConstructor: Graphic
                 }
                 
                 if preferHorizontal || !preferVertical && abs(delta.x) > abs(delta.y) {
-                    CGContextAddLineToPoint(context, wp.x, sp.y)
+                    context?.addLineTo(x: wp.x, y: sp.y)
                     if !preferHorizontal {
                         //print("prefer horizontal")
                         preferHorizontal = true
                     }
                 } else {
-                    CGContextAddLineToPoint(context, sp.x, wp.y)
+                    context?.addLineTo(x: sp.x, y: wp.y)
                     if !preferVertical {
                         //print("prefer vertical")
                         preferVertical = true
@@ -100,15 +100,15 @@ class NetConstructor: Graphic
                 }
                 
                 if wp != sp {
-                    CGContextAddLineToPoint(context, wp.x, wp.y)
+                    context?.addLineTo(x: wp.x, y: wp.y)
                 }
             }
             sp = wp
         }
-        CGContextStrokePath(context)
+        context?.strokePath()
     }
     
-    func makeNetInView(view: SchematicView) {
+    func makeNetInView(_ view: SchematicView) {
         var startNode = Node(origin: origin)
         let el = view.findElementAtPoint(origin)
         if let pin = el as? Pin {
@@ -150,7 +150,7 @@ class NetConstructor: Graphic
 class NetTool: Tool
 {
     
-    override func keyDown(theEvent: NSEvent, view: SchematicView) {
+    override func keyDown(_ theEvent: NSEvent, view: SchematicView) {
         if let netcon = view.construction as? NetConstructor where theEvent.characters == "a" {
             view.construction = nil // add new nets here
             netcon.makeNetInView(view)
@@ -161,19 +161,19 @@ class NetTool: Tool
         }
     }
     
-    func makeNet(netcon: NetConstructor, view: SchematicView) {
+    func makeNet(_ netcon: NetConstructor, view: SchematicView) {
         view.construction = nil
         netcon.makeNetInView(view)
         view.needsDisplay = true
     }
     
-    override func doubleClick(location: CGPoint, view: SchematicView) {
+    override func doubleClick(_ location: CGPoint, view: SchematicView) {
         if let netcon = view.construction as? NetConstructor {
             makeNet(netcon, view: view)
         }
     }
     
-    override func mouseDown(location: CGPoint, view: SchematicView) {
+    override func mouseDown(_ location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
         if let netcon = view.construction as? NetConstructor {
             netcon.addPoint(location)
@@ -189,16 +189,16 @@ class NetTool: Tool
         }
     }
     
-    override func mouseMoved(location: CGPoint, view: SchematicView) {
+    override func mouseMoved(_ location: CGPoint, view: SchematicView) {
         if let netcon = view.construction as? NetConstructor {
             netcon.endPoint = view.snapToGrid(location)
         }
     }
     
-    override func mouseDragged(location: CGPoint, view: SchematicView) {
+    override func mouseDragged(_ location: CGPoint, view: SchematicView) {
         mouseMoved(location, view: view)
     }
     
-    override func mouseUp(location: CGPoint, view: SchematicView) {
+    override func mouseUp(_ location: CGPoint, view: SchematicView) {
     }
 }

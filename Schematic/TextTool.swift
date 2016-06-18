@@ -13,19 +13,19 @@ class TextTool: Tool, NSTextFieldDelegate
     var activeEditor: NSTextField?
     var currentAttribute: AttributeText?
     
-    override var cursor: NSCursor   { return NSCursor.IBeamCursor() }
+    override var cursor: NSCursor   { return NSCursor.iBeam() }
     
-    func editAttribute(attribute: AttributeText, view: SchematicView) {
+    func editAttribute(_ attribute: AttributeText, view: SchematicView) {
         clearEditing()
         currentAttribute = attribute
         let extra: NSString = "WW"
         let font = attribute.font
-        var size = attribute.string.sizeWithAttributes(attribute.textAttributes)
-        size.width += extra.sizeWithAttributes([NSFontAttributeName: font]).width
+        var size = attribute.string.size(withAttributes: attribute.textAttributes)
+        size.width += extra.size(withAttributes: [NSFontAttributeName: font]).width
         let editor = NSTextField(frame: CGRect(origin: attribute.origin - CGPoint(length: 2, angle: attribute.angle), size: size))
         editor.font = font
-        editor.bezeled = false
-        editor.focusRingType = .None
+        editor.isBezeled = false
+        editor.focusRingType = .none
         editor.frameRotation = attribute.angle * 180 / PI
         editor.delegate = self
         activeEditor = editor
@@ -36,40 +36,44 @@ class TextTool: Tool, NSTextFieldDelegate
         let mi = NSMenuItem(title: "Font", action: #selector(SchematicView.showFontPanel), keyEquivalent: "")
         mi.target = view
         menu.addItem(mi)
-        let fieldEditor = view.window?.fieldEditor(true, forObject: editor)
+        let fieldEditor = view.window?.fieldEditor(true, for: editor)
         fieldEditor?.menu = menu
-        NSFontPanel.sharedFontPanel().setPanelFont(attribute.font, isMultiple: false)
+        NSFontPanel.shared().setPanelFont(attribute.font, isMultiple: false)
     }
     
-    override func controlTextDidChange(obj: NSNotification) {
+    override func controlTextDidChange(_ obj: Notification) {
         if let editor = activeEditor {
             let extra: NSString = "WW"
             let text = editor.stringValue
             if let attr = currentAttribute {
                 //attr.string = text
-                var size = text.sizeWithAttributes([NSFontAttributeName: attr.font])
-                size.width += extra.sizeWithAttributes([NSFontAttributeName: attr.font]).width
+                var size = text.size(withAttributes: [NSFontAttributeName: attr.font])
+                size.width += extra.size(withAttributes: [NSFontAttributeName: attr.font]).width
                 var frame = editor.frame
                 size.width = max(frame.size.width, size.width)
                 frame.size = size
                 editor.frame = frame
                 if let view = editor.superview as? SchematicView {
-                    view.setNeedsDisplayInRect(editor.bounds.insetBy(dx: -20, dy: -20))
+                    view.setNeedsDisplay(editor.bounds.insetBy(dx: -20, dy: -20))
                 }
             }
         }
     }
     
-    func control(control: NSControl, textView: NSTextView, completions words: [String], forPartialWordRange charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String] {
+    func control(_ control: NSControl, textView: NSTextView, completions words: [String], forPartialWordRange charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String] {
         if let attr = currentAttribute, let owner = attr.owner where control.stringValue.hasPrefix("=") {
             let curval = owner.stripPrefix(control.stringValue)
-            let possible = owner.attributeNames.sort({ $0 < $1 }).filter { $0.hasPrefix(curval) }
+            let possible = owner.attributeNames.sorted(isOrderedBefore: { $0 < $1 }).filter { $0.hasPrefix(curval) }
             return possible
         }
         return words
     }
     
-    override func controlTextDidEndEditing(obj: NSNotification?) {
+    override func controlTextDidEndEditing(_ obj: Notification) {
+        doEndEditing()
+    }
+    
+    func doEndEditing() {
         if let editor = activeEditor {
             if editor.stringValue.hasPrefix("=") {
                 currentAttribute?.format = editor.stringValue
@@ -94,18 +98,18 @@ class TextTool: Tool, NSTextFieldDelegate
     }
 
     func clearEditing() {
-        controlTextDidEndEditing(nil)
+        doEndEditing()
     }
 
-    override func selectedTool(view: SchematicView) {
+    override func selectedTool(_ view: SchematicView) {
         
     }
     
-    override func unselectedTool(view: SchematicView) {
+    override func unselectedTool(_ view: SchematicView) {
         clearEditing()
     }
     
-    override func mouseDown(location: CGPoint, view: SchematicView) {
+    override func mouseDown(_ location: CGPoint, view: SchematicView) {
         clearEditing()
         let el = view.findElementAtPoint(location)
         if let attr = el as? AttributeText {
@@ -119,14 +123,14 @@ class TextTool: Tool, NSTextFieldDelegate
         }
     }
     
-    override func mouseDragged(location: CGPoint, view: SchematicView) {
+    override func mouseDragged(_ location: CGPoint, view: SchematicView) {
         if let attr = currentAttribute {
             attr.origin = view.snapToGrid(location)
             view.needsDisplay = true
         }
     }
     
-    override func mouseUp(location: CGPoint, view: SchematicView) {
+    override func mouseUp(_ location: CGPoint, view: SchematicView) {
         if let attr = currentAttribute {
             editAttribute(attr, view: view)
         }

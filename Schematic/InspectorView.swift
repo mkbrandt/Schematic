@@ -27,10 +27,10 @@ class InspectorSelectorView: NSView
                 view.translatesAutoresizingMaskIntoConstraints = false
                 addSubview(view)
                 inspectorConstraints = [
-                    NSLayoutConstraint(item: self, attribute: .Leading, relatedBy: .Equal, toItem: view, attribute: .Leading, multiplier: 1, constant: 0),
-                    NSLayoutConstraint(item: self, attribute: .Trailing, relatedBy: .Equal, toItem: view, attribute: .Trailing, multiplier: 1, constant: 0),
-                    NSLayoutConstraint(item: self, attribute: .Bottom, relatedBy: .Equal, toItem: view, attribute: .Bottom, multiplier: 1, constant: 0),
-                    NSLayoutConstraint(item: horizontalLine, attribute: .Bottom, relatedBy: .Equal, toItem: view, attribute: .Top, multiplier: 1, constant: -2)
+                    NSLayoutConstraint(item: self, attribute: .leading, relatedBy: .equal, toItem: view, attribute: .leading, multiplier: 1, constant: 0),
+                    NSLayoutConstraint(item: self, attribute: .trailing, relatedBy: .equal, toItem: view, attribute: .trailing, multiplier: 1, constant: 0),
+                    NSLayoutConstraint(item: self, attribute: .bottom, relatedBy: .equal, toItem: view, attribute: .bottom, multiplier: 1, constant: 0),
+                    NSLayoutConstraint(item: horizontalLine, attribute: .bottom, relatedBy: .equal, toItem: view, attribute: .top, multiplier: 1, constant: -2)
                 ]
                 addConstraints(inspectorConstraints)
             }
@@ -41,19 +41,19 @@ class InspectorSelectorView: NSView
         inspector = defaultSelectorButton?.auxView
     }
     
-    override func drawRect(dirtyRect: NSRect) {
+    override func draw(_ dirtyRect: NSRect) {
         NSEraseRect(dirtyRect)
     }
     
-    @IBAction func toggleShowHide(sender: AnyObject) {
-        if inspectorSplitView.hidden {
-            inspectorSplitView.hidden = false
+    @IBAction func toggleShowHide(_ sender: AnyObject) {
+        if inspectorSplitView.isHidden {
+            inspectorSplitView.isHidden = false
         } else {
-            inspectorSplitView.hidden = true
+            inspectorSplitView.isHidden = true
         }
     }
     
-    @IBAction func takeInspectorFrom(button: InspectorSelectorButton) {
+    @IBAction func takeInspectorFrom(_ button: InspectorSelectorButton) {
         inspector = button.auxView
         for subview in subviews {
             if let b = subview as? InspectorSelectorButton {

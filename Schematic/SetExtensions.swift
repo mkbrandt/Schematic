@@ -33,13 +33,13 @@ class ActionBlockWrapper : NSObject {
 }
 
 extension NSControl {
-    func block_setAction(block: BlockButtonActionBlock) {
+    func block_setAction(_ block: BlockButtonActionBlock) {
         objc_setAssociatedObject(self, &ActionBlockKey, ActionBlockWrapper(block: block), objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         self.target = self
         self.action = #selector(block_handleAction)
     }
     
-    func block_handleAction(sender: NSControl) {
+    func block_handleAction(_ sender: NSControl) {
         if let wrapper = objc_getAssociatedObject(self, &ActionBlockKey) as? ActionBlockWrapper {
             wrapper.block(sender: sender)
         }

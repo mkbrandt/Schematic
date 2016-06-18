@@ -9,22 +9,22 @@
 import Cocoa
 
 let initialUserDefaults: [String: AnyObject] = [
-    "pinNameColor": NSKeyedArchiver.archivedDataWithRootObject(NSColor.blueColor()),
-    "pinNumberColor": NSKeyedArchiver.archivedDataWithRootObject(NSColor.redColor()),
-    "pinColor": NSKeyedArchiver.archivedDataWithRootObject(NSColor.blackColor()),
-    "graphicColor": NSKeyedArchiver.archivedDataWithRootObject(NSColor.blackColor()),
-    "attributeColor": NSKeyedArchiver.archivedDataWithRootObject(NSColor.greenColor()),
-    "wireColor": NSKeyedArchiver.archivedDataWithRootObject(NSColor.blackColor()),
+    "pinNameColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.blue()),
+    "pinNumberColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.red()),
+    "pinColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black()),
+    "graphicColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black()),
+    "attributeColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.green()),
+    "wireColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black()),
 ]
 
-let Defaults = NSUserDefaults.standardUserDefaults()
+let Defaults = UserDefaults.standard()
 
-var pinNameColor: NSColor   { return Defaults.colorForKey("pinNameColor")      ?? NSColor.blueColor()  }
-var pinNumberColor: NSColor { return Defaults.colorForKey("pinNumberColor")    ?? NSColor.redColor()   }
-var pinColor: NSColor       { return Defaults.colorForKey("pinColor")          ?? NSColor.blackColor() }
-var graphicsColor: NSColor  { return Defaults.colorForKey("graphicsColor")     ?? NSColor.blackColor() }
-var attributeColor: NSColor { return Defaults.colorForKey("attributeColor")    ?? NSColor.greenColor() }
-var wireColor: NSColor      { return Defaults.colorForKey("wireColor")         ?? NSColor.blackColor() }
+var pinNameColor: NSColor   { return Defaults.colorForKey("pinNameColor")      ?? NSColor.blue()  }
+var pinNumberColor: NSColor { return Defaults.colorForKey("pinNumberColor")    ?? NSColor.red()   }
+var pinColor: NSColor       { return Defaults.colorForKey("pinColor")          ?? NSColor.black() }
+var graphicsColor: NSColor  { return Defaults.colorForKey("graphicsColor")     ?? NSColor.black() }
+var attributeColor: NSColor { return Defaults.colorForKey("attributeColor")    ?? NSColor.green() }
+var wireColor: NSColor      { return Defaults.colorForKey("wireColor")         ?? NSColor.black() }
 
 
 
@@ -37,7 +37,7 @@ class PrefToolBarButton: NSButton
 class SchematicPreferenceWindow: NSWindow
 {
     
-    @IBAction func setPrefViewFrom(sender: PrefToolBarButton) {
+    @IBAction func setPrefViewFrom(_ sender: PrefToolBarButton) {
         if let view = sender.preferenceView {
             if let subviews = contentView?.subviews {
                 subviews.forEach({ $0.removeFromSuperview() })
@@ -48,21 +48,21 @@ class SchematicPreferenceWindow: NSWindow
     }
 }
 
-extension NSUserDefaults
+extension UserDefaults
 {
-    func colorForKey(key: String) -> NSColor? {
+    func colorForKey(_ key: String) -> NSColor? {
         var color: NSColor?
-        if let colorData = dataForKey(key) {
-            color = NSKeyedUnarchiver.unarchiveObjectWithData(colorData) as? NSColor
+        if let colorData = data(forKey: key) {
+            color = NSKeyedUnarchiver.unarchiveObject(with: colorData) as? NSColor
         }
         return color
     }
     
-    func setColor(color: NSColor?, forKey key: String) {
-        var colorData: NSData?
+    func setColor(_ color: NSColor?, forKey key: String) {
+        var colorData: Data?
         if let color = color {
-            colorData = NSKeyedArchiver.archivedDataWithRootObject(color)
+            colorData = NSKeyedArchiver.archivedData(withRootObject: color)
         }
-        setObject(colorData, forKey: key)
+        set(colorData, forKey: key)
     }
 }

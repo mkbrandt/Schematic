@@ -50,10 +50,10 @@ class PolygonGraphic: PrimitiveGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        if let va = decoder.decodeObjectForKey("vertices") as? [NSValue] {
+        if let va = decoder.decodeObject(forKey: "vertices") as? [NSValue] {
             _vertices = va.map { $0.pointValue }
         }
-        filled = decoder.decodeBoolForKey("filled")
+        filled = decoder.decodeBool(forKey: "filled")
         super.init(coder: decoder)
     }
     
@@ -67,14 +67,14 @@ class PolygonGraphic: PrimitiveGraphic
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
+    override func encode(with coder: NSCoder) {
         let va = _vertices.map { NSValue(point: $0) }
-        coder.encodeObject(va, forKey: "vertices")
-        coder.encodeBool(filled, forKey: "filled")
-        super.encodeWithCoder(coder)
+        coder.encode(va, forKey: "vertices")
+        coder.encode(filled, forKey: "filled")
+        super.encode(with: coder)
     }
     
-    override func setPoint(point: CGPoint, index: Int) {
+    override func setPoint(_ point: CGPoint, index: Int) {
         if index == 0 {
             origin = point
         } else if index <= _vertices.count {
@@ -82,28 +82,28 @@ class PolygonGraphic: PrimitiveGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         points = points.map { $0 + offset }
     }
     
-    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+    override func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         let cps = lines.map({$0.closestPointToPoint(point)})
         return cps.reduce(origin, combine: { $0.distanceToPoint(point) < $1.distanceToPoint(point) ? $0 : $1})
     }
     
     override func draw() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+        let context = NSGraphicsContext.current()?.cgContext
         
-        CGContextBeginPath(context)
-        CGContextMoveToPoint(context, origin.x, origin.y)
+        context?.beginPath()
+        context?.moveTo(x: origin.x, y: origin.y)
         for p in _vertices {
-            CGContextAddLineToPoint(context, p.x, p.y)
+            context?.addLineTo(x: p.x, y: p.y)
         }
         //CGContextClosePath(context)
         if filled {
-            CGContextFillPath(context)
+            context?.fillPath()
         } else {
-            CGContextStrokePath(context)
+            context?.strokePath()
         }
     }
 }

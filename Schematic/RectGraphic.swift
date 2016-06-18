@@ -12,12 +12,12 @@ class RectGraphic: PrimitiveGraphic
 {
     var size: CGSize {
         willSet {
-            willChangeValueForKey("width")
-            willChangeValueForKey("height")
+            willChangeValue(forKey: "width")
+            willChangeValue(forKey: "height")
         }
         didSet {
-            didChangeValueForKey("width")
-            didChangeValueForKey("height")
+            didChangeValue(forKey: "width")
+            didChangeValue(forKey: "height")
         }
     }
     
@@ -45,8 +45,8 @@ class RectGraphic: PrimitiveGraphic
     
     override var inspectables: [Inspectable] {
         return super.inspectables + [
-            Inspectable(name: "width", type: .Float),
-            Inspectable(name: "height", type: .Float)
+            Inspectable(name: "width", type: .float),
+            Inspectable(name: "height", type: .float)
         ]
     }
     
@@ -69,7 +69,7 @@ class RectGraphic: PrimitiveGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        size = decoder.decodeSizeForKey("size")
+        size = decoder.decodeSize(forKey: "size")
         super.init(coder: decoder)
     }
     
@@ -82,12 +82,12 @@ class RectGraphic: PrimitiveGraphic
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeSize(size, forKey: "size")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(size, forKey: "size")
+        super.encode(with: coder)
     }
     
-    override func setPoint(point: CGPoint, index: Int) {
+    override func setPoint(_ point: CGPoint, index: Int) {
         switch index {
         case 0:
             rect = rectContainingPoints([point, rect.topRight])
@@ -102,38 +102,38 @@ class RectGraphic: PrimitiveGraphic
         }
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         rect = rect.rotatedAroundPoint(center, angle: angle)
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         origin = origin + offset
     }
     
-    override func scaleFromRect(fromRect: CGRect, toRect: CGRect) {
+    override func scaleFromRect(_ fromRect: CGRect, toRect: CGRect) {
         let origin = scalePoint(self.origin, fromRect: fromRect, toRect: toRect)
         let topRight = scalePoint(rect.topRight, fromRect: fromRect, toRect: toRect)
         rect = rectContainingPoints([origin, topRight])
     }
     
-    override func intersectsRect(rect: CGRect) -> Bool {
+    override func intersectsRect(_ rect: CGRect) -> Bool {
         return self.rect.intersects(rect) && !self.rect.contains(rect)
     }
     
-    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+    override func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         if let ht = super.hitTest(point, threshold: threshold) {
             return ht
         }
         if ((abs(point.x - rect.left) < threshold || abs(point.x - rect.right) < threshold)) && rect.bottom <= point.y && point.y <= rect.top
         || ((abs(point.y - rect.top) < threshold || abs(point.y - rect.bottom) < threshold)) && rect.left <= point.x && point.x <= rect.right {
-            return .HitsOn(self)
+            return .hitsOn(self)
         }
         return nil
     }
     
     override func draw() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+        let context = NSGraphicsContext.current()?.cgContext
         
-        CGContextStrokeRect(context, rect)
+        context?.stroke(rect)
     }
 }

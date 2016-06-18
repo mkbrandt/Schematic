@@ -10,7 +10,7 @@ import Cocoa
 
 class NetNameTool: TextTool
 {
-    override func mouseDown(location: CGPoint, view: SchematicView) {
+    override func mouseDown(_ location: CGPoint, view: SchematicView) {
         clearEditing()
         let el = view.findElementAtPoint(location)
         let location = view.snapToGrid(location)

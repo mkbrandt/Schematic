@@ -89,11 +89,11 @@ class Component: AttributedGraphic
     var preview: NSImage {
         let image = NSImage(size: bounds.size)
         image.lockFocus()
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        CGContextSaveGState(context)
-        CGContextTranslateCTM(context, -bounds.origin.x, -bounds.origin.y)
+        let context = NSGraphicsContext.current()?.cgContext
+        context?.saveGState()
+        context?.translate(x: -bounds.origin.x, y: -bounds.origin.y)
         drawImage()
-        CGContextRestoreGState(context)
+        context?.restoreGState()
         image.unlockFocus()
         return image
     }
@@ -106,9 +106,9 @@ class Component: AttributedGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        pins = decoder.decodeObjectForKey("pins") as? Set<Pin> ?? []
-        package = decoder.decodeObjectForKey("package") as? Package
-        outline = decoder.decodeObjectForKey("outline") as? Graphic
+        pins = decoder.decodeObject(forKey: "pins") as? Set<Pin> ?? []
+        package = decoder.decodeObject(forKey: "package") as? Package
+        outline = decoder.decodeObject(forKey: "outline") as? Graphic
         super.init(coder: decoder)
         pins.forEach({$0.component = self})
     }
@@ -124,23 +124,23 @@ class Component: AttributedGraphic
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(value, forKey: "value")
-        coder.encodeObject(pins, forKey: "pins")
-        coder.encodeObject(package, forKey: "package")
-        coder.encodeObject(outline, forKey: "outline")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(value, forKey: "value")
+        coder.encode(pins, forKey: "pins")
+        coder.encode(package, forKey: "package")
+        coder.encode(outline, forKey: "outline")
+        super.encode(with: coder)
     }
     
     override var attributeNames: [String] {
         return super.attributeNames + (package?.attributeNames ?? [])
     }
     
-    override func attributeValue(name: String) -> String {
+    override func attributeValue(_ name: String) -> String {
         return package?.attributes[name] ?? super.attributeValue(name)
     }
     
-    override func setAttribute(value: String, name: String) {
+    override func setAttribute(_ value: String, name: String) {
         if let package = package where package.attributes[name] != nil {
             package.setAttribute(value, name: name)
         } else {
@@ -148,7 +148,7 @@ class Component: AttributedGraphic
         }
     }
         
-    override func isSettable(key: String) -> Bool {
+    override func isSettable(_ key: String) -> Bool {
         switch key {
         case "refDes", "partNumber":
             return package != nil
@@ -157,7 +157,7 @@ class Component: AttributedGraphic
         }
     }
     
-    override func setValue(value: AnyObject?, forUndefinedKey key: String) {
+    override func setValue(_ value: AnyObject?, forUndefinedKey key: String) {
         switch key {
         case "refDes", "partNumber":
             package?.setValue(value, forKey: key)
@@ -167,26 +167,26 @@ class Component: AttributedGraphic
         cachedImage = nil
     }
     
-    override func designCheck(view: SchematicView) {
+    override func designCheck(_ view: SchematicView) {
         pins.forEach { pin in
             pin.designCheck(view)
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         outline?.moveBy(offset, view: view)
         elements.forEach { $0.moveBy(offset, view: view) }
         cachedBounds = nil
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         cachedImage = nil
         outline?.rotateByAngle(angle, center: center)
         pins.forEach({ $0.rotateByAngle(angle, center: center)})
         //super.rotateByAngle(angle, center: center)                // attributeTexts
     }
     
-    func flipAttributeHorizontal(attribute: AttributeText, center: CGPoint) {
+    func flipAttributeHorizontal(_ attribute: AttributeText, center: CGPoint) {
         let c2o = attribute.bounds.center.x - attribute.origin.x
         var ac = attribute.bounds.center.x
         ac = center.x - (ac - center.x)
@@ -194,7 +194,7 @@ class Component: AttributedGraphic
         attribute.cachedBounds = nil
     }
     
-    func flipAttributeVertical(attribute: AttributeText, center: CGPoint) {
+    func flipAttributeVertical(_ attribute: AttributeText, center: CGPoint) {
         let c2o = attribute.bounds.center.y - attribute.origin.y
         var ac = attribute.bounds.center.y
         ac = center.y - (ac - center.y)
@@ -202,49 +202,49 @@ class Component: AttributedGraphic
         attribute.cachedBounds = nil
     }
     
-    override func flipHorizontalAroundPoint(center: CGPoint) {
+    override func flipHorizontalAroundPoint(_ center: CGPoint) {
         cachedImage = nil
         outline?.flipHorizontalAroundPoint(center)
         pins.forEach({ $0.flipHorizontalAroundPoint(center) })
         attributeTexts.forEach({ flipAttributeHorizontal($0, center: center) })
     }
     
-    override func flipVerticalAroundPoint(center: CGPoint) {
+    override func flipVerticalAroundPoint(_ center: CGPoint) {
         cachedImage = nil
         outline?.flipVerticalAroundPoint(center)
         pins.forEach({ $0.flipVerticalAroundPoint(center) })
         attributeTexts.forEach({ flipAttributeVertical($0, center: center) })
     }
     
-    func relink(nodeInfo: [(Pin, Node?)], view: SchematicView) {
+    func relink(_ nodeInfo: [(Pin, Node?)], view: SchematicView) {
         nodeInfo.forEach { (pin, node) in pin.node = node; node?.pin = pin }
         view.undoManager?.registerUndoWithTarget(self) { _ in
             self.unlink(view)
         }
-        view.setNeedsDisplayInRect(self.bounds.insetBy(dx: -5, dy: -5))
+        view.setNeedsDisplay(self.bounds.insetBy(dx: -5, dy: -5))
     }
     
-    override func unlink(view: SchematicView) {
+    override func unlink(_ view: SchematicView) {
         let nodeInfo = pins.map { (pin: Pin) in (pin, pin.node) }
         pins.forEach { $0.node?.pin = nil }
         view.undoManager?.registerUndoWithTarget(self) { _ in
             self.relink(nodeInfo, view: view)
         }
-        view.setNeedsDisplayInRect(self.bounds.insetBy(dx: -5, dy: -5))
+        view.setNeedsDisplay(self.bounds.insetBy(dx: -5, dy: -5))
     }
     
-    override func intersectsRect(rect: CGRect) -> Bool {
+    override func intersectsRect(_ rect: CGRect) -> Bool {
         return graphicBounds.intersects(rect) || super.intersectsRect(rect)
     }
     
-    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+    override func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         if graphicBounds.contains(point) {
             return point
         }
         return origin
     }
     
-    override func elementAtPoint(point: CGPoint) -> Graphic? {
+    override func elementAtPoint(_ point: CGPoint) -> Graphic? {
         for pin in pins {
             if pin.graphicBounds.contains(point) {
                 return pin
@@ -254,10 +254,10 @@ class Component: AttributedGraphic
     }
     
     override func showHandles() {
-        drawPoint(graphicBounds.origin, color: NSColor.blackColor())
-        drawPoint(graphicBounds.topLeft, color: NSColor.blackColor())
-        drawPoint(graphicBounds.topRight, color: NSColor.blackColor())
-        drawPoint(graphicBounds.bottomRight, color: NSColor.blackColor())
+        drawPoint(graphicBounds.origin, color: NSColor.black())
+        drawPoint(graphicBounds.topLeft, color: NSColor.black())
+        drawPoint(graphicBounds.topRight, color: NSColor.black())
+        drawPoint(graphicBounds.bottomRight, color: NSColor.black())
     }
     
     func drawImage() {
@@ -267,7 +267,7 @@ class Component: AttributedGraphic
         super.drawInRect(rect)            // draws all of the attributes
     }
     
-    override func drawInRect(rect: CGRect) {
+    override func drawInRect(_ rect: CGRect) {
         if rect.intersects(bounds.insetBy(dx: -5, dy: -5)) {
             drawImage()
             //image.drawInRect(bounds)

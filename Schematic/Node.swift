@@ -9,7 +9,7 @@
 import Cocoa
 
 enum TypedNet {
-    case Origin(Net), EndPoint(Net)
+    case origin(Net), endPoint(Net)
 }
 
 struct NodeState {
@@ -57,8 +57,8 @@ class Node: AttributedGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        pin = decoder.decodeObjectForKey("pin") as? Pin
-        if let attachments = decoder.decodeObjectForKey("attachments") as? Set<Net> {
+        pin = decoder.decodeObject(forKey: "pin") as? Pin
+        if let attachments = decoder.decodeObject(forKey: "attachments") as? Set<Net> {
             self.attachments = attachments
         }
         super.init(coder: decoder)
@@ -71,19 +71,19 @@ class Node: AttributedGraphic
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(attachments, forKey: "attachments")
+    override func encode(with coder: NSCoder) {
+        coder.encode(attachments, forKey: "attachments")
         if let pin = pin {
-            coder.encodeObject(pin, forKey: "pin")
+            coder.encode(pin, forKey: "pin")
         }
-        super.encodeWithCoder(coder)
+        super.encode(with: coder)
     }
     
     var connections: [(Net, Node)] {
         return attachments.map { ($0, otherNode($0)) }
     }
     
-    func restoreState(state: NodeState, view: SchematicView) {
+    func restoreState(_ state: NodeState, view: SchematicView) {
         let oldState = self.state
         self.state = state
         view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
@@ -91,7 +91,7 @@ class Node: AttributedGraphic
         })
     }
     
-    func saveUndoState(view: SchematicView) {
+    func saveUndoState(_ view: SchematicView) {
         if lastUndoSave != undoSequence {
             lastUndoSave = undoSequence
             let state = self.state
@@ -101,7 +101,7 @@ class Node: AttributedGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         var offset = offset
         if constrainedX() { offset.x = 0 }
         if constrainedY() { offset.y = 0 }
@@ -110,12 +110,12 @@ class Node: AttributedGraphic
             return
         }
         saveUndoState(view)
-        attachments.forEach { view.setNeedsDisplayInRect($0.bounds) }
+        attachments.forEach { view.setNeedsDisplay($0.bounds) }
         origin = origin + offset
-        attachments.forEach { view.setNeedsDisplayInRect($0.bounds) }
+        attachments.forEach { view.setNeedsDisplay($0.bounds) }
     }
     
-    func otherNode(net: Net) -> Node {
+    func otherNode(_ net: Net) -> Node {
         if net.originNode == self {
             return net.endPointNode
         } else {
@@ -123,7 +123,7 @@ class Node: AttributedGraphic
         }
     }
     
-    func moveBy(offset: CGPoint, overlapsPinInView view: SchematicView, exclude: Set<Net> = []) -> Bool {
+    func moveBy(_ offset: CGPoint, overlapsPinInView view: SchematicView, exclude: Set<Net> = []) -> Bool {
         if pin != nil || attachments.count == 1 {
             return false
         }
@@ -143,29 +143,29 @@ class Node: AttributedGraphic
         return false
     }
     
-    func constrainedX(exclude: Set<Net> = []) -> Bool {
+    func constrainedX(_ exclude: Set<Net> = []) -> Bool {
         if let comp = pin?.component where !comp.selected {
             return true
         }
-        let verticalNets = attachments.filter { $0.orientation == .Vertical && !exclude.contains($0) }
+        let verticalNets = attachments.filter { $0.orientation == .vertical && !exclude.contains($0) }
         let verticalNodes = verticalNets.map { otherNode($0) }
         return verticalNodes.reduce(false) { $0 || $1.constrainedX(exclude + Set(verticalNets)) }
     }
     
-    func constrainedY(exclude: Set<Net> = []) -> Bool {
+    func constrainedY(_ exclude: Set<Net> = []) -> Bool {
         if let comp = pin?.component where !comp.selected {
             return true
         }
-        let horizontalNets = attachments.filter { $0.orientation == .Horizontal && !exclude.contains($0) }
+        let horizontalNets = attachments.filter { $0.orientation == .horizontal && !exclude.contains($0) }
         let horizontalNodes = horizontalNets.map { otherNode($0) }
         return horizontalNodes.reduce(false) { $0 || $1.constrainedY(exclude + Set(horizontalNets)) }
     }
     
-    override func designCheck(view: SchematicView) {
+    override func designCheck(_ view: SchematicView) {
         designCheck(view, checked: [])
     }
     
-    func connectOverlappingNodes(view: SchematicView) {
+    func connectOverlappingNodes(_ view: SchematicView) {
         if pin == nil && attachments.count == 1 {
             for g in view.findElementsAtPoint(origin) {
                 if let pin = g as? Pin {
@@ -175,7 +175,7 @@ class Node: AttributedGraphic
         }
     }
     
-    func setOtherNodeOfNet(net: Net, node: Node) {
+    func setOtherNodeOfNet(_ net: Net, node: Node) {
         if net.originNode == self {
             net.endPointNode = node
         } else {
@@ -183,9 +183,9 @@ class Node: AttributedGraphic
         }
     }
     
-    func splitNetOrNode(net: Net, node: Node, view: SchematicView) {
+    func splitNetOrNode(_ net: Net, node: Node, view: SchematicView) {
         switch net.orientation {
-        case .Horizontal:
+        case .horizontal:
             if node.origin.y != origin.y {
                 if node.pin == nil {
                     // create a new node vertically offset from this one
@@ -204,7 +204,7 @@ class Node: AttributedGraphic
                     view.addGraphics([net1, net2])
                 }
             }
-        case .Vertical:
+        case .vertical:
             if node.origin.x != origin.x {
                 if node.pin == nil {
                     // create a new node horizontally offset from this one
@@ -226,17 +226,17 @@ class Node: AttributedGraphic
         }
     }
     
-    func designCheck(view: SchematicView, checked: Set<Node>) {
+    func designCheck(_ view: SchematicView, checked: Set<Node>) {
         saveUndoState(view)
         var checked = checked
-        attachments.forEach { $0.saveUndoState(view); view.setNeedsDisplayInRect($0.bounds) }
+        attachments.forEach { $0.saveUndoState(view); view.setNeedsDisplay($0.bounds) }
         connectOverlappingNodes(view)
         optimize(view)
         var propagates: [Node] = []
         for (net, node) in connections {
             if !checked.contains(node) {
                 switch net.orientation {
-                case .Horizontal:
+                case .horizontal:
                     if node.origin.y != origin.y {
                         if node.constrainedY() {
                             splitNetOrNode(net, node: node, view: view)
@@ -245,7 +245,7 @@ class Node: AttributedGraphic
                         }
                         propagates.append(node)
                     }
-                case .Vertical:
+                case .vertical:
                     if node.origin.x != origin.x {
                         if node.constrainedX() {
                             splitNetOrNode(net, node: node, view: view)
@@ -263,28 +263,28 @@ class Node: AttributedGraphic
             node.designCheck(view, checked: checked)
         }
         optimize(view)
-        attachments.forEach { view.setNeedsDisplayInRect($0.bounds) }
+        attachments.forEach { view.setNeedsDisplay($0.bounds) }
     }
     
-    func typedNet(net: Net) -> TypedNet {
+    func typedNet(_ net: Net) -> TypedNet {
         if net.originNode == self {
-            return .Origin(net)
+            return .origin(net)
         } else {
-            return .EndPoint(net)
+            return .endPoint(net)
         }
     }
     
-    func moveNodeConnectionsFromNode(other: Node, attachments: [TypedNet], pin: Pin?, view: SchematicView) {
+    func moveNodeConnectionsFromNode(_ other: Node, attachments: [TypedNet], pin: Pin?, view: SchematicView) {
         saveUndoState(view)
         other.saveUndoState(view)
         for tnet in attachments {
             switch tnet {
-            case .Origin(let net):
+            case .origin(let net):
                 net.saveUndoState(view)
                 //print("moving origin of NET \(net.graphicID) from NODE \(net.originNode.graphicID) to NODE \(self.graphicID)")
                 net.originNode = self
                 //showNet(net)
-            case .EndPoint(let net):
+            case .endPoint(let net):
                 net.saveUndoState(view)
                 //print("moving endPoint of NET \(net.graphicID) from NODE \(net.endPointNode.graphicID) to NODE \(self.graphicID)")
                 net.endPointNode = self
@@ -298,7 +298,7 @@ class Node: AttributedGraphic
     }
     
     /// optimize the current node in relation to the nodes and nets around it
-    func optimize(view: SchematicView) {
+    func optimize(_ view: SchematicView) {
         saveUndoState(view)
         for net in attachments {
             if net.line.length == 0 {
@@ -343,29 +343,29 @@ class Node: AttributedGraphic
         }
     }
     
-    func showNet(net: Net) {
+    func showNet(_ net: Net) {
         print("Net \(net.graphicID) :: origin is NODE \(net.originNode.graphicID) endPoint is NODE \(net.endPointNode.graphicID)")
         print("   originNode connections: \(net.originNode.attachments.map { $0.graphicID })")
         print("   endPointNode connections: \(net.endPointNode.attachments.map { $0.graphicID })")
     }
     
-    override func drawInRect(rect: CGRect) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+    override func drawInRect(_ rect: CGRect) {
+        let context = NSGraphicsContext.current()?.cgContext
         if pin == nil && attachments.count > 2 {
-            NSColor.blackColor().set()
-            CGContextBeginPath(context)
-            CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
-            CGContextFillPath(context)
+            NSColor.black().set()
+            context?.beginPath()
+            context?.addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.fillPath()
         } else if pin == nil && attachments.count == 1 {
-            setDrawingColor(NSColor.redColor())
-            CGContextBeginPath(context)
-            CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
-            CGContextFillPath(context)
+            setDrawingColor(NSColor.red())
+            context?.beginPath()
+            context?.addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.fillPath()
         } else if attachments.count == 0 {
-            setDrawingColor(NSColor.redColor())
-            CGContextBeginPath(context)
-            CGContextAddArc(context, origin.x, origin.y, 2, 0, 2 * PI, 1)
-            CGContextStrokePath(context)
+            setDrawingColor(NSColor.red())
+            context?.beginPath()
+            context?.addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.strokePath()
         }
     }
 }

@@ -13,11 +13,11 @@ class ComponentSheet: NSWindow
     @IBOutlet var nameField: NSTextField!
     @IBOutlet var packageSingleCheckbox: NSButton!
     
-    @IBAction func ok(sender: AnyObject) {
+    @IBAction func ok(_ sender: AnyObject) {
         sheetParent?.endSheet(self, returnCode: NSModalResponseOK)
     }
     
-    @IBAction func cancel(sender: AnyObject) {
+    @IBAction func cancel(_ sender: AnyObject) {
         sheetParent?.endSheet(self, returnCode: NSModalResponseCancel)
     }
 }
@@ -28,11 +28,11 @@ class PackagingSheet: NSWindow
     @IBOutlet var footprintField: NSTextField!
     @IBOutlet var partNumberField: NSTextField!
     
-    @IBAction func ok(sender: AnyObject) {
+    @IBAction func ok(_ sender: AnyObject) {
         sheetParent?.endSheet(self, returnCode: NSModalResponseOK)
     }
     
-    @IBAction func cancel(sender: AnyObject) {
+    @IBAction func cancel(_ sender: AnyObject) {
         sheetParent?.endSheet(self, returnCode: NSModalResponseCancel)
     }
 }

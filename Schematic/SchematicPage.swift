@@ -24,14 +24,14 @@ class SchematicPage: NSObject, NSCoding
     }
     
     required init?(coder decoder: NSCoder) {
-        name = decoder.decodeObjectForKey("name") as? String ?? "unnamed"
-        pageSize = decoder.decodeSizeForKey("pageSize")
-        displayList = decoder.decodeObjectForKey("displayList") as? [Graphic] ?? []
+        name = decoder.decodeObject(forKey: "name") as? String ?? "unnamed"
+        pageSize = decoder.decodeSize(forKey: "pageSize")
+        displayList = decoder.decodeObject(forKey: "displayList") as? [Graphic] ?? []
     }
     
-    func encodeWithCoder(encoder: NSCoder) {
-        encoder.encodeObject(name, forKey: "name")
-        encoder.encodeObject(displayList, forKey: "displayList")
-        encoder.encodeSize(pageSize, forKey: "pageSize")
+    func encode(with encoder: NSCoder) {
+        encoder.encode(name, forKey: "name")
+        encoder.encode(displayList, forKey: "displayList")
+        encoder.encode(pageSize, forKey: "pageSize")
     }
 }

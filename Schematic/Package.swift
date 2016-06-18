@@ -62,7 +62,7 @@ class Package: AttributedGraphic
     }
 
     required init?(coder decoder: NSCoder) {
-        components = decoder.decodeObjectForKey("components") as? Set<Component> ?? []
+        components = decoder.decodeObject(forKey: "components") as? Set<Component> ?? []
         super.init(coder: decoder)
     }
     
@@ -76,12 +76,12 @@ class Package: AttributedGraphic
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(components, forKey: "components")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(components, forKey: "components")
+        super.encode(with: coder)
     }
     
-    func assignReference(document: SchematicDocument) {
+    func assignReference(_ document: SchematicDocument) {
         let allGraphics = document.pages.reduce([]) { $0 + $1.displayList }
         let components = allGraphics.filter { $0 is Component } as! [Component]
         let designators = Set(components.flatMap { $0.refDes })

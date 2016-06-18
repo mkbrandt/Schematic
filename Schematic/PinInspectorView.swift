@@ -18,7 +18,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         }
         didSet {
             if drawingView != nil {
-                drawingView.addObserver(self, forKeyPath: "selection", options: .New, context: nil)
+                drawingView.addObserver(self, forKeyPath: "selection", options: .new, context: nil)
             }
         }
     }
@@ -30,7 +30,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     @IBOutlet var clockCheckBox: NSButton!
     @IBOutlet var orientationButton: NSPopUpButton!
     
-    var pin: Pin! = Pin(origin: CGPoint(), component: nil, name: "Pin", number: "1", orientation: .Right) {
+    var pin: Pin! = Pin(origin: CGPoint(), component: nil, name: "Pin", number: "1", orientation: .right) {
         didSet {
             loadPinValues()
             bounds = CGRect(x: pin.origin.x - frame.size.width / 4, y: pin.origin.y - frame.size.height / 4, width: frame.size.width / 2, height: frame.size.height / 2)
@@ -47,14 +47,14 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     
     var trailingNumberRE = RegularExpression(pattern: "([[:digit:]]+)$")
     
-    override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
+    override func observeValue(forKeyPath keyPath: String?, of object: AnyObject?, change: [NSKeyValueChangeKey : AnyObject]?, context: UnsafeMutablePointer<Void>?) {
         if drawingView.selection.count == 1 {
             if let pin = drawingView.selection.first as? Pin {
                 self.pin = pin
                 needsDisplay = true
             }
         } else {
-            pin = Pin(origin: CGPoint(), component: nil, name: "PIN", number: "1", orientation: .Right)
+            pin = Pin(origin: CGPoint(), component: nil, name: "PIN", number: "1", orientation: .right)
         }
     }
     
@@ -65,10 +65,10 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         overbarCheckBox.state = pin.pinNameText?.overbar ?? false ? NSOnState : NSOffState
         clockCheckBox.state = pin.hasClockFlag ? NSOnState : NSOffState
         switch pin.orientation {
-        case .Right: orientationButton.selectItemAtIndex(0)
-        case .Left: orientationButton.selectItemAtIndex(1)
-        case .Top: orientationButton.selectItemAtIndex(2)
-        case .Bottom: orientationButton.selectItemAtIndex(3)
+        case .right: orientationButton.selectItem(at: 0)
+        case .left: orientationButton.selectItem(at: 1)
+        case .top: orientationButton.selectItem(at: 2)
+        case .bottom: orientationButton.selectItem(at: 3)
         }
     }
     
@@ -78,11 +78,11 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         needsDisplay = true
     }
     
-    override func controlTextDidChange(obj: NSNotification) {
+    override func controlTextDidChange(_ obj: Notification) {
         updatePinAttributes(self)
     }
     
-    func updateTrailingDigits(string: String) -> String {
+    func updateTrailingDigits(_ string: String) -> String {
         if trailingNumberRE.matchesWithString(string) {
             if let digits = trailingNumberRE.match(1) {
                 if let number = Int(digits) {
@@ -93,14 +93,14 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         return string
     }
     
-    @IBAction func updatePinAttributes(sender: AnyObject) {
-        var orientation: PinOrientation = .Right
+    @IBAction func updatePinAttributes(_ sender: AnyObject) {
+        var orientation: PinOrientation = .right
         
         switch orientationButton.indexOfSelectedItem {
-        case 0: orientation = .Right
-        case 1: orientation = .Left
-        case 2: orientation = .Top
-        case 3: orientation = .Bottom
+        case 0: orientation = .right
+        case 1: orientation = .left
+        case 2: orientation = .top
+        case 3: orientation = .bottom
         default: break
         }
         
@@ -115,30 +115,30 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         drawingView.needsDisplay = true
     }
     
-    override func drawRect(dirtyRect: NSRect) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+    override func draw(_ dirtyRect: NSRect) {
+        let context = NSGraphicsContext.current()?.cgContext
         
-        NSColor.whiteColor().set()
-        CGContextFillRect(context, bounds)
-        NSColor.blackColor().set()
-        CGContextBeginPath(context)
+        NSColor.white().set()
+        context?.fill(bounds)
+        NSColor.black().set()
+        context?.beginPath()
         switch pin.orientation {
-        case .Right, .Left:
-            CGContextMoveToPoint(context, pin.origin.x, bounds.top)
-            CGContextAddLineToPoint(context, pin.origin.x, bounds.bottom)
-        case .Top, .Bottom:
-            CGContextMoveToPoint(context, bounds.left, pin.origin.y)
-            CGContextAddLineToPoint(context, bounds.right, pin.origin.y)
+        case .right, .left:
+            context?.moveTo(x: pin.origin.x, y: bounds.top)
+            context?.addLineTo(x: pin.origin.x, y: bounds.bottom)
+        case .top, .bottom:
+            context?.moveTo(x: bounds.left, y: pin.origin.y)
+            context?.addLineTo(x: bounds.right, y: pin.origin.y)
         }
-        CGContextStrokePath(context)
+        context?.strokePath()
         pin?.drawInRect(bounds)
     }
     
     var pinImage: NSImage {
         let image = NSImage(size: pin.bounds.size)
         image.lockFocus()
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        CGContextTranslateCTM(context, -pin.bounds.origin.x, -pin.bounds.origin.y)
+        let context = NSGraphicsContext.current()?.cgContext
+        context?.translate(x: -pin.bounds.origin.x, y: -pin.bounds.origin.y)
         pin.drawInRect(pin.bounds)
         image.unlockFocus()
         return image
@@ -146,13 +146,13 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     
     // Pin Dragging
     
-    override func mouseDown(theEvent: NSEvent) {
+    override func mouseDown(_ theEvent: NSEvent) {
         let item = NSDraggingItem(pasteboardWriter: pin)
         item.setDraggingFrame(pin.bounds, contents: pinImage)
-        beginDraggingSessionWithItems([item], event: theEvent, source: self)
+        beginDraggingSession(with: [item], event: theEvent, source: self)
     }
     
-    func draggingSession(session: NSDraggingSession, sourceOperationMaskForDraggingContext context: NSDraggingContext) -> NSDragOperation {
-        return .Copy
+    func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        return .copy
     }
 }

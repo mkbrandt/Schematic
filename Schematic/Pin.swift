@@ -9,7 +9,7 @@
 import Cocoa
 
 enum PinOrientation: Int {
-    case Top, Left, Bottom, Right
+    case top, left, bottom, right
 }
 
 class Pin: AttributedGraphic
@@ -74,13 +74,13 @@ class Pin: AttributedGraphic
     
     var endPoint: CGPoint {
         switch orientation {
-        case .Left:
+        case .left:
             return origin - CGPoint(x: pinLength, y: 0)
-        case .Right:
+        case .right:
             return origin + CGPoint(x: pinLength, y: 0)
-        case .Bottom:
+        case .bottom:
             return origin - CGPoint(x: 0, y: pinLength)
-        case .Top:
+        case .top:
             return origin + CGPoint(x: 0, y: pinLength)
         }
     }
@@ -97,8 +97,8 @@ class Pin: AttributedGraphic
         
         let pinNameText = AttributeText(origin: CGPoint(), format: "=pinName", angle: 0, owner: nil)
         let pinNumberText = AttributeText(origin: CGPoint(), format: "=pinNumber", angle: 0, owner: nil)
-        pinNameText.color = NSColor.blueColor()
-        pinNumberText.color = NSColor.redColor()
+        pinNameText.color = NSColor.blue()
+        pinNumberText.color = NSColor.red()
         attributeTexts.insert(pinNameText)
         attributeTexts.insert(pinNumberText)
         
@@ -112,15 +112,15 @@ class Pin: AttributedGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        self.component = decoder.decodeObjectForKey("component") as? Component
-        orientation = PinOrientation(rawValue: decoder.decodeIntegerForKey("orientation")) ?? .Right
-        hasBubble = decoder.decodeBoolForKey("bubble")
-        hasClockFlag = decoder.decodeBoolForKey("clock")
+        self.component = decoder.decodeObject(forKey: "component") as? Component
+        orientation = PinOrientation(rawValue: decoder.decodeInteger(forKey: "orientation")) ?? .right
+        hasBubble = decoder.decodeBool(forKey: "bubble")
+        hasClockFlag = decoder.decodeBool(forKey: "clock")
         super.init(coder: decoder)
     }
     
     override init(json: JSON) {
-        orientation = PinOrientation(rawValue: json["orientation"].intValue) ?? .Right
+        orientation = PinOrientation(rawValue: json["orientation"].intValue) ?? .right
         hasBubble = json["hasBubble"].boolValue
         hasClockFlag = json["hasClockFlag"].boolValue
         super.init(json: json)
@@ -137,12 +137,12 @@ class Pin: AttributedGraphic
         attributeTexts = Set(pin.attributeTexts.map { AttributeText(copy: $0) })
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(component, forKey: "component")
-        coder.encodeInteger(orientation.rawValue, forKey: "orientation")
-        coder.encodeBool(hasBubble, forKey: "bubble")
-        coder.encodeBool(hasClockFlag, forKey: "clock")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(component, forKey: "component")
+        coder.encode(orientation.rawValue, forKey: "orientation")
+        coder.encode(hasBubble, forKey: "bubble")
+        coder.encode(hasClockFlag, forKey: "clock")
+        super.encode(with: coder)
     }
     
     func placeAttributes() {
@@ -150,22 +150,22 @@ class Pin: AttributedGraphic
         let numberSize = pinNumberText?.size ?? CGSize()
         
         switch orientation {
-        case .Right:
+        case .right:
             pinNameText?.angle = 0
             pinNumberText?.angle = 0
             pinNameText?.origin = CGPoint(x: origin.x - nameSize.width - 2, y: origin.y - nameSize.height / 2)
             pinNumberText?.origin = CGPoint(x: origin.x + 4, y: origin.y + 0.5)
-        case .Top:
+        case .top:
             pinNameText?.angle = PI / 2
             pinNumberText?.angle = PI / 2
             pinNameText?.origin = CGPoint(x: origin.x + nameSize.width / 2, y: origin.y - nameSize.height - 2)
             pinNumberText?.origin = CGPoint(x: origin.x - 0.5, y: origin.y + 4)
-        case .Bottom:
+        case .bottom:
             pinNameText?.angle = PI / 2
             pinNumberText?.angle = PI / 2
             pinNameText?.origin = CGPoint(x: origin.x + nameSize.width / 2, y: origin.y + 2)
             pinNumberText?.origin = CGPoint(x: origin.x - 0.5, y: origin.y - numberSize.height - 2)
-        case .Left:
+        case .left:
             pinNameText?.angle = 0
             pinNumberText?.angle = 0
             pinNameText?.origin = CGPoint(x: origin.x + 2, y: origin.y - nameSize.height / 2)
@@ -173,55 +173,55 @@ class Pin: AttributedGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         node?.moveBy(offset, view: view)
         super.moveBy(offset, view: view)
         origin = origin + offset
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         origin = rotatePoint(origin, angle: angle, center: center)
         let angle = normalizeAngle((endPoint - origin).angle + angle)
         var orient = Int(round(angle / (PI / 2)))
         while orient < 0 { orient += 4 }
         while orient >= 4 { orient -= 4 }
         switch orient {
-        case 0: orientation = .Right
-        case 1: orientation = .Top
-        case 2: orientation = .Left
-        case 3: orientation = .Bottom
+        case 0: orientation = .right
+        case 1: orientation = .top
+        case 2: orientation = .left
+        case 3: orientation = .bottom
         default: break
         }
         placeAttributes()
         cachedBounds = nil
     }
     
-    override func flipHorizontalAroundPoint(center: CGPoint) {
+    override func flipHorizontalAroundPoint(_ center: CGPoint) {
         origin.x = center.x - (origin.x - center.x)
         switch orientation {
-        case .Left: orientation = .Right
-        case .Right: orientation = .Left
+        case .left: orientation = .right
+        case .right: orientation = .left
         default: break
         }
     }
     
-    override func flipVerticalAroundPoint(center: CGPoint) {
+    override func flipVerticalAroundPoint(_ center: CGPoint) {
         origin.y = center.y - (origin.y - center.y)
         switch orientation {
-        case .Top: orientation = .Bottom
-        case .Bottom: orientation = .Top
+        case .top: orientation = .bottom
+        case .bottom: orientation = .top
         default: break
         }
     }
     
-    override func elementAtPoint(point: CGPoint) -> Graphic? {
+    override func elementAtPoint(_ point: CGPoint) -> Graphic? {
         if point.distanceToPoint(endPoint) < 3 {
             return self
         }
         return super.elementAtPoint(point)
     }
     
-    override func designCheck(view: SchematicView) {
+    override func designCheck(_ view: SchematicView) {
         let graphics = view.findElementsAtPoint(endPoint)
         for g in graphics {
             if let node = g as? Node {
@@ -232,33 +232,33 @@ class Pin: AttributedGraphic
         node?.designCheck(view)
     }
     
-    override func drawInRect(rect: CGRect) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+    override func drawInRect(_ rect: CGRect) {
+        let context = NSGraphicsContext.current()?.cgContext
 
-        NSColor.blackColor().set()
-        CGContextSetLineWidth(context, 1)
-        CGContextBeginPath(context)
-        CGContextMoveToPoint(context, origin.x, origin.y)
+        NSColor.black().set()
+        context?.setLineWidth(1)
+        context?.beginPath()
+        context?.moveTo(x: origin.x, y: origin.y)
         if hasBubble {
             let bsize = GridSize / 2
             var bubbleRect: CGRect
             switch orientation {
-            case .Right:    bubbleRect = CGRect(x: origin.x, y: origin.y - bsize / 2, width: bsize, height: bsize)
-            case .Left:     bubbleRect = CGRect(x: origin.x - bsize, y: origin.y - bsize / 2, width: bsize, height: bsize)
-            case .Top:      bubbleRect = CGRect(x: origin.x - bsize / 2, y: origin.y, width: bsize, height: bsize)
-            case .Bottom:   bubbleRect = CGRect(x: origin.x - bsize / 2, y: origin.y - bsize, width: bsize, height: bsize)
+            case .right:    bubbleRect = CGRect(x: origin.x, y: origin.y - bsize / 2, width: bsize, height: bsize)
+            case .left:     bubbleRect = CGRect(x: origin.x - bsize, y: origin.y - bsize / 2, width: bsize, height: bsize)
+            case .top:      bubbleRect = CGRect(x: origin.x - bsize / 2, y: origin.y, width: bsize, height: bsize)
+            case .bottom:   bubbleRect = CGRect(x: origin.x - bsize / 2, y: origin.y - bsize, width: bsize, height: bsize)
             }
-            CGContextStrokeEllipseInRect(context, bubbleRect)
-            CGContextMoveToPoint(context, (origin.x + endPoint.x) / 2, (origin.y + endPoint.y) / 2)
+            context?.strokeEllipse(in: bubbleRect)
+            context?.moveTo(x: (origin.x + endPoint.x) / 2, y: (origin.y + endPoint.y) / 2)
         }
-        CGContextAddLineToPoint(context, endPoint.x, endPoint.y)
-        CGContextStrokePath(context)
+        context?.addLineTo(x: endPoint.x, y: endPoint.y)
+        context?.strokePath()
         if !hasConnection {
-            CGContextBeginPath(context)
-            CGContextAddArc(context, endPoint.x, endPoint.y, 2, 0, 2 * PI, 1)
-            CGContextSetLineWidth(context, 0.2)
-            setDrawingColor(NSColor.redColor())
-            CGContextStrokePath(context)
+            context?.beginPath()
+            context?.addArc(centerX: endPoint.x, y: endPoint.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.setLineWidth(0.2)
+            setDrawingColor(NSColor.red())
+            context?.strokePath()
         }
         super.drawInRect(rect)
     }

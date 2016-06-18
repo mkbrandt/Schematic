@@ -16,25 +16,25 @@ class UnplacedcomponentsTableViewDataSource: NSObject, NSTableViewDataSource
     var draggedComponent: Component?
     
     override func awakeFromNib() {
-        document.addObserver(self, forKeyPath: "unplacedComponents", options: .New, context: nil)
+        document.addObserver(self, forKeyPath: "unplacedComponents", options: .new, context: nil)
     }
     
-    override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
+    override func observeValue(forKeyPath keyPath: String?, of object: AnyObject?, change: [NSKeyValueChangeKey : AnyObject]?, context: UnsafeMutablePointer<Void>?) {
         tableView?.reloadData()
     }
     
-    func numberOfRowsInTableView(tableView: NSTableView) -> Int {
+    func numberOfRows(in tableView: NSTableView) -> Int {
         return document.unplacedComponents.count
     }
     
-    func tableView(tableView: NSTableView, objectValueForTableColumn tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
-        let components = document.unplacedComponents.sort { $0.partNumber < $1.partNumber }
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+        let components = document.unplacedComponents.sorted { $0.partNumber < $1.partNumber }
         
         return components[row]
     }
     
-    func tableView(tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
-        let components = document.unplacedComponents.sort { $0.partNumber < $1.partNumber }
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        let components = document.unplacedComponents.sorted { $0.partNumber < $1.partNumber }
         
         draggedComponent = components[row]
         return components[row]

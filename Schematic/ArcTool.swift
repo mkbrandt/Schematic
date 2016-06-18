@@ -14,7 +14,7 @@ class ArcTool: Tool
     var startPoint = CGPoint()
     var endPoint = CGPoint()
     
-    func arcFromStartPoint(startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) -> Graphic {
+    func arcFromStartPoint(_ startPoint: CGPoint, endPoint: CGPoint, midPoint: CGPoint) -> Graphic {
         let mp1 = (startPoint + midPoint) / 2
         let mp2 = (endPoint + midPoint) / 2
         let ang1 = (midPoint - startPoint).angle + PI / 2
@@ -33,11 +33,11 @@ class ArcTool: Tool
         return LineGraphic(origin: startPoint, endPoint: endPoint)
     }
     
-    override func selectedTool(view: SchematicView) {
+    override func selectedTool(_ view: SchematicView) {
         state = 0
     }
     
-    override func mouseDown(location: CGPoint, view: SchematicView) {
+    override func mouseDown(_ location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
         switch state {
         case 0:
@@ -50,7 +50,7 @@ class ArcTool: Tool
         }
     }
     
-    override func mouseMoved(location: CGPoint, view: SchematicView) {
+    override func mouseMoved(_ location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
         switch state {
         case 0:
@@ -63,7 +63,7 @@ class ArcTool: Tool
         }
     }
     
-    override func mouseDragged(location: CGPoint, view: SchematicView) {
+    override func mouseDragged(_ location: CGPoint, view: SchematicView) {
         let location = view.snapToGrid(location)
         
         switch state {
@@ -76,7 +76,7 @@ class ArcTool: Tool
         
     }
     
-    override func mouseUp(location: CGPoint, view: SchematicView) {
+    override func mouseUp(_ location: CGPoint, view: SchematicView) {
         switch state {
         case 0:
             state = 1

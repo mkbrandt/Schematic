@@ -11,8 +11,8 @@ import Cocoa
 class CircleGraphic: PrimitiveGraphic
 {
     var radius: CGFloat {
-        willSet { willChangeValueForKey("radius") }
-        didSet { didChangeValueForKey("radius") }
+        willSet { willChangeValue(forKey: "radius") }
+        didSet { didChangeValue(forKey: "radius") }
     }
     
     override var bounds: CGRect     { return CGRect(x: origin.x - radius, y: origin.y - radius, width: 2 * radius, height: 2 * radius) }
@@ -20,7 +20,7 @@ class CircleGraphic: PrimitiveGraphic
     
     override var inspectables: [Inspectable] {
         return super.inspectables + [
-            Inspectable(name: "radius", type: .Float)
+            Inspectable(name: "radius", type: .float)
         ]
     }
 
@@ -52,12 +52,12 @@ class CircleGraphic: PrimitiveGraphic
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
+    override func encode(with coder: NSCoder) {
         coder.encodeCGFloat(radius, forKey: "radius")
-        super.encodeWithCoder(coder)
+        super.encode(with: coder)
     }
     
-    override func setPoint(point: CGPoint, index: Int) {
+    override func setPoint(_ point: CGPoint, index: Int) {
         switch index {
         case 0:
             origin = point
@@ -68,7 +68,7 @@ class CircleGraphic: PrimitiveGraphic
         }
     }
     
-    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+    override func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         let v = point - origin
         let cp = CGPoint(length: radius, angle: v.angle)
         if origin.distanceToPoint(point) < cp.distanceToPoint(point) {
@@ -78,21 +78,21 @@ class CircleGraphic: PrimitiveGraphic
         }
     }
     
-    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+    override func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         if let ht = super.hitTest(point, threshold: threshold) {
             return ht
         }
         if abs(radius - point.distanceToPoint(origin)) < threshold {
-            return .HitsOn(self)
+            return .hitsOn(self)
         }
         return nil
     }
     
-    override func rotateByAngle(angle: CGFloat, center: CGPoint) {
+    override func rotateByAngle(_ angle: CGFloat, center: CGPoint) {
         origin = rotatePoint(origin, angle: angle, center: center)
     }
     
-    func intersectionsWithLine(line: Line) -> [CGPoint] {
+    func intersectionsWithLine(_ line: Line) -> [CGPoint] {
         let cp = line.closestPointToPoint(origin, extended: true)
         let vp = cp - origin
         if vp.length < radius {
@@ -110,17 +110,17 @@ class CircleGraphic: PrimitiveGraphic
     }
     
 
-    func intersectsLine(line: Line) -> Bool {
+    func intersectsLine(_ line: Line) -> Bool {
         return intersectionsWithLine(line).count > 0
     }
     
-    override func intersectsRect(rect: CGRect) -> Bool {
+    override func intersectsRect(_ rect: CGRect) -> Bool {
         return rect.contains(bounds) || rect.lines.reduce(false, combine: { $0 || intersectsLine($1) })
     }
     
     override func draw() {
-        let context = NSGraphicsContext.currentContext()?.CGContext
+        let context = NSGraphicsContext.current()?.cgContext
         
-        CGContextStrokeEllipseInRect(context, bounds)
+        context?.strokeEllipse(in: bounds)
     }
 }

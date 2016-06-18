@@ -14,40 +14,40 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
     @IBOutlet var schematic: SchematicView!
     @IBOutlet var pageTable: NSTableView!
     
-    func numberOfRowsInTableView(tableView: NSTableView) -> Int {
+    func numberOfRows(in tableView: NSTableView) -> Int {
         return document.pages.count
     }
     
-    func tableView(tableView: NSTableView, objectValueForTableColumn tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
         let page = document.pages[row]
         
         return page.name
     }
     
-    func tableView(tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
+    func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
         document.currentPage = row
         schematic.needsDisplay = true
         return true
     }
     
-    @IBAction func changePageName(sender: NSTextField) {
+    @IBAction func changePageName(_ sender: NSTextField) {
         guard pageTable.selectedRow >= 0 else { return }
         let page = document.pages[pageTable.selectedRow]
         page.name = sender.stringValue
     }
 
-    @IBAction func addPage(sender: AnyObject) {
+    @IBAction func addPage(_ sender: AnyObject) {
         let page = SchematicPage()
         insertPage(page, index: document.pages.count)
     }
     
-    func deletePageAtIndex(index: Int) {
+    func deletePageAtIndex(_ index: Int) {
         let page = document.pages[index]
         document.undoManager?.registerUndoWithTarget(self, handler: { _ in
             self.insertPage(page, index: index)
         })
         if document.pages.count > 1 {
-            document.pages.removeAtIndex(index)
+            document.pages.remove(at: index)
             if document.currentPage >= index {
                 document.currentPage -= 1
             }
@@ -56,9 +56,9 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
         pageTable.reloadData()
     }
     
-    func insertPage(page: SchematicPage, index: Int) {
+    func insertPage(_ page: SchematicPage, index: Int) {
         if index <= document.pages.count {
-            document.pages.insert(page, atIndex: index)
+            document.pages.insert(page, at: index)
             schematic.needsDisplay = true
             document.undoManager?.registerUndoWithTarget(self, handler: { _ in
                 self.deletePageAtIndex(index)
@@ -67,7 +67,7 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
         pageTable.reloadData()
     }
     
-    @IBAction func deletePage(sender: AnyObject) {
+    @IBAction func deletePage(_ sender: AnyObject) {
         deletePageAtIndex(document.currentPage)
     }
 }

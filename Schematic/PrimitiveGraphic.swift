@@ -10,13 +10,13 @@ import Cocoa
 
 class PrimitiveGraphic: Graphic
 {
-    var color: NSColor = NSColor.blackColor()
+    var color: NSColor = NSColor.black()
     var lineWeight: CGFloat = 1.0
 
     override var inspectables: [Inspectable] {
         return [
-            Inspectable(name: "color", type: .Color),
-            Inspectable(name: "lineWeight", type: .Float)
+            Inspectable(name: "color", type: .color),
+            Inspectable(name: "lineWeight", type: .float)
         ]
     }
 
@@ -35,20 +35,20 @@ class PrimitiveGraphic: Graphic
     }
     
     required init?(coder decoder: NSCoder) {
-        color = decoder.decodeObjectForKey("color") as? NSColor ?? NSColor.blackColor()
+        color = decoder.decodeObject(forKey: "color") as? NSColor ?? NSColor.black()
         lineWeight = decoder.decodeCGFloatForKey("lineWeight")
         super.init(coder: decoder)
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(color, forKey: "color")
+    override func encode(with coder: NSCoder) {
+        coder.encode(color, forKey: "color")
         coder.encodeCGFloat(lineWeight, forKey: "lineWeight")
-        super.encodeWithCoder(coder)
+        super.encode(with: coder)
     }
     
     override var json: JSON {
         var json = super.json
-        let color = self.color.colorUsingColorSpace(NSColorSpace.deviceRGBColorSpace())!
+        let color = self.color.usingColorSpace(NSColorSpace.deviceRGB())!
         json["color"] = JSON(["r": color.redComponent, "g": color.greenComponent, "b": color.blueComponent])
         json["lineWeight"] = JSON(lineWeight)
         return json
@@ -58,18 +58,18 @@ class PrimitiveGraphic: Graphic
         fatalError("fuck me")
     }
 
-    override func drawInRect(rect: CGRect) {
+    override func drawInRect(_ rect: CGRect) {
         if intersectsRect(rect) {
-            let context = NSGraphicsContext.currentContext()?.CGContext
+            let context = NSGraphicsContext.current()?.cgContext
             
-            CGContextSaveGState(context)
-            CGContextSetLineWidth(context, lineWeight)
+            context?.saveGState()
+            context?.setLineWidth(lineWeight)
             setDrawingColor(color)
             draw()
             if selected {
                 showHandles()
             }
-            CGContextRestoreGState(context)
+            context?.restoreGState()
        }
     }
 }

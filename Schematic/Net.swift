@@ -9,7 +9,7 @@
 import Cocoa
 
 enum NetOrientation: Int {
-    case Horizontal, Vertical
+    case horizontal, vertical
 }
 
 struct NetState {
@@ -31,7 +31,7 @@ class Net: AttributedGraphic
     
     var orientation: NetOrientation {
         let delta = endPoint - origin
-        return abs(delta.x) < abs(delta.y) ? .Vertical : .Horizontal
+        return abs(delta.x) < abs(delta.y) ? .vertical : .horizontal
     }
     
     override var origin: CGPoint {
@@ -94,8 +94,8 @@ class Net: AttributedGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        if let originNode = decoder.decodeObjectForKey("originNode") as? Node,
-            let endPointNode = decoder.decodeObjectForKey("endPointNode") as? Node {
+        if let originNode = decoder.decodeObject(forKey: "originNode") as? Node,
+            let endPointNode = decoder.decodeObject(forKey: "endPointNode") as? Node {
             self.originNode = originNode
             self.endPointNode = endPointNode
             super.init(coder: decoder)
@@ -104,13 +104,13 @@ class Net: AttributedGraphic
         }
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(originNode, forKey: "originNode")
-        coder.encodeObject(endPointNode, forKey: "endPointNode")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(originNode, forKey: "originNode")
+        coder.encode(endPointNode, forKey: "endPointNode")
+        super.encode(with: coder)
     }
     
-    func physicallyConnectedNets(gathered: Set<Net>) -> Set<Net> {
+    func physicallyConnectedNets(_ gathered: Set<Net>) -> Set<Net> {
         if gathered.contains(self) {
             return gathered
         }
@@ -122,7 +122,7 @@ class Net: AttributedGraphic
         return gathered
     }
     
-    func logicallyConnectedNets(view: SchematicView) -> Set<Net> {
+    func logicallyConnectedNets(_ view: SchematicView) -> Set<Net> {
         if let name = name {
             let nets = view.displayList.flatMap { $0 as? Net }
             return Set(nets.filter { $0.name == name })
@@ -131,22 +131,22 @@ class Net: AttributedGraphic
         }
     }
     
-    override func closestPointToPoint(point: CGPoint) -> CGPoint {
+    override func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         return line.closestPointToPoint(point)
     }
     
-    override func intersectsRect(rect: CGRect) -> Bool {
+    override func intersectsRect(_ rect: CGRect) -> Bool {
         return line.intersectsRect(rect) || super.intersectsRect(rect)
     }
     
-    override func hitTest(point: CGPoint, threshold: CGFloat) -> HitTestResult? {
+    override func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
         if line.distanceToPoint(point) < threshold {
-            return .HitsOn(self)
+            return .hitsOn(self)
         }
         return nil
     }
     
-    override func elementAtPoint(point: CGPoint) -> Graphic? {
+    override func elementAtPoint(_ point: CGPoint) -> Graphic? {
         if point.distanceToPoint(origin) < 3 {
             return originNode
         } else if point.distanceToPoint(endPoint) < 3 {
@@ -155,17 +155,17 @@ class Net: AttributedGraphic
         return super.elementAtPoint(point)
     }
     
-    func restoreUndoState(state: NetState, view: SchematicView) {
-        view.setNeedsDisplayInRect(bounds.insetBy(dx: -5, dy: -5))
+    func restoreUndoState(_ state: NetState, view: SchematicView) {
+        view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
         let oldState = self.state
         self.state = state
         view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
             self.restoreUndoState(oldState, view: view)
         })
-        view.setNeedsDisplayInRect(bounds.insetBy(dx: -5, dy: -5))
+        view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
     }
     
-    func saveUndoState(view: SchematicView) {
+    func saveUndoState(_ view: SchematicView) {
         if undoSequence != lastUndoSave {
             lastUndoSave = undoSequence
             let state = self.state
@@ -175,14 +175,14 @@ class Net: AttributedGraphic
         }
     }
     
-    override func moveBy(offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint, view: SchematicView) {
         saveUndoState(view)
         originNode.moveBy(offset, view: view)
         endPointNode.moveBy(offset, view: view)
         super.moveBy(offset, view: view)
     }
     
-    func propagatedName(exclude exclude: Set<Net>) -> String? {
+    func propagatedName(exclude: Set<Net>) -> String? {
         let connected = (originNode.attachments + endPointNode.attachments).filter { !exclude.contains($0) }
         let pinName = originNode.pin?.netName ?? endPointNode.pin?.netName
         if let name = explicitName ?? pinName {
@@ -198,7 +198,7 @@ class Net: AttributedGraphic
         return nil
     }
     
-    func relink(view: SchematicView) {
+    func relink(_ view: SchematicView) {
         originNode.attachments.insert(self)
         endPointNode.attachments.insert(self)
         view.undoManager?.registerUndoWithTarget(self) { (_) in
@@ -206,7 +206,7 @@ class Net: AttributedGraphic
         }
     }
     
-    override func unlink(view: SchematicView) {
+    override func unlink(_ view: SchematicView) {
         originNode.attachments.remove(self)
         endPointNode.attachments.remove(self)
         view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
@@ -217,7 +217,7 @@ class Net: AttributedGraphic
     }
     
     override func showHandles() {
-        let color = NSColor.brownColor()
+        let color = NSColor.brown()
         if originNode.singleEndpoint {
             drawPoint(originNode.origin, color: color)
         }
@@ -226,27 +226,27 @@ class Net: AttributedGraphic
         }
     }
 
-    override func drawInRect(rect: CGRect) {
-        let context = NSGraphicsContext.currentContext()?.CGContext
-        NSColor.blackColor().set()
-        CGContextSetLineWidth(context, 1.0)
+    override func drawInRect(_ rect: CGRect) {
+        let context = NSGraphicsContext.current()?.cgContext
+        NSColor.black().set()
+        context?.setLineWidth(1.0)
         
         if selected {
-            NSColor.greenColor().set()
-            CGContextSetLineWidth(context, 3)
-            CGContextBeginPath(context)
-            CGContextMoveToPoint(context, origin.x, origin.y)
-            CGContextAddLineToPoint(context, endPoint.x, endPoint.y)
-            CGContextStrokePath(context)
+            NSColor.green().set()
+            context?.setLineWidth(3)
+            context?.beginPath()
+            context?.moveTo(x: origin.x, y: origin.y)
+            context?.addLineTo(x: endPoint.x, y: endPoint.y)
+            context?.strokePath()
             showHandles()
         }
-        NSColor.blackColor().set()
-        CGContextSetLineWidth(context, 1.0)
+        NSColor.black().set()
+        context?.setLineWidth(1.0)
 
-        CGContextBeginPath(context)
-        CGContextMoveToPoint(context, origin.x, origin.y)
-        CGContextAddLineToPoint(context, endPoint.x, endPoint.y)
-        CGContextStrokePath(context)
+        context?.beginPath()
+        context?.moveTo(x: origin.x, y: origin.y)
+        context?.addLineTo(x: endPoint.x, y: endPoint.y)
+        context?.strokePath()
         originNode.drawInRect(rect)
         endPointNode.drawInRect(rect)
         super.drawInRect(rect)
@@ -270,7 +270,7 @@ class NetNameAttributeText: AttributeText
     }
     
     required init?(coder decoder: NSCoder) {
-        if let netName = decoder.decodeObjectForKey("netName") as? String {
+        if let netName = decoder.decodeObject(forKey: "netName") as? String {
             self.netName = netName
         } else {
             return nil
@@ -282,8 +282,8 @@ class NetNameAttributeText: AttributeText
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
-    override func encodeWithCoder(coder: NSCoder) {
-        coder.encodeObject(netName, forKey: "netName")
-        super.encodeWithCoder(coder)
+    override func encode(with coder: NSCoder) {
+        coder.encode(netName, forKey: "netName")
+        super.encode(with: coder)
     }
 }
