@@ -419,7 +419,11 @@ class SchematicView: ZoomView
 // MARK: Drag and Drop
     
     func adjustPosition(_ g: Graphic) {
-        if let comp = g as? Component {
+        if let group = g as? GroupGraphic {
+            for g in group.contents {
+                adjustPosition(g)
+            }
+        } else if let comp = g as? Component {
             if let p1 = comp.pins.first?.origin {
                 let p2 = self.snapToGrid(p1)
                 g.moveBy(p2 - p1, view: self)
@@ -663,6 +667,7 @@ class SchematicView: ZoomView
         guard selection.count > 0 else { return }
         let g = GroupGraphic(contents: selection)
         g.flipHorizontalAroundPoint(g.centerPoint)
+        adjustPosition(g)
         needsDisplay = true
     }
 
@@ -670,6 +675,7 @@ class SchematicView: ZoomView
         guard selection.count > 0 else { return }
         let g = GroupGraphic(contents: selection)
         g.flipVerticalAroundPoint(g.centerPoint)
+        adjustPosition(g)
         needsDisplay = true
     }
     
