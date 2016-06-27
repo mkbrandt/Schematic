@@ -15,6 +15,8 @@
 		7A074AB71CFC918C008D8EA7 /* TextTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074AB61CFC918C008D8EA7 /* TextTool.swift */; };
 		7A074AB91CFDD4A5008D8EA7 /* NetTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074AB81CFDD4A5008D8EA7 /* NetTool.swift */; };
 		7A074ABB1CFFA90F008D8EA7 /* NetNameTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A074ABA1CFFA90F008D8EA7 /* NetNameTool.swift */; };
+		7A1D748C1D19D0730028FAB9 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A1D748B1D19D0730028FAB9 /* CloudKit.framework */; };
+		7A1D748E1D1ADDF80028FAB9 /* CloudLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1D748D1D1ADDF80028FAB9 /* CloudLibrary.swift */; };
 		7A4894401CF74CFF00F6D132 /* PolygonGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A48943F1CF74CFF00F6D132 /* PolygonGraphic.swift */; };
 		7A4894421CF7A0B000F6D132 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4894411CF7A0B000F6D132 /* LibraryView.swift */; };
 		7A4A226A1CF132D800EA774C /* AbstractGraphics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A4A22691CF132D800EA774C /* AbstractGraphics.swift */; };
@@ -69,6 +71,8 @@
 		7A074AB61CFC918C008D8EA7 /* TextTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextTool.swift; sourceTree = "<group>"; };
 		7A074AB81CFDD4A5008D8EA7 /* NetTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetTool.swift; sourceTree = "<group>"; };
 		7A074ABA1CFFA90F008D8EA7 /* NetNameTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetNameTool.swift; sourceTree = "<group>"; };
+		7A1D748B1D19D0730028FAB9 /* CloudKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CloudKit.framework; path = System/Library/Frameworks/CloudKit.framework; sourceTree = SDKROOT; };
+		7A1D748D1D1ADDF80028FAB9 /* CloudLibrary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CloudLibrary.swift; sourceTree = "<group>"; };
 		7A48943F1CF74CFF00F6D132 /* PolygonGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PolygonGraphic.swift; sourceTree = "<group>"; };
 		7A4894411CF7A0B000F6D132 /* LibraryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		7A4A22691CF132D800EA774C /* AbstractGraphics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AbstractGraphics.swift; sourceTree = "<group>"; };
@@ -122,17 +126,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7A1D748C1D19D0730028FAB9 /* CloudKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7A1D74821D19CF650028FAB9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7A1D748B1D19D0730028FAB9 /* CloudKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		7A5FBDF91CE66FF80031ED77 = {
 			isa = PBXGroup;
 			children = (
 				7A5FBE041CE66FF80031ED77 /* Schematic */,
 				7A5FBE031CE66FF80031ED77 /* Products */,
+				7A1D74821D19CF650028FAB9 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -164,6 +178,7 @@
 				7A4A22D51CF6519000EA774C /* KLibRipper.swift */,
 				7A074AB01CF932CF008D8EA7 /* Octopart.swift */,
 				7AD3685B1D04B2AD006EEAA9 /* NetList.swift */,
+				7A1D748D1D1ADDF80028FAB9 /* CloudLibrary.swift */,
 				7A5FBE4F1CEA16DD0031ED77 /* Tools */,
 				7A5FBE2E1CE910800031ED77 /* ZoomView.swift */,
 				7A5FBE091CE66FF80031ED77 /* SchematicDocument.xib */,
@@ -260,9 +275,18 @@
 				TargetAttributes = {
 					7A5FBE011CE66FF80031ED77 = {
 						CreatedOnToolsVersion = 7.3;
+						DevelopmentTeam = 46W5TFUQVR;
+						DevelopmentTeamName = "Matt Brandt";
 						LastSwiftMigration = 0800;
+						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
+							com.apple.Push = {
+								enabled = 1;
+							};
 							com.apple.Sandbox = {
+								enabled = 1;
+							};
+							com.apple.iCloud = {
 								enabled = 1;
 							};
 						};
@@ -333,6 +357,7 @@
 				7A5FBE531CEA1AF80031ED77 /* RectGraphic.swift in Sources */,
 				7A5FBE271CE67C5E0031ED77 /* Graphic.swift in Sources */,
 				7A4A226E1CF3D05700EA774C /* SetExtensions.swift in Sources */,
+				7A1D748E1D1ADDF80028FAB9 /* CloudLibrary.swift in Sources */,
 				7A5FBE4E1CE93F0D0031ED77 /* SchematicPage.swift in Sources */,
 				7A4A22701CF4A28F00EA774C /* Sheets.swift in Sources */,
 				7A8C9BC11CEAA815000B79BE /* CircleGraphic.swift in Sources */,
@@ -465,10 +490,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Schematic/Schematic.entitlements;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Schematic/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = walkingdog.net.Schematic;
+				PRODUCT_BUNDLE_IDENTIFIER = net.walkingdog.Schematic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
 			};
@@ -479,10 +505,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Schematic/Schematic.entitlements;
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = Schematic/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = walkingdog.net.Schematic;
+				PRODUCT_BUNDLE_IDENTIFIER = net.walkingdog.Schematic;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 3.0;

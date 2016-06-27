@@ -7,6 +7,7 @@
 //
 
 import Cocoa
+import CloudKit
 
 class Component: AttributedGraphic
 {
@@ -28,6 +29,9 @@ class Component: AttributedGraphic
     var refDesText: AttributeText?          { return attributeTextsForAttribute("refDes").first }
     var partNumberText: AttributeText?      { return attributeTextsForAttribute("partNumber").first }
     var nameText: AttributeText?            { return attributeTextsForAttribute("name").first }
+    var record: CKRecord?
+    
+    var name: String    { return package?.partNumber ?? value ?? "UNNAMED" }
     
     var pins: Set<Pin> = []     {
         didSet {
@@ -109,6 +113,7 @@ class Component: AttributedGraphic
         pins = decoder.decodeObject(forKey: "pins") as? Set<Pin> ?? []
         package = decoder.decodeObject(forKey: "package") as? Package
         outline = decoder.decodeObject(forKey: "outline") as? Graphic
+        record = decoder.decodeObject(forKey: "record") as? CKRecord
         super.init(coder: decoder)
         pins.forEach({$0.component = self})
     }
@@ -129,6 +134,9 @@ class Component: AttributedGraphic
         coder.encode(pins, forKey: "pins")
         coder.encode(package, forKey: "package")
         coder.encode(outline, forKey: "outline")
+        if let record = record {
+            coder.encode(record, forKey: "record")
+        }
         super.encode(with: coder)
     }
     

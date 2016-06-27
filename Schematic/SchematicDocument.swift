@@ -13,28 +13,6 @@ let MajorGridSize: CGFloat = 100.0
 
 var printInColor = false
 
-/*
-class SchematicDocumentState: NSObject, NSCoding
-{
-    var pages: [SchematicPage] = [SchematicPage()]
-    var currentPage: Int = 0
-    
-    override init() {
-        super.init()
-    }
-    
-    required init?(coder decoder: NSCoder) {
-        pages = decoder.decodeObjectForKey("pages") as? [SchematicPage] ?? [SchematicPage()]
-        currentPage = decoder.decodeIntegerForKey("currentPage")
-    }
-    
-    func encodeWithCoder(encoder: NSCoder) {
-        encoder.encodeObject(pages, forKey: "pages")
-        encoder.encodeInteger(currentPage, forKey: "currentPage")
-    }
-}
-*/
-
 class Schematic: NSObject, NSCoding
 {
     var pages: [SchematicPage] = [SchematicPage()]
@@ -76,8 +54,12 @@ class Schematic: NSObject, NSCoding
     }
 }
 
-class SchematicDocument: NSDocument {
-    
+@objc protocol SchematicDelegate {
+    func documentDidChangeStructure()
+}
+
+class SchematicDocument: NSDocument
+{
     @IBOutlet var drawingView: SchematicView?
     @IBOutlet var newPageDialog: NewPageDialog?
     @IBOutlet var pageLayoutAccessory: SchematicPageLayoutController?
@@ -85,8 +67,13 @@ class SchematicDocument: NSDocument {
     @IBOutlet var octopartWindow: OctoPartWindow?
     @IBOutlet var netlistAccessory: NSView?
     @IBOutlet var netlistChooser: NSPopUpButton?
+    @IBOutlet var qAndASheet: QandASheet?
+
+    var changeSubscriptions: [SchematicDelegate] = []
     
     var schematic = Schematic()
+    
+    var name: String { return fileURL?.lastPathComponent ?? "UNNAMED" }
     
     var pages: [SchematicPage] {
         get { return schematic.pages }
@@ -118,7 +105,7 @@ class SchematicDocument: NSDocument {
     override init() {
         super.init()
     }
-
+    
     override class func autosavesInPlace() -> Bool {
         return true
     }
@@ -150,18 +137,22 @@ class SchematicDocument: NSDocument {
         }
     }
     
+    override func close() {
+        libraryManager?.unhook()
+    }
+    
     override func awakeFromNib() {
         libraryManager?.openLibrariesByBookmark(schematic.openLibraries)
         printInColor = Defaults.bool(forKey: "printColor")
         if let scale = schematic.savedScale {
             drawingView?.zoomToFit(self)
-            drawingView?.zoomByFactor(100)
-            drawingView?.zoomByFactor(0.01)
+            drawingView?.zoomByFactor(10)
+            drawingView?.zoomByFactor(0.1)
             drawingView?.zoomToAbsoluteScale(scale)
             drawingView?.scrollPointToCenter(schematic.centeredPoint)
         }
     }
-
+    
     // MARK: Window Delegate
     
     func windowDidResize(_ notification: Notification) {
@@ -228,6 +219,62 @@ class SchematicDocument: NSDocument {
         }
     }
     
+    // MARK: Library insert and delete
+    
+    func notifyChange() {
+        for delegate in changeSubscriptions {
+            delegate.documentDidChangeStructure()
+        }
+    }
+    
+    func subscribeToChanges(delegate: SchematicDelegate) {
+        changeSubscriptions.append(delegate)
+    }
+    
+    func unsubscribeToChanges(delegate: SchematicDelegate) {
+        changeSubscriptions = changeSubscriptions.filter { $0 !== delegate }
+    }
+    
+    func insert(components: [Component], in page: SchematicPage, at index: Int) {
+        if index < page.displayList.count {
+            var index = index
+            for comp in components {
+                page.displayList.insert(comp, at: index)
+                index += 1
+            }
+        } else {
+            for comp in components {
+                page.displayList.append(comp)
+            }
+
+        }
+        notifyChange()
+    }
+    
+    func add(page: SchematicPage, to parent: SchematicPage?) {
+        if parent == nil {
+            schematic.pages.append(page)
+        }
+        page.parentPage = parent
+        notifyChange()
+    }
+    
+    func delete(page: SchematicPage) {
+        if let index = schematic.pages.index(of: page) {
+            page.parentPage = nil
+            schematic.pages.remove(at: index)
+        }
+        notifyChange()
+    }
+    
+    func delete(component: Component) {
+        for page in pages {
+            while let index = page.displayList.index(of: component) {
+                page.displayList.remove(at: index)
+            }
+        }
+    }
+    
     // MARK: Sanity Checks
     
     var components: Set<Component> {
@@ -275,6 +322,61 @@ class SchematicDocument: NSDocument {
     
     @IBAction func closeLibrary(_ sender: AnyObject) {
         libraryManager?.closeLibrary(self)
+    }
+    
+    @IBAction func addLibraryCategory(_ sender: AnyObject) {
+        qAndASheet?.askQuestion(question: "Category Name?", in: drawingView?.window, completion: { (answer) in
+            if let answer = answer {
+                let newPage = SchematicPage()
+                newPage.name = answer
+                self.libraryManager?.currentLib?.add(page: newPage, to: self.libraryManager?.currentSelectedPage)
+            }
+        })
+    }
+    
+    @IBAction func deleteLibraryCategory(_ sender: AnyObject) {
+        if let category = libraryManager?.currentSelectedPage {
+            let alert = NSAlert()
+            alert.messageText = "Are you sure you want to delete the category \(category.name)"
+            alert.informativeText = "This will delete all components in the category and cannot be undone!"
+            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: "Cancel")
+            if let window = drawingView?.window {
+                alert.beginSheetModal(for: window) { (response) in
+                    alert.window.orderOut(self)
+                    if response == NSAlertFirstButtonReturn {
+                        self.libraryManager?.currentLib?.delete(page: category)
+                    }
+                }
+            }
+        }
+    }
+    
+    @IBAction func deleteComponentFromLibrary(_ sender: AnyObject) {
+        if let component = libraryManager?.currentSelectedComponent {
+            let alert = NSAlert()
+            alert.messageText = "Are you sure you want to delete the component \(component.name)"
+            alert.informativeText = "This operation cannot be undone!"
+            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: "Cancel")
+            if let window = drawingView?.window {
+                alert.beginSheetModal(for: window) { (response) in
+                    alert.window.orderOut(self)
+                    if response == NSAlertFirstButtonReturn {
+                        self.libraryManager?.currentLib?.delete(component: component)
+                    }
+                }
+            }
+        }
+    }
+    
+    @IBAction func writeToLibrary(_ sender: AnyObject) {
+        if let selection = drawingView?.selection {
+            let parts = selection.flatMap { $0 as? Component }
+            if parts.count > 0 {
+                libraryManager?.writePartsToLibrary(components: parts)
+            }
+        }
     }
     
     @IBAction func populatePartParameters(_ sender: AnyObject) {

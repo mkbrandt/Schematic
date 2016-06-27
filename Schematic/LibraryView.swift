@@ -10,6 +10,8 @@ import Cocoa
 
 class LibraryPreview: NSView, NSDraggingSource
 {
+    @IBOutlet var drawingView: SchematicView?
+    
     var component: Component? {
         didSet {
             if let component = component {
@@ -20,6 +22,7 @@ class LibraryPreview: NSView, NSDraggingSource
                 let size = frame.size * r
                 let offset = CGPoint(x: size.width - csize.width, y: size.height - csize.height) / 2
                 bounds = CGRect(origin: component.bounds.origin - offset, size: size).insetBy(dx: -5, dy: -5)
+                drawingView?.selection = [component]     // make it show in the graphic inspector
             }
             needsDisplay = true
         }
@@ -45,12 +48,25 @@ class LibraryPreview: NSView, NSDraggingSource
     }
 }
 
-class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOutlineViewDataSource, NSOutlineViewDelegate
+extension SchematicDocument
+{
+    var categories: [SchematicPage]     { return schematic.pages.filter { $0.parentPage == nil }}
+}
+
+extension SchematicPage
+{
+    var categories: [SchematicPage]     { return childPages.sorted { $0.name < $1.name } }
+}
+
+class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOutlineViewDataSource, NSOutlineViewDelegate, SchematicDelegate
 {
     @IBOutlet var librariesTable: NSTableView!
     @IBOutlet var componentsTable: NSOutlineView!
     @IBOutlet var preview: LibraryPreview!
     @IBOutlet var librarySplitView: NSView!
+    
+    var currentSelectedPage: SchematicPage?
+    var currentSelectedComponent: Component?    { return preview.component }
     
     var openLibs: [SchematicDocument] = []
     var currentIndex: Int = 0
@@ -61,13 +77,8 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return nil
     }
     
-    var components: Set<Component>  { return currentLib?.components ?? [] }
-    var sortedComponents: [Component] {
-        return components.sorted { $0.sortName < $1.sortName }
-    }
-    
     var bookmarks: [Data] {
-        let answer: [Data] = openLibs.flatMap { (lib: SchematicDocument) in
+        let answer: [Data] = openLibs.dropFirst().flatMap { lib in
             let bookmark = try? lib.fileURL?.bookmarkData(NSURL.BookmarkCreationOptions.withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
             if let bookmark = bookmark {
                 return bookmark
@@ -77,9 +88,6 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return answer
     }
     
-    //var packages: Set<Package>      { return Set(components.flatMap { $0.package }) }
-    //var sortedPackages: [Package]   { return packages.sort { $0.sortName < $1.sortName } }
-    
     func setViewState() {
         if openLibs.count == 0 {
             librarySplitView.isHidden = true
@@ -88,17 +96,33 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         }
     }
     
+    func documentDidChangeStructure() {
+        forceRefresh()
+    }
+    
+    func forceRefresh() {
+        DispatchQueue.main.async {
+            self.librariesTable.reloadData()
+            self.componentsTable.reloadData()
+        }
+    }
+    
     override func awakeFromNib() {
+        if openLibs.count == 0 {
+            openLibs.append(cloudLibrary)
+            cloudLibrary.subscribeToChanges(delegate: self)
+            forceRefresh()
+        }
         setViewState()
     }
     
     func openLibraryURL(_ url: URL) {
         do {
-            let lib = try SchematicDocument(contentsOf: url, ofType: "")
-            openLibs.append(lib)
+            let sch = try SchematicDocument(contentsOf: url, ofType: "")
+            openLibs.append(sch)
+            sch.subscribeToChanges(delegate: self)
             currentIndex = openLibs.count - 1
-            componentsTable.reloadData()
-            librariesTable.reloadData()
+            forceRefresh()
         } catch(let err) {
             print("Error opening: \(err)")
         }
@@ -130,9 +154,10 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     }
     
     @IBAction func closeLibrary(_ sender: AnyObject) {
-        if currentIndex >= 0 && currentIndex < openLibs.count {
+        if currentIndex > 0 && currentIndex < openLibs.count {
             let lib = openLibs.remove(at: currentIndex)
             lib.close()
+            lib.fileURL?.stopAccessingSecurityScopedResource()
         }
         setViewState()
         currentIndex = 0
@@ -156,57 +181,83 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
             librariesTable.reloadData()
         }
     }
+    
+    @IBAction func deleteSelected(_ sender: AnyObject) {
+        if let lib = currentLib {
+            if let component = currentSelectedComponent {
+                lib.delete(component: component)
+            } else if let page = currentSelectedPage {
+                lib.delete(page: page)
+            }
+        }
+    }
+    
+    func unhook() {
+        for lib in openLibs {
+            lib.unsubscribeToChanges(delegate: self)
+        }
+    }
+    
+    func writePartsToLibrary(components: [Component]) {
+        if let lib = currentLib {
+            if let page = currentSelectedPage {
+                lib.insert(components: components, in: page, at: 0)
+            }
+        }
+    }
 
 // MARK: TableView Data and Delegate
     
     func numberOfRows(in tableView: NSTableView) -> Int {
-        if tableView == librariesTable {
-            return openLibs.count
-        } else if tableView == componentsTable {
-            return sortedComponents.count
-        }
-        return 0
+        return openLibs.count
     }
     
     func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
-        if tableView == librariesTable {
-            return openLibs[row]
-        } else {
-            let comp = sortedComponents[row]
-            return comp.sortName
-        }
+        return openLibs[row].name
     }
     
     func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
-        if tableView == librariesTable {
-            currentIndex = row
-            componentsTable.reloadData()
-        } else {
-            preview.component = sortedComponents[row]
-        }
+        currentIndex = row
+        componentsTable.reloadData()
         return true
     }
 
-// MARK: Outline View Data and Delegate
+// MARK: OutlineView Data and Delegate
     
     func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: AnyObject?) -> AnyObject {
+        //print("self = \(self), index = \(currentIndex), current lib = \(currentLib), count = \(currentLib?.categories.count)")
         if let currentLib = currentLib where item == nil {
-            return currentLib.pages[index]
-        } else if let page = item as? SchematicPage {
-            let components = page.displayList.flatMap { $0 as? Component }
-            //let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
-            return components[index]
+            return currentLib.categories[index]
+        } else if let category = item as? SchematicPage {
+            let subcategories = category.categories
+            let components = category.components.sorted { $0.name < $1.name }
+            //let freeComponents = components.filter { $0.package == nil }
+            //let packages = Set(components.flatMap { $0.package }).sorted { $0.partNumber < $1.partNumber }
+            if index < subcategories.count {
+                return subcategories[index]
+            //} else if index - subcategories.count < freeComponents.count {
+            //    return freeComponents[index - subcategories.count]
+            //} else {
+            //    return packages[index - subcategories.count - freeComponents.count]
+            //}
+            } else {
+                return components[index - subcategories.count]
+            }
         }
-        return "---"
+        return "WTF"
     }
     
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: AnyObject?) -> Int {
         if item == nil {
-            return currentLib?.pages.count ?? 0
-        } else if let page = item as? SchematicPage {
-            let components = page.displayList.flatMap { $0 as? Component }
-            //let packages = Set(components.flatMap { $0.package }).sort { $0.partNumber < $1.partNumber }
-            return components.count
+            //print("self = \(self), index = \(currentIndex), current lib = \(currentLib), count = \(currentLib?.categories.count)")
+            return currentLib?.categories.count ?? 0
+        } else if let category = item as? SchematicPage {
+            let subcategories = category.categories
+            let components = category.components
+            //let freeComponents = components.filter { $0.package == nil }
+            //let packages = Set(components.flatMap { $0.package }).sorted { $0.partNumber < $1.partNumber }
+            //return subcategories.count + packages.count + freeComponents.count
+            return subcategories.count + components.count
         }
         return 0
     }
@@ -216,22 +267,29 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     }
     
     func outlineView(_ outlineView: NSOutlineView, objectValueFor tableColumn: NSTableColumn?, byItem item: AnyObject?) -> AnyObject? {
-        if let page = item as? SchematicPage {
-            return page.name
+        if let category = item as? SchematicPage {
+            return category.name
         } else if let package = item as? Package {
-            return package.partNumber ?? package.components.first?.value ?? "---"
+            return package.components.first?.name ?? "UNNAMED"
         } else if let component = item as? Component {
-            return component.value
+            return component.name
         }
         return "-"
     }
     
     func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: AnyObject) -> Bool {
+        currentSelectedPage = nil
         if let package = item as? Package, let component = package.components.first {
             preview.component = component
         } else if let component = item as? Component {
             preview.component = component
+        } else {
+            if let page = item as? SchematicPage {
+                currentSelectedPage = page
+            }
+            preview.component = nil
         }
+        Swift.print("selected page = \(currentSelectedPage?.name), object = \(preview.component?.name)")
         return true
     }
 }

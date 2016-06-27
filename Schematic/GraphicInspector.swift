@@ -228,16 +228,40 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
         return nil
     }
     
+    
     @IBAction func attributeChanged(_ sender: AnyObject) {
         let row = tableView.selectedRow
         if let g = inspectee as? AttributedGraphic where row >= 0 && row <= g.attributeNames.count {
             drawingView.setNeedsDisplay(g.bounds)
             g.setAttribute(sender.stringValue, name: g.attributeNames[row])
             drawingView.setNeedsDisplay(g.bounds)
+            // FIXME: save the graphic if in a library
+        }
+    }
+    
+    @IBAction func attributeNameChanged(_ sender: AnyObject) {
+        let row = tableView.selectedRow
+        if let g = inspectee as? AttributedGraphic where row >= 0 && row <= g.attributeNames.count {
+            drawingView.setNeedsDisplay(g.bounds)
+            let oldName = g.attributeNames[row]
+            let newName: String = sender.stringValue
+            if let value = g.attributes[oldName] {
+                g.attributes[oldName] = nil
+                g.attributes[newName] = value
+                // FIXME: Need to figure out how to save the graphic if it is in a library
+            }
         }
     }
         
     override func draw(_ dirtyRect: NSRect) {
         NSEraseRect(dirtyRect)
+    }
+    
+    @IBAction func addAttribute(_ sender: AnyObject) {
+        
+    }
+    
+    @IBAction func deleteAttribute(_ sender: AnyObject) {
+        
     }
 }

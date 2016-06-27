@@ -746,6 +746,7 @@ class SchematicView: ZoomView
         package.prefix = packagingSheet.prefixField.stringValue
         package.partNumber = packagingSheet.partNumberField.stringValue
         package.footprint = packagingSheet.footprintField.stringValue
+        package.manufacturer = packagingSheet.vendorField.stringValue
         package.assignReference(document)
         components.forEach {
             let refDes = AttributeText(origin: $0.bounds.topLeft, format: "=refDes", owner: $0)

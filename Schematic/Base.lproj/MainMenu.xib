@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="10116" systemVersion="15F34" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="11129.15" systemVersion="15F34" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="10116"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="11129.15"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -226,6 +226,38 @@
                         </items>
                     </menu>
                 </menuItem>
+                <menuItem title="Library" id="xJt-kB-5sm">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Library" id="dqO-8i-p0d">
+                        <items>
+                            <menuItem title="Write Component to Library" id="Gph-vt-3La">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="writeToLibrary:" target="-1" id="XG3-kc-FOA"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Remove Component from Library" id="Guj-Ar-ePp">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="deleteComponentFromLibrary:" target="-1" id="CBo-FQ-5cE"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="4yR-Se-aYl"/>
+                            <menuItem title="Create Library Category" id="78e-LP-onh">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="addLibraryCategory:" target="-1" id="GcB-vx-rO5"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Delete Library Category" id="dji-Fv-3fH">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="deleteLibraryCategory:" target="-1" id="QgR-9x-WMZ"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
                 <menuItem title="Create" id="z2F-3B-vzd">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Create" id="Ry2-TW-nw7">
@@ -347,6 +379,7 @@
             <subviews>
                 <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wat-VV-w1y">
                     <rect key="frame" x="103" y="158" width="44" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <connections>
                         <binding destination="KgX-8f-Iiq" name="value" keyPath="values.pinNameColor" id="4Rx-JY-o50">
@@ -358,6 +391,7 @@
                 </colorWell>
                 <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="JDV-qo-8Lb">
                     <rect key="frame" x="103" y="130" width="44" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <connections>
                         <binding destination="KgX-8f-Iiq" name="value" keyPath="values.pinNumberColor" id="gKz-VU-eu1">
@@ -369,6 +403,7 @@
                 </colorWell>
                 <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9ST-jK-Yh7">
                     <rect key="frame" x="103" y="102" width="44" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <connections>
                         <binding destination="KgX-8f-Iiq" name="value" keyPath="values.pinColor" id="QgR-Di-T4d">
@@ -380,6 +415,7 @@
                 </colorWell>
                 <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CaO-1d-eht">
                     <rect key="frame" x="103" y="76" width="44" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <connections>
                         <binding destination="KgX-8f-Iiq" name="value" keyPath="values.graphicColor" id="m1M-ND-exO">
@@ -391,6 +427,7 @@
                 </colorWell>
                 <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="J8J-a6-Ypi">
                     <rect key="frame" x="103" y="48" width="44" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <connections>
                         <binding destination="KgX-8f-Iiq" name="value" keyPath="values.attributeColor" id="eQ5-Kz-O45">
@@ -402,6 +439,7 @@
                 </colorWell>
                 <colorWell fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XXU-Oz-lof">
                     <rect key="frame" x="103" y="20" width="44" height="23"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="color" red="0.05813049898" green="0.055541899059999997" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                     <connections>
                         <binding destination="KgX-8f-Iiq" name="value" keyPath="values.wireColor" id="HUl-4h-yyC">
@@ -413,6 +451,7 @@
                 </colorWell>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9CB-RM-GqS">
                     <rect key="frame" x="28" y="158" width="69" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Pin Names" id="Km7-r9-BYv">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -421,6 +460,7 @@
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KPn-Be-AGE">
                     <rect key="frame" x="15" y="130" width="82" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Pin Numbers" id="gKk-GB-ORk">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -429,6 +469,7 @@
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4Qn-os-msF">
                     <rect key="frame" x="67" y="102" width="30" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Pins" id="QZn-5g-eud">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -437,6 +478,7 @@
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2kX-10-LC4">
                     <rect key="frame" x="38" y="76" width="59" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Graphics" id="Fw5-ak-fS8">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -445,6 +487,7 @@
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6Fx-fA-dQu">
                     <rect key="frame" x="33" y="48" width="64" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Attributes" id="kHI-4K-o3I">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -453,6 +496,7 @@
                 </textField>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zuj-IT-Woe">
                     <rect key="frame" x="33" y="20" width="64" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Net Wires" id="Nj7-Ww-ALW">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -468,9 +512,6 @@
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <point key="canvasLocation" x="930.5" y="749"/>
         </customView>
-        <menuItem title="Item" id="1D7-iB-kRt">
-            <modifierMask key="keyEquivalentModifierMask"/>
-        </menuItem>
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" oneShot="NO" releasedWhenClosed="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="qR0-Ke-3kN" customClass="SchematicPreferenceWindow" customModule="Schematic" customModuleProvider="target">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>

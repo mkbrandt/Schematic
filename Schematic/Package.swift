@@ -35,12 +35,15 @@ class Package: AttributedGraphic
         set { attributes["manufacturer"] = newValue }
     }
     
+    var primaryComponent: Component?
+    
     var components: Set<Component> = [] {
         willSet {
             components.forEach({ $0.package = nil })
         }
         didSet {
             components.forEach({ $0.package = self })
+            primaryComponent = components.first
         }
     }
     
@@ -57,12 +60,15 @@ class Package: AttributedGraphic
     
     init(components: Set<Component>) {
         self.components = components
+        self.primaryComponent = components.first
         super.init(origin: CGPoint())
         components.forEach { $0.package = self }
     }
 
     required init?(coder decoder: NSCoder) {
         components = decoder.decodeObject(forKey: "components") as? Set<Component> ?? []
+        primaryComponent = components.first
+        primaryComponent = decoder.decodeObject(forKey: "primaryComponent") as? Component
         super.init(coder: decoder)
     }
     

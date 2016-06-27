@@ -265,7 +265,7 @@ extension SchematicDocument
                     }
                 }
             } catch (let err) {
-                print("error: \(err)")
+                Swift.print("error: \(err)")
             }
         }
         return netlisters
