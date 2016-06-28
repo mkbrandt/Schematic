@@ -8,6 +8,19 @@
 
 import Cocoa
 
+class ArcState: CircleState {
+    var startAngle: CGFloat
+    var endAngle: CGFloat
+    var clockwise: Bool
+    
+    init(origin: CGPoint, radius: CGFloat, startAngle: CGFloat, endAngle: CGFloat, clockwise: Bool) {
+        self.startAngle = startAngle
+        self.endAngle = endAngle
+        self.clockwise = clockwise
+        super.init(origin: origin, radius: radius)
+    }
+}
+
 class ArcGraphic: CircleGraphic
 {
     var startAngle: CGFloat
@@ -63,6 +76,16 @@ class ArcGraphic: CircleGraphic
             ea += 2 * PI
         }
         return ea - sa
+    }
+    
+    override var state: GraphicState {
+        get { return ArcState(origin: origin, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: clockwise) }
+        set {
+            super.state = newValue
+            if let newValue = newValue as? ArcState {
+                (startAngle, endAngle, clockwise) = (newValue.startAngle, newValue.endAngle, newValue.clockwise)
+            }
+        }
     }
     
     override var inspectionName: String     { return "Arc" }
@@ -175,7 +198,7 @@ class ArcGraphic: CircleGraphic
         }
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint) {
         origin = origin + offset
     }
     

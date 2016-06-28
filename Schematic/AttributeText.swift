@@ -202,8 +202,8 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         }
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
-        super.moveBy(offset, view: view)
+    override func moveBy(_ offset: CGPoint) {
+        super.moveBy(offset)
         invalidateDrawing()
     }
     

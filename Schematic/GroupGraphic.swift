@@ -25,6 +25,15 @@ func jsonToGraphic(_ json: JSON) -> Graphic {
     }
 }
 
+class GroupState: GraphicState {
+    var contentStates: [(Graphic, GraphicState)]
+    
+    init(contents: [Graphic]) {
+        contentStates = contents.map { ($0, $0.state) }
+        super.init(origin: CGPoint())
+    }
+}
+
 class GroupGraphic: Graphic
 {
     override var origin: CGPoint {
@@ -39,6 +48,19 @@ class GroupGraphic: Graphic
     override var bounds: CGRect         { return contents.reduce(CGRect(), combine: { $0 + $1.bounds }) }
     override var centerPoint: CGPoint   { return contents.reduce(CGPoint(), combine: { $0 + $1.centerPoint }) / CGFloat(contents.count) }
     override var points: [CGPoint]      { return boundingRect.points }
+    
+    override var state: GraphicState {
+        get { return GroupState(contents: Array(contents)) }
+        set {
+            if let newValue = newValue as? GroupState {
+                //contents = []
+                for (g, st) in newValue.contentStates {
+                    g.state = st
+                    //contents.insert(g)
+                }
+            }
+        }
+    }
 
     override var inspectionName: String         { return "Group" }
     override var inspectables: [Inspectable]    { return [] }
@@ -100,9 +122,9 @@ class GroupGraphic: Graphic
         return nil
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint) {
         for g in contents {
-            g.moveBy(offset, view: view)
+            g.moveBy(offset)
         }
     }
     

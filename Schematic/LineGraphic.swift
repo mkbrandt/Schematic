@@ -8,6 +8,15 @@
 
 import Cocoa
 
+class LineState: GraphicState {
+    var endPoint: CGPoint
+    
+    init(origin: CGPoint, endPoint: CGPoint) {
+        self.endPoint = endPoint
+        super.init(origin: origin)
+    }
+}
+
 class LineGraphic: PrimitiveGraphic
 {
     var endPoint: CGPoint {
@@ -46,6 +55,15 @@ class LineGraphic: PrimitiveGraphic
             Inspectable(name: "angle", type: .angle),
             Inspectable(name: "length", type: .float)
         ]
+    }
+    
+    override var state: GraphicState {
+        get { return LineState(origin: origin, endPoint: endPoint) }
+        set {
+            if let newValue = newValue as? LineState {
+                (origin, endPoint) = (newValue.origin, newValue.endPoint)
+            }
+        }
     }
     
     override var inspectionName: String     { return "Line" }
@@ -139,7 +157,7 @@ class LineGraphic: PrimitiveGraphic
         return nil
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint) {
         origin = origin + offset
         endPoint = endPoint + offset
     }

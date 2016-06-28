@@ -32,6 +32,14 @@ class Inspectable: NSObject {
     }
 }
 
+class GraphicState {
+    var origin: CGPoint
+    
+    init(origin: CGPoint) {
+        self.origin = origin
+    }
+}
+
 var _NextGraphicID = 0
 var nextGraphicID: Int { _NextGraphicID += 1; return _NextGraphicID }
 
@@ -61,6 +69,11 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     var inspectionName: String      { return "Graphic" }
     
     var json: JSON  { return JSON(["origin": origin.json]) }
+    
+    var state: GraphicState {
+        get { return GraphicState(origin: origin) }
+        set { origin = newValue.origin }
+    }
     
     init(origin: CGPoint) {
         self.origin = origin
@@ -191,20 +204,29 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         return bounds.intersects(rect)
     }
     
-    func moveBy(_ offset: CGPoint, view: SchematicView) {
-        view.setNeedsDisplay(bounds)
+    func restoreUndo(state: GraphicState, view: SchematicView) {
+        view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
+        let oldState = self.state
+        self.state = state
+        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+            self.restoreUndo(state: oldState, view: view)
+        })
+        view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
+    }
+
+    func saveUndoState(view: SchematicView) {
+        let state = self.state
+        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+            self.restoreUndo(state: state, view: view)
+        })
+    }
+    
+    func moveBy(_ offset: CGPoint) {
         origin = origin + offset
-       view.setNeedsDisplay(bounds)
     }
         
-    func moveTo(_ location: CGPoint, view: SchematicView) {
-        let p = origin
-        let offset = location - origin
-        moveBy(offset, view: view)
-        view.undoManager?.registerUndoWithTarget(self) { (g) in
-            g.moveTo(p, view: view)
-            view.needsDisplay = true
-        }
+    func moveTo(_ location: CGPoint) {
+        moveBy(location - origin)
     }
     
     func elementAtPoint(_ point: CGPoint) -> Graphic? {

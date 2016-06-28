@@ -8,6 +8,15 @@
 
 import Cocoa
 
+class RectState: GraphicState {
+    var size: CGSize
+    
+    init(origin: CGPoint, size: CGSize) {
+        self.size = size
+        super.init(origin: origin)
+    }
+}
+
 class RectGraphic: PrimitiveGraphic
 {
     var size: CGSize {
@@ -39,6 +48,15 @@ class RectGraphic: PrimitiveGraphic
     override var bounds: CGRect  { return rect + super.bounds }
     override var points: [CGPoint] {
         get { return [rect.origin, rect.topLeft, rect.topRight, rect.bottomRight] }
+    }
+    
+    override var state: GraphicState {
+        get { return RectState(origin: origin, size: size) }
+        set {
+            if let newValue = newValue as? RectState {
+                (origin, size) = (newValue.origin, newValue.size)
+            }
+        }
     }
     
     override var centerPoint: CGPoint { return rect.center }
@@ -106,7 +124,7 @@ class RectGraphic: PrimitiveGraphic
         rect = rect.rotatedAroundPoint(center, angle: angle)
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint) {
         origin = origin + offset
     }
     

@@ -12,9 +12,28 @@ enum NetOrientation: Int {
     case horizontal, vertical
 }
 
-struct NetState {
+class NetState: GraphicState {
     var originNode: Node
     var endPointNode: Node
+    
+    init(originNode: Node, endPointNode: Node) {
+        self.originNode = originNode
+        self.endPointNode = endPointNode
+        super.init(origin: CGPoint())
+    }
+}
+
+class PhysicalNetState: GraphicState {
+    var netStates: [(Net, GraphicState)]
+    var nodeStates: [(Node, GraphicState)]
+    
+    init(nets: Set<Net>, nodes: Set<Node>) {
+        netStates = nets.map { ($0, $0.state) }
+        nodeStates = nodes.map { ($0, $0.state) }
+        super.init(origin: CGPoint())
+    }
+    
+    var bounds: CGRect { return netStates.reduce(CGRect()) { $0 + $1.0.bounds } }
 }
 
 class Net: AttributedGraphic
@@ -29,9 +48,15 @@ class Net: AttributedGraphic
         didSet  { endPointNode.attachments.insert(self); originNode.attachments.insert(self) }
     }
     
+    var previousOrientation: NetOrientation?
     var orientation: NetOrientation {
         let delta = endPoint - origin
-        return abs(delta.x) < abs(delta.y) ? .vertical : .horizontal
+        if let previousOrientation = previousOrientation where abs(delta.x) == abs(delta.y) {
+            return previousOrientation
+        }
+        let currentOrientation: NetOrientation = abs(delta.x) < abs(delta.y) ? .vertical : .horizontal
+        previousOrientation = currentOrientation
+        return currentOrientation
     }
     
     override var origin: CGPoint {
@@ -52,11 +77,35 @@ class Net: AttributedGraphic
         }
     }
     
-    var state: NetState {
+    override var state: GraphicState {
         get { return NetState(originNode: originNode, endPointNode: endPointNode) }
-        set { originNode = newValue.originNode; endPointNode = newValue.endPointNode }
+        set {
+            if let newValue = newValue as? NetState {
+                originNode = newValue.originNode
+                endPointNode = newValue.endPointNode
+            } else if let newValue = newValue as? PhysicalNetState {
+                self.physicalNetState = newValue
+            }
+        }
     }
-    var lastUndoSave = -1
+    
+    var physicalNetState: GraphicState {
+        get {
+            let nets = physicallyConnectedNets([])
+            let nodes = nets.reduce([]) { return $0 + [$1.originNode, $1.endPointNode] }
+            return PhysicalNetState(nets: Set(nets), nodes: Set(nodes))
+        }
+        set {
+            if let newValue = newValue as? PhysicalNetState {
+                for (net, st) in newValue.netStates {
+                    net.state = st
+                }
+                for (node, st) in newValue.nodeStates {
+                    node.state = st
+                }
+            }
+        }
+    }
     
     override var description: String    { return "net \(name): \(origin) - \(endPoint)" }
     override var points: [CGPoint] { return [origin, endPoint] }
@@ -110,6 +159,27 @@ class Net: AttributedGraphic
         super.encode(with: coder)
     }
     
+    override func restoreUndo(state: GraphicState, view: SchematicView) {
+        if let state = state as? PhysicalNetState {
+            view.setNeedsDisplay(state.bounds.insetBy(dx: -5, dy: -5))
+            let oldState = self.state
+            self.state = state
+            view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+                self.restoreUndo(state: oldState, view: view)
+            })
+            view.setNeedsDisplay(state.bounds.insetBy(dx: -5, dy: -5))
+        } else {
+            super.restoreUndo(state: state, view: view)
+        }
+    }
+
+    override func saveUndoState(view: SchematicView) {
+        let state = self.physicalNetState
+        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+            self.restoreUndo(state: state, view: view)
+        })
+    }
+    
     func physicallyConnectedNets(_ gathered: Set<Net>) -> Set<Net> {
         if gathered.contains(self) {
             return gathered
@@ -154,32 +224,11 @@ class Net: AttributedGraphic
         }
         return super.elementAtPoint(point)
     }
-    
-    func restoreUndoState(_ state: NetState, view: SchematicView) {
-        view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
-        let oldState = self.state
-        self.state = state
-        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
-            self.restoreUndoState(oldState, view: view)
-        })
-        view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
-    }
-    
-    func saveUndoState(_ view: SchematicView) {
-        if undoSequence != lastUndoSave {
-            lastUndoSave = undoSequence
-            let state = self.state
-            view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
-                self.restoreUndoState(state, view: view)
-            })
-        }
-    }
-    
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
-        saveUndoState(view)
-        originNode.moveBy(offset, view: view)
-        endPointNode.moveBy(offset, view: view)
-        super.moveBy(offset, view: view)
+            
+    override func moveBy(_ offset: CGPoint) {
+        originNode.moveBy(offset)
+        endPointNode.moveBy(offset)
+        super.moveBy(offset)
     }
     
     func propagatedName(exclude: Set<Net>) -> String? {
@@ -196,6 +245,16 @@ class Net: AttributedGraphic
             }
         }
         return nil
+    }
+    
+    override func designCheck(_ view: SchematicView) {
+        if originNode.pin != nil {
+            originNode.designCheck(view)
+        }
+        endPointNode.designCheck(view)
+        if originNode.pin == nil {
+            originNode.designCheck(view)
+        }
     }
     
     func relink(_ view: SchematicView) {

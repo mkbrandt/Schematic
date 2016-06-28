@@ -56,9 +56,11 @@ class Component: AttributedGraphic
         return json
     }
     
+    var connectedNets: Set<Net>    { return Set(pins.flatMap { $0.node?.attachments.first }) }
+    
     override var origin: CGPoint {
         get { return bounds.origin }
-        set { fatalError("AttributedGraphic.setOrigin not implemented") }
+        set { moveBy(newValue - origin) }
     }
     
     override var bounds: CGRect {
@@ -181,9 +183,9 @@ class Component: AttributedGraphic
         }
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
-        outline?.moveBy(offset, view: view)
-        elements.forEach { $0.moveBy(offset, view: view) }
+    override func moveBy(_ offset: CGPoint) {
+        outline?.moveBy(offset)
+        elements.forEach { $0.moveBy(offset) }
         cachedBounds = nil
     }
     

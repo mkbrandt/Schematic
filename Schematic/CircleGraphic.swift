@@ -8,6 +8,15 @@
 
 import Cocoa
 
+class CircleState: GraphicState {
+    var radius: CGFloat
+    
+    init(origin: CGPoint, radius: CGFloat) {
+        self.radius = radius
+        super.init(origin: origin)
+    }
+}
+
 class CircleGraphic: PrimitiveGraphic
 {
     var radius: CGFloat {
@@ -22,6 +31,15 @@ class CircleGraphic: PrimitiveGraphic
         return super.inspectables + [
             Inspectable(name: "radius", type: .float)
         ]
+    }
+    
+    override var state: GraphicState {
+        get { return CircleState(origin: origin, radius: radius) }
+        set {
+            if let newValue = newValue as? CircleState {
+                (origin, radius) = (newValue.origin, newValue.radius)
+            }
+        }
     }
 
     override var inspectionName: String     { return "Circle" }

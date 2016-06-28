@@ -426,7 +426,7 @@ class SchematicView: ZoomView
         } else if let comp = g as? Component {
             if let p1 = comp.pins.first?.origin {
                 let p2 = self.snapToGrid(p1)
-                g.moveBy(p2 - p1, view: self)
+                g.moveBy(p2 - p1)
             }
         }
     }
@@ -437,7 +437,7 @@ class SchematicView: ZoomView
             let pin = source.pinCopy
             let location = snapToGrid(convert(sender.draggingLocation(), from: nil))
             source.updatePinAttributes(self)
-            pin.moveTo(location, view: self)
+            pin.moveTo(location)
             construction = pin
             needsDisplay = true
             return .copy
@@ -446,7 +446,7 @@ class SchematicView: ZoomView
                 //Swift.print("Got graphic: \(g)")
                 construction = g
                 let location = snapToGrid(convert(sender.draggingLocation(), from: nil))
-                construction?.moveTo(location, view: self)
+                construction?.moveTo(location)
                 needsDisplay = true
                 sender.enumerateDraggingItems(.clearNonenumeratedImages, for: self, classes: [], searchOptions: [:]) { _ in }
                 return .move
@@ -459,7 +459,7 @@ class SchematicView: ZoomView
                 item.setDraggingFrame(fr, contents: image)
                 self.construction = g
                 let location = self.snapToGrid(self.convert(sender.draggingLocation(), from: nil))
-                g.moveTo(location, view: self)
+                g.moveTo(location)
                 self.adjustPosition(g)
                 self.needsDisplay = true
                 return
@@ -471,7 +471,7 @@ class SchematicView: ZoomView
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
         let location = snapToGrid(convert(sender.draggingLocation(), from: nil))
         if let g = construction {
-            g.moveTo(location, view: self)
+            g.moveTo(location)
             adjustPosition(g)
         }
         needsDisplay = true
@@ -620,7 +620,7 @@ class SchematicView: ZoomView
             if let graphics = pasteBoard.readObjects(forClasses: [Graphic.self], options:[:]) as? [Graphic] {
                 let graphicSet = Set(graphics)
                 let group = GroupGraphic(contents: graphicSet)
-                group.moveTo(pasteOrigin + pasteOffset, view: self)
+                group.moveTo(pasteOrigin + pasteOffset)
                 pasteOrigin = group.origin
                 addGraphics(graphicSet)
                 graphicSet.forEach {

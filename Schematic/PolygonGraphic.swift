@@ -8,6 +8,15 @@
 
 import Cocoa
 
+class PolygonState: GraphicState {
+    var vertices: [CGPoint]
+    
+    init(origin: CGPoint, vertices: [CGPoint]) {
+        self.vertices = vertices
+        super.init(origin: origin)
+    }
+}
+
 class PolygonGraphic: PrimitiveGraphic
 {
     var _vertices: [CGPoint] = []
@@ -33,6 +42,16 @@ class PolygonGraphic: PrimitiveGraphic
         }
         lines.append(Line(origin: sp, endPoint: origin))
         return lines
+    }
+    
+    override var state: GraphicState {
+        get { return PolygonState(origin: origin, vertices: _vertices) }
+        set {
+            super.state = newValue
+            if let newValue = newValue as? PolygonState {
+                _vertices = newValue.vertices
+            }
+        }
     }
     
     override var json: JSON {
@@ -82,7 +101,7 @@ class PolygonGraphic: PrimitiveGraphic
         }
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
+    override func moveBy(_ offset: CGPoint) {
         points = points.map { $0 + offset }
     }
     

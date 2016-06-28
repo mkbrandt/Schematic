@@ -106,8 +106,8 @@ class AttributedGraphic: Graphic
         }
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
-        attributeTexts.forEach({ $0.moveBy(offset, view: view) })
+    override func moveBy(_ offset: CGPoint) {
+        attributeTexts.forEach({ $0.moveBy(offset) })
         cachedBounds = nil
     }
     

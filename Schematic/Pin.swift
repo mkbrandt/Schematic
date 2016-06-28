@@ -173,9 +173,9 @@ class Pin: AttributedGraphic
         }
     }
     
-    override func moveBy(_ offset: CGPoint, view: SchematicView) {
-        node?.moveBy(offset, view: view)
-        super.moveBy(offset, view: view)
+    override func moveBy(_ offset: CGPoint) {
+        node?.moveBy(offset)
+        super.moveBy(offset)
         origin = origin + offset
     }
     
