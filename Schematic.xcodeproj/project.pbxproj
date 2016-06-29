@@ -53,6 +53,7 @@
 		7A8C9BBF1CEA85AD000B79BE /* GroupGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BBE1CEA85AD000B79BE /* GroupGraphic.swift */; };
 		7A8C9BC11CEAA815000B79BE /* CircleGraphic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BC01CEAA815000B79BE /* CircleGraphic.swift */; };
 		7A8C9BC31CEAADD1000B79BE /* CircleTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A8C9BC21CEAADD1000B79BE /* CircleTool.swift */; };
+		7AB790D31D230CFB00CB9DAC /* BOM.csv.netlister in Resources */ = {isa = PBXBuildFile; fileRef = 7AB790D21D230CFB00CB9DAC /* BOM.csv.netlister */; };
 		7ACBCC311D01B0B9007EA736 /* Node.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ACBCC301D01B0B9007EA736 /* Node.swift */; };
 		7AD3685C1D04B2AD006EEAA9 /* NetList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD3685B1D04B2AD006EEAA9 /* NetList.swift */; };
 		7AD368971D0B20A7006EEAA9 /* OrCAD.net.netlister in Resources */ = {isa = PBXBuildFile; fileRef = 7AD368961D0B20A7006EEAA9 /* OrCAD.net.netlister */; };
@@ -111,6 +112,7 @@
 		7A8C9BBE1CEA85AD000B79BE /* GroupGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroupGraphic.swift; sourceTree = "<group>"; };
 		7A8C9BC01CEAA815000B79BE /* CircleGraphic.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleGraphic.swift; sourceTree = "<group>"; };
 		7A8C9BC21CEAADD1000B79BE /* CircleTool.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleTool.swift; sourceTree = "<group>"; };
+		7AB790D21D230CFB00CB9DAC /* BOM.csv.netlister */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = BOM.csv.netlister; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		7ACBCC301D01B0B9007EA736 /* Node.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Node.swift; sourceTree = "<group>"; };
 		7AD3685B1D04B2AD006EEAA9 /* NetList.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetList.swift; sourceTree = "<group>"; };
 		7AD3685D1D08BA5D006EEAA9 /* Schematic.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = Schematic.entitlements; sourceTree = "<group>"; };
@@ -191,6 +193,7 @@
 				7A5FBE0E1CE66FF80031ED77 /* MainMenu.xib */,
 				7A5FBE111CE66FF80031ED77 /* Info.plist */,
 				7AD368961D0B20A7006EEAA9 /* OrCAD.net.netlister */,
+				7AB790D21D230CFB00CB9DAC /* BOM.csv.netlister */,
 				7AD368981D0C75EE006EEAA9 /* JSON.json.netlister */,
 			);
 			path = Schematic;
@@ -321,6 +324,7 @@
 				7AD368991D0C75EE006EEAA9 /* JSON.json.netlister in Resources */,
 				7A5FBE0B1CE66FF80031ED77 /* SchematicDocument.xib in Resources */,
 				7A5FBE101CE66FF80031ED77 /* MainMenu.xib in Resources */,
+				7AB790D31D230CFB00CB9DAC /* BOM.csv.netlister in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

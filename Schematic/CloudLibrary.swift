@@ -141,8 +141,8 @@ class CloudLibrary: SchematicDocument
                         let data = record["data"] as? Data,
                         let newComponent = NSKeyedUnarchiver.unarchiveObject(with: data) as? Component {
                             newComponent.record = record
-                            oldPage.displayList = displayList.filter { $0 != component }
-                            newPage.displayList.append(newComponent)
+                            oldPage.displayList.remove(component)
+                            newPage.displayList.insert(newComponent)
                             didModify()
                             return newComponent
                         }
@@ -157,7 +157,7 @@ class CloudLibrary: SchematicDocument
                 let component = NSKeyedUnarchiver.unarchiveObject(with: data) as? Component {
                 component.record = record
                 if let page = parentPage(record: record) {
-                    page.displayList.append(component)
+                    page.displayList.insert(component)
                     didModify(forceWrite: false)
                     return component
                 } else {
@@ -168,7 +168,7 @@ class CloudLibrary: SchematicDocument
         return nil
     }
     
-    override func insert(components: [Component], in page: SchematicPage, at index: Int) {
+    override func insert(components: [Component], in page: SchematicPage) {
         if let parentRecord = page.record {
             var records: [CKRecord] = []
             for comp in components {
@@ -190,7 +190,7 @@ class CloudLibrary: SchematicDocument
                 }
             }
             cloudDatabase.add(writeOp)
-            super.insert(components: components, in: page, at: index)
+            super.insert(components: components, in: page)
         }
         didModify(forceWrite: true)
     }

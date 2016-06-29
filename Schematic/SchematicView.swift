@@ -17,7 +17,7 @@ class SchematicView: ZoomView
     @IBOutlet var componentSheet: ComponentSheet!
     @IBOutlet var packagingSheet: PackagingSheet!
     
-    var displayList: [Graphic] {
+    var displayList: Set<Graphic> {
         get { return document.page.displayList }
         set { document.page.displayList = newValue }
     }
@@ -253,7 +253,7 @@ class SchematicView: ZoomView
     
     func addGraphics(_ graphics: Set<Graphic>) {
         document.willChangeValue(forKey: "unplacedComponents")
-        displayList.append(contentsOf: graphics)
+        displayList.formUnion(graphics)
         document.didChangeValue(forKey: "unplacedComponents")
         undoManager?.prepare(withInvocationTarget: self).deleteGraphics(graphics)
         needsDisplay = true
@@ -268,7 +268,7 @@ class SchematicView: ZoomView
         removeAttributes(attrs)
         document.willChangeValue(forKey: "unplacedComponents")
         graphics.forEach { $0.unlink(self) }
-        displayList = displayList.filter { !graphics.contains($0) }
+        displayList.subtract(graphics)
         undoManager?.prepare(withInvocationTarget: self).addGraphics(graphics)
         document.didChangeValue(forKey: "unplacedComponents")
         needsDisplay = true

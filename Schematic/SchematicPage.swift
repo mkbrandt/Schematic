@@ -15,7 +15,7 @@ class SchematicPage: NSObject, NSCoding
 {
     var name: String
     var pageSize: CGSize = CGSize(width: 100 * 17, height: 100 * 11)            // B Size by default
-    var displayList: [Graphic] = []
+    var displayList: Set<Graphic> = []
     var record: CKRecord?
     var parentPage: SchematicPage? {
         willSet {
@@ -43,7 +43,13 @@ class SchematicPage: NSObject, NSCoding
         name = decoder.decodeObject(forKey: "name") as? String ?? "unnamed"
         pageSize = decoder.decodeSize(forKey: "pageSize")
         parentPage = decoder.decodeObject(forKey: "parentPage") as? SchematicPage
-        displayList = decoder.decodeObject(forKey: "displayList") as? [Graphic] ?? []
+        if let displayList = decoder.decodeObject(forKey: "displayList") {
+            if let displayList = displayList as? Set<Graphic> {
+                self.displayList = displayList
+            } else if let displayList = displayList as? [Graphic] {         // backward compatibility
+                self.displayList = Set(displayList)
+            }
+        }
         record = decoder.decodeObject(forKey: "record") as? CKRecord
         super.init()
         if let parent = parentPage {

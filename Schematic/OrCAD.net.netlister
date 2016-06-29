@@ -5,6 +5,7 @@ require 'json'
 require 'pp'
 
 input = $stdin.read
+input = input.force_encoding("utf-8")
 
 netlist = JSON.parse(input)
 

@@ -166,7 +166,7 @@ class KLibRipper: NSObject
                 origin.y += 100
                 origin.x = 100
             }
-            page.displayList.insert(comp, at: 0)
+            page.displayList.insert(comp)
         }
     }
     

@@ -23,6 +23,7 @@ class LibraryPreview: NSView, NSDraggingSource
                 let offset = CGPoint(x: size.width - csize.width, y: size.height - csize.height) / 2
                 bounds = CGRect(origin: component.bounds.origin - offset, size: size).insetBy(dx: -5, dy: -5)
                 drawingView?.selection = [component]     // make it show in the graphic inspector
+                component.selected = false
             }
             needsDisplay = true
         }
@@ -201,7 +202,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     func writePartsToLibrary(components: [Component]) {
         if let lib = currentLib {
             if let page = currentSelectedPage {
-                lib.insert(components: components, in: page, at: 0)
+                lib.insert(components: components, in: page)
             }
         }
     }

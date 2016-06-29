@@ -55,9 +55,14 @@ class Pin: AttributedGraphic
         set { attributes["pinNumber"] = newValue }
     }
     
-    var netName: String? {
+    var _implicitNetName: String?       // used for phantom pins
+    var implicitNetName: String? {
         let netNameAttributes = attributeTexts.flatMap({$0 as? NetNameAttributeText })
-        return netNameAttributes.first?.netName
+        return netNameAttributes.first?.netName ?? _implicitNetName
+    }
+    
+    var netName: String? {
+        return implicitNetName ?? node?.attachments.first?.name
     }
     
     weak var pinNameText: AttributeText?        { return attributeTextsForAttribute("pinName").first }

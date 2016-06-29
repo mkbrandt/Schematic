@@ -35,6 +35,11 @@ class Package: AttributedGraphic
         set { attributes["manufacturer"] = newValue }
     }
     
+    var netpins: String? {
+        get { return attributes["netpins"] }
+        set { attributes["netpins"] = newValue }
+    }
+    
     var primaryComponent: Component?
     
     var components: Set<Component> = [] {
@@ -45,6 +50,29 @@ class Package: AttributedGraphic
             components.forEach({ $0.package = self })
             primaryComponent = components.first
         }
+    }
+    
+    var pins: [Pin] {
+        var pins: [Pin] = []
+        
+        for comp in components {
+            pins = pins + comp.pins
+        }
+        
+        if let np = netpins {
+            let pindefs = np.components(separatedBy: ",")
+            for pdef in pindefs {
+                let pd = pdef.components(separatedBy: "=")
+                if pd.count == 2 {
+                    let netName = pd[0].trimmingCharacters(in: .whitespaces)
+                    let pinNumber = pd[1].trimmingCharacters(in: .whitespaces)
+                    let phantomPin = Pin(origin: CGPoint(), component: nil, name: netName, number: pinNumber, orientation: .right)
+                    phantomPin._implicitNetName = netName
+                    pins.append(phantomPin)
+                }
+            }
+        }
+        return pins
     }
     
     override var json: JSON {
@@ -63,13 +91,14 @@ class Package: AttributedGraphic
         self.primaryComponent = components.first
         super.init(origin: CGPoint())
         components.forEach { $0.package = self }
+        self.netpins = ""
     }
 
     required init?(coder decoder: NSCoder) {
+        super.init(coder: decoder)
         components = decoder.decodeObject(forKey: "components") as? Set<Component> ?? []
         primaryComponent = components.first
         primaryComponent = decoder.decodeObject(forKey: "primaryComponent") as? Component
-        super.init(coder: decoder)
     }
     
     override init(json: JSON) {

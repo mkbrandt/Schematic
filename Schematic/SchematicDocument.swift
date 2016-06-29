@@ -92,7 +92,7 @@ class SchematicDocument: NSDocument
         return pages[currentPage]
     }
     
-    var displayList: [Graphic] {
+    var displayList: Set<Graphic> {
         get { return page.displayList }
         set { page.displayList = newValue }
     }
@@ -113,7 +113,7 @@ class SchematicDocument: NSDocument
     override var windowNibName: String? {
         return "SchematicDocument"
     }
-
+    
     override func data(ofType typeName: String) throws -> Data
     {
         if let libs = libraryManager?.bookmarks {
@@ -235,18 +235,9 @@ class SchematicDocument: NSDocument
         changeSubscriptions = changeSubscriptions.filter { $0 !== delegate }
     }
     
-    func insert(components: [Component], in page: SchematicPage, at index: Int) {
-        if index < page.displayList.count {
-            var index = index
-            for comp in components {
-                page.displayList.insert(comp, at: index)
-                index += 1
-            }
-        } else {
-            for comp in components {
-                page.displayList.append(comp)
-            }
-
+    func insert(components: [Component], in page: SchematicPage) {
+        for comp in components {
+            page.displayList.insert(comp)
         }
         notifyChange()
     }

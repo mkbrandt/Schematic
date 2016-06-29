@@ -26,6 +26,11 @@ class Component: AttributedGraphic
         set { attributes["value"] = newValue }
     }
     
+    var netpins: String? {
+        get { return package?.netpins }
+        set { package?.netpins = newValue }
+    }
+    
     var refDesText: AttributeText?          { return attributeTextsForAttribute("refDes").first }
     var partNumberText: AttributeText?      { return attributeTextsForAttribute("partNumber").first }
     var nameText: AttributeText?            { return attributeTextsForAttribute("name").first }
@@ -118,6 +123,11 @@ class Component: AttributedGraphic
         record = decoder.decodeObject(forKey: "record") as? CKRecord
         super.init(coder: decoder)
         pins.forEach({$0.component = self})
+        if let netpins = attributes["netpins"] ?? attributes["NetPins"] {
+            self.netpins = netpins
+            attributes["netpins"] = nil
+            attributes["NetPins"] = nil
+        }
     }
     
     override init(json: JSON) {

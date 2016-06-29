@@ -4,5 +4,7 @@ require 'rubygems'
 require 'json'
 
 text = $stdin.read
+input = input.force_encoding("utf-8")
+
 json = JSON.parse(text)
 puts JSON.pretty_generate(json)

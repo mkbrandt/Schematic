@@ -55,6 +55,7 @@ extension SchematicDocument
     }
     
     var packages: Set<Package>      { return Set(self.components.flatMap { $0.package }) }
+    
     var netLists: Set<NetList> {
         var netLists: [NetList] = []
         let allGraphics = pages.reduce([]) { $0 + $1.displayList }
@@ -80,11 +81,33 @@ extension SchematicDocument
         var netDict: [String: JSON] = [:]
 
         var packageArray: [JSON] = []
+        var netPins: [String: [(String, String)]] {
+            var netpins: [String: [(String, String)]] = [:]
+            for pkg in packages {
+                if let np = pkg.netpins, let refDes = pkg.refDes {
+                    let pindefs = np.components(separatedBy: ",")
+                    for pdef in pindefs {
+                        let pd = pdef.components(separatedBy: "=")
+                        if pd.count == 2 {
+                            let netname = pd[0].trimmingCharacters(in: .whitespaces)
+                            let pinInfo = (refDes, pd[1].trimmingCharacters(in: .whitespaces))
+                            if let npv = netpins[netname] {
+                                netpins[netname] = npv + [pinInfo]
+                            } else {
+                                netpins[netname] = [pinInfo]
+                            }
+                        }
+                    }
+                }
+            }
+            return netpins
+        }
         
         for pkg in packages {
             var pjson: [String: JSON] = [:]
-            let pins = pkg.components.reduce([]) { $0 + $1.pins }
-            pjson["pins"] = JSON(pins.map { JSON(["pinName": $0.pinName, "pinNumber": $0.pinNumber]) })
+            let pins = pkg.pins
+            let pinmap = pins.map({ JSON(["pinName": $0.pinName, "pinNumber": $0.pinNumber]) })
+            pjson["pins"] = JSON(pinmap)
             for (k, v) in pkg.attributes {
                 pjson[k] = JSON(v)
             }
@@ -95,9 +118,9 @@ extension SchematicDocument
             }
             packageArray.append(JSON(pjson))
         }
-
+        
         for nlist in netLists {
-            var pinNames: [String] = []
+            var pinNames: [String] = netPins[nlist.name]?.map({ "\($0.0):\($0.1)" }) ?? []
 
             for pin in nlist.pins {
                 let refDes = pin.component?.refDes
@@ -206,6 +229,7 @@ extension SchematicDocument
         }
     }
     
+    /// old JSON netlist, replaced by ruby passthrough
     @IBAction func runNetlist(_ sender: AnyObject) {
         let netlist = jsonNetList()
         let errors = netlist["errors"].arrayValue
@@ -235,6 +259,7 @@ extension SchematicDocument
         }
     }
     
+    /// old ORCAD netlist - replaced by ruby postprocessor
     @IBAction func runOrcadNetlist(_ sender: AnyObject) {
         let netlist = orcadNetlist()
         
@@ -277,17 +302,21 @@ extension SchematicDocument
             let inpipe = Pipe()
             let outpipe = Pipe()
             let json = jsonNetList()
-            let jsonData = try json.rawData()
-            script.standardInput = inpipe.fileHandleForReading
-            script.standardOutput = outpipe.fileHandleForWriting
-            script.execute(withArguments: nil, completionHandler: nil)
-            inpipe.fileHandleForWriting.write(jsonData)
-            script.standardInput?.closeFile()
-            inpipe.fileHandleForWriting.closeFile()
-            let netlist = outpipe.fileHandleForReading.readDataToEndOfFile()
-            script.standardOutput?.closeFile()
-            outpipe.fileHandleForReading.closeFile()
-            return String(data: netlist, encoding: String.Encoding.utf8)
+            let jsonString = json.rawString()
+            //let jsonData = try json.rawData()
+            if let jsonData = jsonString?.data(using: String.Encoding.utf8) {
+                script.standardInput = inpipe.fileHandleForReading
+                script.standardOutput = outpipe.fileHandleForWriting
+                script.standardError = outpipe.fileHandleForWriting
+                script.execute(withArguments: nil, completionHandler: nil)
+                inpipe.fileHandleForWriting.write(jsonData)
+                script.standardInput?.closeFile()
+                inpipe.fileHandleForWriting.closeFile()
+                let netlist = outpipe.fileHandleForReading.readDataToEndOfFile()
+                script.standardOutput?.closeFile()
+                outpipe.fileHandleForReading.closeFile()
+                return String(data: netlist, encoding: String.Encoding.utf8)
+            }
         } catch (let err) {
             Swift.print("error: \(err)")
         }

@@ -233,7 +233,7 @@ class Net: AttributedGraphic
     
     func propagatedName(exclude: Set<Net>) -> String? {
         let connected = (originNode.attachments + endPointNode.attachments).filter { !exclude.contains($0) }
-        let pinName = originNode.pin?.netName ?? endPointNode.pin?.netName
+        let pinName = originNode.pin?.implicitNetName ?? endPointNode.pin?.implicitNetName
         if let name = explicitName ?? pinName {
             return name
         }

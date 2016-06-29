@@ -1,0 +1,38 @@
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'json'
+require 'pp'
+
+input = $stdin.read
+input = input.force_encoding("utf-8")
+
+netlist = JSON.parse(input)
+
+pseq = 100
+
+$bom = {}
+
+packages = netlist["packages"]
+for pkg in packages
+    refdes = pkg["refDes"]
+    partnum = pkg["partNumber"]
+    footprint = pkg["footprint"]
+    value = pkg["value"]
+    
+    key = "#{partnum}_#{value}_#{footprint}"
+    entry = $bom[key]
+    entry = [partnum, footprint, value, []] if entry.nil?
+    entry[3] += [refdes]
+    $bom[key] = entry
+end
+
+print "Quantity, Part Number, Footprint, Value, References\n"
+for key, entry in $bom
+    refs = entry[3]
+    if refs != nil then
+        qty = refs.count
+        print "#{qty}, #{entry.join(', ')}\n"
+    end
+end
+
