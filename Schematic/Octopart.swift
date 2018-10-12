@@ -32,8 +32,9 @@ class OctoPartWindow: NSWindow, NSTableViewDataSource
     @IBOutlet var startField: NSTextField!
     @IBOutlet var limitField: NSTextField!
     
-    var searchQueue = DispatchQueue.global(attributes: DispatchQueue.GlobalAttributes.qosDefault)
-    
+    //var searchQueue = DispatchQueue.global(attributes: DispatchQueue.GlobalAttributes.qosDefault)
+    var searchQueue = DispatchQueue.global(qos: .default)
+
     var partInfo: [OctopartInfo] = []
     
     var component: Component?
@@ -44,7 +45,7 @@ class OctoPartWindow: NSWindow, NSTableViewDataSource
             let url = URL(string: "https://octopart.com/api/v3/parts/search?apikey=\(API_KEY)&q=\(q)&start=\(start)&limit=\(limit)&pretty_print=true&include[]=specs&include[]=datasheets&include[]=descriptions")
          {
             if let response = try? NSString(contentsOf: url, encoding: String.Encoding.utf8.rawValue) {
-                let json = JSON.parse(response as String)
+                let json = JSON(response as String)
                 //let hits = json["hits"].intValue
                 //Swift.print("\(hits) hits")
                 for result in json["results"].arrayValue {
@@ -133,7 +134,7 @@ class OctoPartWindow: NSWindow, NSTableViewDataSource
         return partInfo.count
     }
     
-    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any? {
         let info = partInfo[row]
         
         if let tableColumn = tableColumn {

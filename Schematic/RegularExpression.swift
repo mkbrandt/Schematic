@@ -31,16 +31,16 @@ class RegularExpression
         if eo == so {
             return ""
         }
-        var start = matchedString.characters.startIndex
+        var start = matchedString.utf8.startIndex
         for _ in 0 ..< so {
-            start = matchedString.characters.index(after: start)
+            start = matchedString.utf8.index(after: start)
         }
         var end = start
         for _ in 0 ..< eo - so - 1 {
-            end = matchedString.characters.index(after: end)
+            end = matchedString.utf8.index(after: end)
         }
         let s = matchedString[start...end]
-        return s
+        return String(s)
     }
     
     func match(_ n: Int) -> String? {

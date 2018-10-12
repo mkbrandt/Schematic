@@ -38,6 +38,8 @@ class PhysicalNetState: GraphicState {
 
 class Net: AttributedGraphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var originNode: Node {
         willSet { originNode.attachments.remove(self) }
         didSet  { originNode.attachments.insert(self); endPointNode.attachments.insert(self) }
@@ -51,7 +53,7 @@ class Net: AttributedGraphic
     var previousOrientation: NetOrientation?
     var orientation: NetOrientation {
         let delta = endPoint - origin
-        if let previousOrientation = previousOrientation where abs(delta.x) == abs(delta.y) {
+        if let previousOrientation = previousOrientation, abs(delta.x) == abs(delta.y) {
             return previousOrientation
         }
         let currentOrientation: NetOrientation = abs(delta.x) < abs(delta.y) ? .vertical : .horizontal
@@ -107,8 +109,8 @@ class Net: AttributedGraphic
         }
     }
     
-    override var description: String    { return "net \(name): \(origin) - \(endPoint)" }
-    override var points: [CGPoint] { return [origin, endPoint] }
+    override var description: String    { return "net \(String(describing: name)): \(origin) - \(endPoint)" }
+    override var points: [CGPoint]      { return [origin, endPoint] }
     
     override var graphicBounds: CGRect { return rectContainingPoints(points).insetBy(dx: -2, dy: -2) }
     override var bounds: CGRect { return super.bounds + graphicBounds }
@@ -138,13 +140,13 @@ class Net: AttributedGraphic
         endPointNode.attachments.insert(self)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
     required init?(coder decoder: NSCoder) {
-        if let originNode = decoder.decodeObject(forKey: "originNode") as? Node,
-            let endPointNode = decoder.decodeObject(forKey: "endPointNode") as? Node {
+        if let originNode = decoder.decodeObject(of: Node.self, forKey: "originNode"),
+            let endPointNode = decoder.decodeObject(of: Node.self, forKey: "endPointNode") {
             self.originNode = originNode
             self.endPointNode = endPointNode
             super.init(coder: decoder)
@@ -164,7 +166,7 @@ class Net: AttributedGraphic
             view.setNeedsDisplay(state.bounds.insetBy(dx: -5, dy: -5))
             let oldState = self.state
             self.state = state
-            view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+            view.undoManager?.registerUndo(withTarget: self, handler: { (_) in
                 self.restoreUndo(state: oldState, view: view)
             })
             view.setNeedsDisplay(state.bounds.insetBy(dx: -5, dy: -5))
@@ -175,7 +177,7 @@ class Net: AttributedGraphic
 
     override func saveUndoState(view: SchematicView) {
         let state = self.physicalNetState
-        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+        view.undoManager?.registerUndo(withTarget: self, handler: { (_) in
             self.restoreUndo(state: state, view: view)
         })
     }
@@ -260,7 +262,7 @@ class Net: AttributedGraphic
     func relink(_ view: SchematicView) {
         originNode.attachments.insert(self)
         endPointNode.attachments.insert(self)
-        view.undoManager?.registerUndoWithTarget(self) { (_) in
+        view.undoManager?.registerUndo(withTarget: self) { (_) in
             self.unlink(view)
         }
     }
@@ -268,7 +270,7 @@ class Net: AttributedGraphic
     override func unlink(_ view: SchematicView) {
         originNode.attachments.remove(self)
         endPointNode.attachments.remove(self)
-        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+        view.undoManager?.registerUndo(withTarget: self, handler: { (_) in
             self.relink(view)
         })
         originNode.optimize(view)
@@ -276,7 +278,7 @@ class Net: AttributedGraphic
     }
     
     override func showHandles() {
-        let color = NSColor.brown()
+        let color = NSColor.brown
         if originNode.singleEndpoint {
             drawPoint(originNode.origin, color: color)
         }
@@ -286,25 +288,25 @@ class Net: AttributedGraphic
     }
 
     override func drawInRect(_ rect: CGRect) {
-        let context = NSGraphicsContext.current()?.cgContext
-        NSColor.black().set()
+        let context = NSGraphicsContext.current?.cgContext
+        NSColor.black.set()
         context?.setLineWidth(1.0)
         
         if selected {
-            NSColor.green().set()
+            NSColor.green.set()
             context?.setLineWidth(3)
             context?.beginPath()
-            context?.moveTo(x: origin.x, y: origin.y)
-            context?.addLineTo(x: endPoint.x, y: endPoint.y)
+            context?.__moveTo(x: origin.x, y: origin.y)
+            context?.__addLineTo(x: endPoint.x, y: endPoint.y)
             context?.strokePath()
             showHandles()
         }
-        NSColor.black().set()
+        NSColor.black.set()
         context?.setLineWidth(1.0)
 
         context?.beginPath()
-        context?.moveTo(x: origin.x, y: origin.y)
-        context?.addLineTo(x: endPoint.x, y: endPoint.y)
+        context?.__moveTo(x: origin.x, y: origin.y)
+        context?.__addLineTo(x: endPoint.x, y: endPoint.y)
         context?.strokePath()
         originNode.drawInRect(rect)
         endPointNode.drawInRect(rect)
@@ -314,10 +316,12 @@ class Net: AttributedGraphic
 
 class NetNameAttributeText: AttributeText
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var netName: String = "unnamed"
     
     override var string: NSString  {
-        get { return netName }
+        get { return netName as NSString }
         set { netName = newValue as String }
     }
     
@@ -329,7 +333,7 @@ class NetNameAttributeText: AttributeText
     }
     
     required init?(coder decoder: NSCoder) {
-        if let netName = decoder.decodeObject(forKey: "netName") as? String {
+        if let netName = decoder.decodeObject(of: NSString.self, forKey: "netName") as String? {
             self.netName = netName
         } else {
             return nil
@@ -337,7 +341,7 @@ class NetNameAttributeText: AttributeText
         super.init(coder: decoder)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     

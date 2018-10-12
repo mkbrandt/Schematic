@@ -19,6 +19,8 @@ class PolygonState: GraphicState {
 
 class PolygonGraphic: PrimitiveGraphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var _vertices: [CGPoint] = []
     
     override var points: [CGPoint] {
@@ -69,7 +71,7 @@ class PolygonGraphic: PrimitiveGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        if let va = decoder.decodeObject(forKey: "vertices") as? [NSValue] {
+        if let va = decoder.decodeObject(of: NSArray.self, forKey: "vertices") as? [NSValue] {
             _vertices = va.map { $0.pointValue }
         }
         filled = decoder.decodeBool(forKey: "filled")
@@ -82,7 +84,7 @@ class PolygonGraphic: PrimitiveGraphic
         super.init(json: json)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -107,16 +109,16 @@ class PolygonGraphic: PrimitiveGraphic
     
     override func closestPointToPoint(_ point: CGPoint) -> CGPoint {
         let cps = lines.map({$0.closestPointToPoint(point)})
-        return cps.reduce(origin, combine: { $0.distanceToPoint(point) < $1.distanceToPoint(point) ? $0 : $1})
+        return cps.reduce(origin, { $0.distanceToPoint(point) < $1.distanceToPoint(point) ? $0 : $1})
     }
     
     override func draw() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
         context?.beginPath()
-        context?.moveTo(x: origin.x, y: origin.y)
+        context?.__moveTo(x: origin.x, y: origin.y)
         for p in _vertices {
-            context?.addLineTo(x: p.x, y: p.y)
+            context?.__addLineTo(x: p.x, y: p.y)
         }
         //CGContextClosePath(context)
         if filled {

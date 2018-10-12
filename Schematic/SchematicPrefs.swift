@@ -9,22 +9,22 @@
 import Cocoa
 
 let initialUserDefaults: [String: AnyObject] = [
-    "pinNameColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.blue()),
-    "pinNumberColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.red()),
-    "pinColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black()),
-    "graphicColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black()),
-    "attributeColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.green()),
-    "wireColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black()),
+    "pinNameColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.blue) as AnyObject,
+    "pinNumberColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.red) as AnyObject,
+    "pinColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black) as AnyObject,
+    "graphicColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black) as AnyObject,
+    "attributeColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.green) as AnyObject,
+    "wireColor": NSKeyedArchiver.archivedData(withRootObject: NSColor.black) as AnyObject,
 ]
 
-let Defaults = UserDefaults.standard()
+let Defaults = UserDefaults.standard
 
-var pinNameColor: NSColor   { return Defaults.colorForKey("pinNameColor")      ?? NSColor.blue()  }
-var pinNumberColor: NSColor { return Defaults.colorForKey("pinNumberColor")    ?? NSColor.red()   }
-var pinColor: NSColor       { return Defaults.colorForKey("pinColor")          ?? NSColor.black() }
-var graphicsColor: NSColor  { return Defaults.colorForKey("graphicsColor")     ?? NSColor.black() }
-var attributeColor: NSColor { return Defaults.colorForKey("attributeColor")    ?? NSColor.green() }
-var wireColor: NSColor      { return Defaults.colorForKey("wireColor")         ?? NSColor.black() }
+var pinNameColor: NSColor   { return Defaults.colorForKey("pinNameColor")      ?? NSColor.blue  }
+var pinNumberColor: NSColor { return Defaults.colorForKey("pinNumberColor")    ?? NSColor.red   }
+var pinColor: NSColor       { return Defaults.colorForKey("pinColor")          ?? NSColor.black }
+var graphicsColor: NSColor  { return Defaults.colorForKey("graphicsColor")     ?? NSColor.black }
+var attributeColor: NSColor { return Defaults.colorForKey("attributeColor")    ?? NSColor.green }
+var wireColor: NSColor      { return Defaults.colorForKey("wireColor")         ?? NSColor.black }
 
 
 

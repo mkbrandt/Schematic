@@ -16,7 +16,8 @@ func runRipper(_ document: SchematicDocument) {
     openPanel.orderOut(document)
     for url in urls {
         let ripper = KLibRipper()
-        let text = String(contentsOfURL: url, encoding: String.Encoding.utf8)
+        var enc = String.Encoding.utf8
+        let text = try! String(contentsOf: url, usedEncoding: &enc)
         ripper.ripString(text, document: document)
     }
 }

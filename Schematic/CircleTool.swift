@@ -23,7 +23,7 @@ class CircleTool: Tool
     }
     
     override func mouseUp(_ location: CGPoint, view: SchematicView) {
-        if let circle = view.construction as? CircleGraphic where circle.radius > 0 {
+        if let circle = view.construction as? CircleGraphic, circle.radius > 0 {
             view.addConstruction()
         }
     }

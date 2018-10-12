@@ -36,7 +36,7 @@ class LibraryPreview: NSView, NSDraggingSource
     
     // Dragging
     
-    override func mouseDown(_ theEvent: NSEvent) {
+    override func mouseDown(with theEvent: NSEvent) {
         if let component = component {
             let item = NSDraggingItem(pasteboardWriter: component)
             item.setDraggingFrame(component.bounds, contents: component.image)
@@ -80,7 +80,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
     
     var bookmarks: [Data] {
         let answer: [Data] = openLibs.dropFirst().flatMap { lib in
-            let bookmark = try? lib.fileURL?.bookmarkData(NSURL.BookmarkCreationOptions.withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+            let bookmark = try? lib.fileURL?.bookmarkData(options: NSURL.BookmarkCreationOptions.withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
             if let bookmark = bookmark {
                 return bookmark
             }
@@ -174,7 +174,8 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         for url in urls {
             let lib = SchematicDocument()
             let ripper = KLibRipper()
-            let text = String(contentsOfURL: url, encoding: String.Encoding.utf8)
+            var encoding = String.Encoding.utf8
+            let text = try! String(contentsOf: url, usedEncoding: &encoding)
             ripper.ripString(text, document: lib)
             openLibs.append(lib)
             currentIndex = openLibs.count - 1
@@ -213,8 +214,8 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return openLibs.count
     }
     
-    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
-        return openLibs[row].name
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any? {
+        return openLibs[row].name as AnyObject
     }
     
     func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
@@ -225,10 +226,10 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
 
 // MARK: OutlineView Data and Delegate
     
-    func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: AnyObject?) -> AnyObject {
+    func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
         //print("self = \(self), index = \(currentIndex), current lib = \(currentLib), count = \(currentLib?.categories.count)")
-        if let currentLib = currentLib where item == nil {
-            return currentLib.categories[index]
+        if item == nil, let cLib = currentLib {
+            return cLib.categories[index]
         } else if let category = item as? SchematicPage {
             let subcategories = category.categories
             let components = category.components.sorted { $0.name < $1.name }
@@ -245,10 +246,10 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
                 return components[index - subcategories.count]
             }
         }
-        return "WTF"
+        return "WTF" as AnyObject
     }
     
-    func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: AnyObject?) -> Int {
+    func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
         if item == nil {
             //print("self = \(self), index = \(currentIndex), current lib = \(currentLib), count = \(currentLib?.categories.count)")
             return currentLib?.categories.count ?? 0
@@ -263,22 +264,22 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
         return 0
     }
     
-    func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: AnyObject) -> Bool {
+    func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
         return item is SchematicPage
     }
     
-    func outlineView(_ outlineView: NSOutlineView, objectValueFor tableColumn: NSTableColumn?, byItem item: AnyObject?) -> AnyObject? {
+    func outlineView(_ outlineView: NSOutlineView, objectValueFor tableColumn: NSTableColumn?, byItem item: Any?) -> Any? {
         if let category = item as? SchematicPage {
-            return category.name
+            return category.name as AnyObject
         } else if let package = item as? Package {
-            return package.components.first?.name ?? "UNNAMED"
+            return (package.components.first?.name ?? "UNNAMED") as AnyObject
         } else if let component = item as? Component {
-            return component.name
+            return component.name as AnyObject
         }
-        return "-"
+        return "-" as AnyObject
     }
     
-    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: AnyObject) -> Bool {
+    func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool {
         currentSelectedPage = nil
         if let package = item as? Package, let component = package.components.first {
             preview.component = component
@@ -290,7 +291,7 @@ class LibraryManager: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSOu
             }
             preview.component = nil
         }
-        Swift.print("selected page = \(currentSelectedPage?.name), object = \(preview.component?.name)")
+        Swift.print("selected page = \(String(describing: currentSelectedPage?.name)), object = \(String(describing: preview.component?.name))")
         return true
     }
 }

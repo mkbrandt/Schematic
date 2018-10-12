@@ -80,8 +80,17 @@ class SchematicView: ZoomView
         viewSetup()
     }
     
+    override func value(forKey key: String) -> Any? {
+        switch key {
+        case "selection":
+            return selection
+        default:
+            return super.value(forKey: key)
+        }
+    }
+    
     func viewSetup() {
-        register(forDraggedTypes: [SchematicElementUTI])
+        registerForDraggedTypes([NSPasteboard.PasteboardType(rawValue: SchematicElementUTI)])
     }
     
     func scaleFloat(_ f: CGFloat) -> CGFloat {
@@ -107,12 +116,12 @@ class SchematicView: ZoomView
         window?.acceptsMouseMovedEvents = true
         tool.selectedTool(self)
         updateTrackingAreas()
-        register(forDraggedTypes: [SchematicElementUTI])
+        registerForDraggedTypes([NSPasteboard.PasteboardType(rawValue: SchematicElementUTI)])
     }
     
     override func updateTrackingAreas()
     {
-        let options: NSTrackingAreaOptions = [.mouseMoved, .mouseEnteredAndExited, .activeAlways]
+        let options: NSTrackingArea.Options = [NSTrackingArea.Options.mouseMoved, NSTrackingArea.Options.mouseEnteredAndExited, NSTrackingArea.Options.activeAlways]
         
         if _trackingArea != nil {
             removeTrackingArea(_trackingArea!)
@@ -131,9 +140,9 @@ class SchematicView: ZoomView
         let borderWidth: CGFloat = 10
         let outsideBorderRect = pageRect.insetBy(dx: 10, dy: 10)
         let insideBorderRect = outsideBorderRect.insetBy(dx: borderWidth, dy: borderWidth)
-        NSBezierPath.setDefaultLineWidth(2.0)
+        NSBezierPath.defaultLineWidth = 2.0
         NSBezierPath.stroke(insideBorderRect)
-        NSBezierPath.setDefaultLineWidth(0.5)
+        NSBezierPath.defaultLineWidth = 0.5
         NSBezierPath.stroke(outsideBorderRect)
         NSBezierPath.strokeLine(from: insideBorderRect.topLeft, to: outsideBorderRect.topLeft)
         NSBezierPath.strokeLine(from: insideBorderRect.bottomLeft, to: outsideBorderRect.bottomLeft)
@@ -151,7 +160,7 @@ class SchematicView: ZoomView
         }
         
         let font = NSFont.systemFont(ofSize: borderWidth * 0.8)
-        let attributes = [NSFontAttributeName: font]
+        let attributes = [NSAttributedStringKey.font: font]
         
         for i in 0 ..< horizontalDivisions {
             let label = "\(i)" as NSString
@@ -193,13 +202,13 @@ class SchematicView: ZoomView
             let left = dirtyRect.origin.x - GridSize
             let right = dirtyRect.origin.x + dirtyRect.size.width + GridSize
             
-            NSColor.blue().withAlphaComponent(0.5).set()
+            NSColor.blue.withAlphaComponent(0.5).set()
             var x = xs
             while x <= right {
                 let isMajor = fmod((x / GridSize), divsPerMajor) == 0
                 let linewidth = CGFloat(isMajor ? 0.25 : 0.1)
                 if drawMajor && isMajor || drawMinor {
-                    NSBezierPath.setDefaultLineWidth(scaleFloat(linewidth))
+                    NSBezierPath.defaultLineWidth = scaleFloat(linewidth)
                     NSBezierPath.strokeLine(from: CGPoint(x: x, y: top), to: CGPoint(x: x, y: bottom))
                 }
                 x += GridSize
@@ -210,7 +219,7 @@ class SchematicView: ZoomView
                 let isMajor = fmod((y / GridSize), divsPerMajor) == 0
                 let linewidth = CGFloat(isMajor ? 0.25 : 0.1)
                 if drawMajor && isMajor || drawMinor {
-                    NSBezierPath.setDefaultLineWidth(scaleFloat(linewidth))
+                    NSBezierPath.defaultLineWidth = scaleFloat(linewidth)
                     NSBezierPath.strokeLine(from: CGPoint(x: left, y: y), to: CGPoint(x: right, y: y))
                 }
                 y += GridSize
@@ -219,7 +228,7 @@ class SchematicView: ZoomView
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
         context?.setLineJoin(.round)
         context?.setLineCap(.round)
@@ -255,7 +264,8 @@ class SchematicView: ZoomView
         document.willChangeValue(forKey: "unplacedComponents")
         displayList.formUnion(graphics)
         document.didChangeValue(forKey: "unplacedComponents")
-        undoManager?.prepare(withInvocationTarget: self).deleteGraphics(graphics)
+        let target = undoManager?.prepare(withInvocationTarget: self) as? SchematicView
+        target?.deleteGraphics(graphics)
         needsDisplay = true
     }
     
@@ -269,7 +279,8 @@ class SchematicView: ZoomView
         document.willChangeValue(forKey: "unplacedComponents")
         graphics.forEach { $0.unlink(self) }
         displayList.subtract(graphics)
-        undoManager?.prepare(withInvocationTarget: self).addGraphics(graphics)
+        let target = undoManager?.prepare(withInvocationTarget: self) as? SchematicView
+        target?.addGraphics(graphics)
         document.didChangeValue(forKey: "unplacedComponents")
         needsDisplay = true
     }
@@ -288,7 +299,7 @@ class SchematicView: ZoomView
     }
     
     func addAttributes(_ attrs: [AttributeText], owners: [AttributedGraphic?]) {
-        undoManager?.registerUndoWithTarget(self, handler: { (_) in
+        undoManager?.registerUndo(withTarget: self, handler: { (_) in
             self.removeAttributes(attrs)
         })
         for i in 0 ..< attrs.count {
@@ -300,7 +311,7 @@ class SchematicView: ZoomView
     
     func removeAttributes(_ attrs: [AttributeText]) {
         let owners = attrs.map { $0.owner }
-        undoManager?.registerUndoWithTarget(self, handler: { (_) in
+        undoManager?.registerUndo(withTarget: self, handler: { (_) in
             self.addAttributes(attrs, owners: owners)
         })
         for attr in attrs {
@@ -348,10 +359,10 @@ class SchematicView: ZoomView
         selection = Set(displayList.filter { $0.intersectsRect(rect) })
     }
     
-    override func changeFont(_ sender: AnyObject?) {
+    override func changeFont(_ sender: Any?) {
         for g in selection {
             if let text = g as? AttributeText {
-                text.font = NSFontPanel.shared().convert(text.font)
+                text.font = NSFontPanel.shared.convert(text.font)
             }
         }
         needsDisplay = true
@@ -361,7 +372,7 @@ class SchematicView: ZoomView
     
     var dragOrigin = CGPoint()
     
-    override func mouseDown(_ theEvent: NSEvent) {
+    override func mouseDown(with theEvent: NSEvent) {
         let location = self.convert(theEvent.locationInWindow, from: nil)
         if selection.count == 0 {
             pasteOrigin = snapToGrid(location)
@@ -375,7 +386,7 @@ class SchematicView: ZoomView
         redrawConstruction()
     }
     
-    override func mouseDragged(_ theEvent: NSEvent) {
+    override func mouseDragged(with theEvent: NSEvent) {
         let location = self.convert(theEvent.locationInWindow, from: nil)
         
         redrawConstruction()
@@ -383,7 +394,7 @@ class SchematicView: ZoomView
         redrawConstruction()
     }
     
-    override func mouseMoved(_ theEvent: NSEvent) {
+    override func mouseMoved(with theEvent: NSEvent) {
         let location = self.convert(theEvent.locationInWindow, from: nil)
         
         redrawConstruction()
@@ -391,7 +402,7 @@ class SchematicView: ZoomView
         redrawConstruction()
     }
     
-    override func mouseUp(_ theEvent: NSEvent) {
+    override func mouseUp(with theEvent: NSEvent) {
         let location = self.convert(theEvent.locationInWindow, from: nil)
         
         redrawConstruction()
@@ -399,17 +410,17 @@ class SchematicView: ZoomView
         redrawConstruction()
     }
     
-    override func flagsChanged(_ theEvent: NSEvent) {
-        controlKeyDown = theEvent.modifierFlags.contains(.control)
+    override func flagsChanged(with theEvent: NSEvent) {
+        controlKeyDown = theEvent.modifierFlags.contains(NSEvent.ModifierFlags.control)
     }
     
-    override func keyDown(_ theEvent: NSEvent) {
+    override func keyDown(with theEvent: NSEvent) {
         if tool is SelectTool {
             switch theEvent.keyCode {
             case 51, 117:
                 deleteSelection()
             default:
-                nextResponder?.keyDown(theEvent)
+                nextResponder?.keyDown(with: theEvent)
             }
         } else {
             tool.keyDown(theEvent, view: self)
@@ -448,11 +459,11 @@ class SchematicView: ZoomView
                 let location = snapToGrid(convert(sender.draggingLocation(), from: nil))
                 construction?.moveTo(location)
                 needsDisplay = true
-                sender.enumerateDraggingItems(.clearNonenumeratedImages, for: self, classes: [], searchOptions: [:]) { _ in }
+                sender.enumerateDraggingItems(options: .clearNonenumeratedImages, for: self, classes: [], searchOptions: [:]) { _,_,_  in }
                 return .move
             }
         }
-        sender.enumerateDraggingItems(.clearNonenumeratedImages, for: self, classes: [Graphic.self], searchOptions: [:]) { (item, n, stop) in
+        sender.enumerateDraggingItems(options: .clearNonenumeratedImages, for: self, classes: [Graphic.self], searchOptions: [:]) { (item, n, stop) in
             if let g = item.item as? Graphic {
                 let fr = item.draggingFrame
                 let image = NSImage(size: CGSize(width: 1, height: 1))
@@ -534,68 +545,68 @@ class SchematicView: ZoomView
         if let toolbar = window?.toolbar {
             for item in toolbar.items {
                 if let button = item.view as? NSButton {
-                    button.state = NSOffState
+                    button.state = NSControl.StateValue.off
                 }
             }
         }
     }
 
     @IBAction func showFontPanel(_ sender: AnyObject) {
-        NSFontPanel.shared().orderFront(self)
+        NSFontPanel.shared.orderFront(self)
     }
     
     @IBAction func selectLineTool(_ sender: NSButton) {
         tool = LineTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectRectTool(_ sender: NSButton) {
         tool = RectTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectArrowTool(_ sender: NSButton) {
         tool = SelectTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectArcTool(_ sender: NSButton) {
         tool = ArcTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectCircleTool(_ sender: NSButton) {
         tool = CircleTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectPolygonTool(_ sender: NSButton) {
         tool = PolygonTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectTextTool(_ sender: NSButton) {
         tool = TextTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectNetNameTool(_ sender: NSButton) {
         tool = NetNameTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func selectNetTool(_ sender: NSButton) {
         tool = NetTool()
         clearButtonStates()
-        sender.state = NSOnState
+        sender.state = NSControl.StateValue.on
     }
     
     @IBAction func cut(_ sender: AnyObject) {
@@ -604,7 +615,7 @@ class SchematicView: ZoomView
     }
     
     @IBAction func copy(_ sender: AnyObject) {
-        let pasteBoard = NSPasteboard.general()
+        let pasteBoard = NSPasteboard.general
         
         pasteBoard.clearContents()
         let group = GroupGraphic(contents: selection)
@@ -614,7 +625,7 @@ class SchematicView: ZoomView
     }
     
     @IBAction func paste(_ sender: AnyObject) {
-        let pasteBoard = NSPasteboard.general()
+        let pasteBoard = NSPasteboard.general
         let classes = [Graphic.self]
         if pasteBoard.canReadObject(forClasses: classes, options: [:]) {
             if let graphics = pasteBoard.readObjects(forClasses: [Graphic.self], options:[:]) as? [Graphic] {
@@ -691,7 +702,7 @@ class SchematicView: ZoomView
         guard selection.count > 0 else { return }
         window?.beginSheet(componentSheet) { response in
             self.componentSheet.orderOut(self)
-            if response == NSModalResponseOK {
+            if response == NSApplication.ModalResponse.OK {
                 self.performCreateComponent()
             }
         }
@@ -699,7 +710,7 @@ class SchematicView: ZoomView
     
     func performCreateComponent() {
         let outline = GroupGraphic(contents: Set(selection.filter { !($0 is AttributedGraphic) }))
-        let pins = Set(selection.filter { $0 is Pin } as! [Pin])
+        let pins = Set(selection.filter { $0 is Pin }) as! Set<Pin>
         let component = Component(origin: outline.origin, pins: pins, outline: outline)
         component.attributeTexts.insert(AttributeText(origin: component.bounds.topLeft, format: "=value", owner: component))
         component.value = componentSheet.nameField.stringValue
@@ -708,7 +719,7 @@ class SchematicView: ZoomView
         addGraphic(component)
         selection = [component]
         needsDisplay = true
-        if componentSheet.packageSingleCheckbox.state == NSOnState {
+        if componentSheet.packageSingleCheckbox.state == NSControl.StateValue.on {
             createPackage(self)
         }
     }
@@ -735,11 +746,11 @@ class SchematicView: ZoomView
     }
     
     @IBAction func createPackage(_ sender: AnyObject) {
-        let components = selection.filter { $0 is Component } as! [Component]
+        let components = selection.filter { $0 is Component } as! Set<Component>
         if components.count > 0 {
             window?.beginSheet(packagingSheet) { response in
                 self.packagingSheet.orderOut(self)
-                if response == NSModalResponseOK {
+                if response == NSApplication.ModalResponse.OK {
                     self.packagingSheet.orderOut(self)
                     self.performPackaging(Set(components))
                 }

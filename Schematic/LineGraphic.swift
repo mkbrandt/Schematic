@@ -18,8 +18,10 @@ class LineState: GraphicState {
 }
 
 class LineGraphic: PrimitiveGraphic
-{
-    var endPoint: CGPoint {
+{    
+    override class var supportsSecureCoding: Bool { return true }
+    
+   var endPoint: CGPoint {
         willSet {
             willChangeValue(forKey: "angle")
             willChangeValue(forKey: "length")
@@ -94,7 +96,7 @@ class LineGraphic: PrimitiveGraphic
         super.init(coder: decoder)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -141,7 +143,7 @@ class LineGraphic: PrimitiveGraphic
     }
     
     override func intersectsRect(_ rect: CGRect) -> Bool {
-        return rect.contains(origin) || rect.contains(endPoint) || rect.lines.reduce(false, combine: { $0 || $1.intersectsLine(line) })
+        return rect.contains(origin) || rect.contains(endPoint) || rect.lines.reduce(false, { $0 || $1.intersectsLine(line) })
     }
     
     override func hitTest(_ point: CGPoint, threshold: CGFloat) -> HitTestResult? {
@@ -163,11 +165,11 @@ class LineGraphic: PrimitiveGraphic
     }
     
     override func draw() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
         context?.beginPath()
-        context?.moveTo(x: origin.x, y: origin.y)
-        context?.addLineTo(x: endPoint.x, y: endPoint.y)
+        context?.__moveTo(x: origin.x, y: origin.y)
+        context?.__addLineTo(x: endPoint.x, y: endPoint.y)
         context?.strokePath()
     }
 }

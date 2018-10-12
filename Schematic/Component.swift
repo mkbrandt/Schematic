@@ -11,6 +11,8 @@ import CloudKit
 
 class Component: AttributedGraphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var refDes: String {
         get { return package?.refDes ?? "UNPACKAGED" }
         set { package?.refDes = newValue }
@@ -69,7 +71,7 @@ class Component: AttributedGraphic
     }
     
     override var bounds: CGRect {
-        let pinBounds = pins.reduce(CGRect(), combine: {$0 + $1.bounds})
+        let pinBounds = pins.reduce(CGRect(), {$0 + $1.bounds})
         let b = outline?.bounds ?? CGRect()
         let attrBounds = super.bounds
         return pinBounds + b + attrBounds
@@ -100,9 +102,9 @@ class Component: AttributedGraphic
     var preview: NSImage {
         let image = NSImage(size: bounds.size)
         image.lockFocus()
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         context?.saveGState()
-        context?.translate(x: -bounds.origin.x, y: -bounds.origin.y)
+        context?.translateBy(x: -bounds.origin.x, y: -bounds.origin.y)
         drawImage()
         context?.restoreGState()
         image.unlockFocus()
@@ -117,10 +119,13 @@ class Component: AttributedGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        pins = decoder.decodeObject(forKey: "pins") as? Set<Pin> ?? []
-        package = decoder.decodeObject(forKey: "package") as? Package
-        outline = decoder.decodeObject(forKey: "outline") as? Graphic
-        record = decoder.decodeObject(forKey: "record") as? CKRecord
+        pins = []
+        if let pinset = decoder.decodeObject(of: [NSSet.self, Pin.self], forKey: "pins") {
+            pins = pinset as? Set<Pin> ?? []
+        }
+        package = decoder.decodeObject(of: Package.self, forKey: "package")
+        outline = decoder.decodeObject(of: Graphic.self, forKey: "outline")
+        record = decoder.decodeObject(of: CKRecord.self, forKey: "record")
         super.init(coder: decoder)
         pins.forEach({$0.component = self})
         if let netpins = attributes["netpins"] ?? attributes["NetPins"] {
@@ -137,7 +142,7 @@ class Component: AttributedGraphic
         pins.forEach { $0.component = self }
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -152,6 +157,16 @@ class Component: AttributedGraphic
         super.encode(with: coder)
     }
     
+    override func value(forKey key: String) -> Any? {
+        switch key {
+        case "preview": return preview
+        case "refDes": return refDes
+        case "name": return name
+        case "partNumber": return partNumber
+        default: return super.value(forKey: key)
+        }
+    }
+    
     override var attributeNames: [String] {
         return super.attributeNames + (package?.attributeNames ?? [])
     }
@@ -161,7 +176,7 @@ class Component: AttributedGraphic
     }
     
     override func setAttribute(_ value: String, name: String) {
-        if let package = package where package.attributes[name] != nil {
+        if let package = package, package.attributes[name] != nil {
             package.setAttribute(value, name: name)
         } else {
             super.setAttribute(value, name: name)
@@ -177,7 +192,7 @@ class Component: AttributedGraphic
         }
     }
     
-    override func setValue(_ value: AnyObject?, forUndefinedKey key: String) {
+    override func setValue(_ value: Any?, forUndefinedKey key: String) {
         switch key {
         case "refDes", "partNumber":
             package?.setValue(value, forKey: key)
@@ -238,7 +253,7 @@ class Component: AttributedGraphic
     
     func relink(_ nodeInfo: [(Pin, Node?)], view: SchematicView) {
         nodeInfo.forEach { (pin, node) in pin.node = node; node?.pin = pin }
-        view.undoManager?.registerUndoWithTarget(self) { _ in
+        view.undoManager?.registerUndo(withTarget: self) { _ in
             self.unlink(view)
         }
         view.setNeedsDisplay(self.bounds.insetBy(dx: -5, dy: -5))
@@ -247,7 +262,7 @@ class Component: AttributedGraphic
     override func unlink(_ view: SchematicView) {
         let nodeInfo = pins.map { (pin: Pin) in (pin, pin.node) }
         pins.forEach { $0.node?.pin = nil }
-        view.undoManager?.registerUndoWithTarget(self) { _ in
+        view.undoManager?.registerUndo(withTarget: self) { _ in
             self.relink(nodeInfo, view: view)
         }
         view.setNeedsDisplay(self.bounds.insetBy(dx: -5, dy: -5))
@@ -274,10 +289,10 @@ class Component: AttributedGraphic
     }
     
     override func showHandles() {
-        drawPoint(graphicBounds.origin, color: NSColor.black())
-        drawPoint(graphicBounds.topLeft, color: NSColor.black())
-        drawPoint(graphicBounds.topRight, color: NSColor.black())
-        drawPoint(graphicBounds.bottomRight, color: NSColor.black())
+        drawPoint(graphicBounds.origin, color: NSColor.black)
+        drawPoint(graphicBounds.topLeft, color: NSColor.black)
+        drawPoint(graphicBounds.topRight, color: NSColor.black)
+        drawPoint(graphicBounds.bottomRight, color: NSColor.black)
     }
     
     func drawImage() {

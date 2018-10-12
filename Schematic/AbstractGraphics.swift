@@ -108,7 +108,7 @@ class Line
     
     func intersectsRect(_ rect: CGRect) -> Bool {
         let r = CGRect(origin: rect.origin, size: rect.size)
-        return rect.contains(origin) || rect.contains(endPoint) || r.lines.reduce(false, combine: { $0 || $1.intersectsLine(self) })
+        return rect.contains(origin) || rect.contains(endPoint) || r.lines.reduce(false, { $0 || $1.intersectsLine(self) })
     }
 
 }

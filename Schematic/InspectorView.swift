@@ -57,10 +57,10 @@ class InspectorSelectorView: NSView
         inspector = button.auxView
         for subview in subviews {
             if let b = subview as? InspectorSelectorButton {
-                b.state = NSOffState
+                b.state = NSControl.StateValue.off
             }
         }
-        button.state = NSOnState
+        button.state = NSControl.StateValue.on
     }
 }
 

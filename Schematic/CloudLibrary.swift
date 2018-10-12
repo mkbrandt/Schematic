@@ -43,8 +43,8 @@ class CloudLibrary: SchematicDocument
         do {
             super.init()
             schematic.pages = []
-            let cacheDirectory = try FileManager.default().urlForDirectory(.cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            let fileURL = try cacheDirectory.appendingPathComponent("iCloudLibrary.sch")
+            let cacheDirectory = try FileManager.default.url(for: .cachesDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            let fileURL = cacheDirectory.appendingPathComponent("iCloudLibrary.sch")
             self.fileURL = fileURL
             try read(from: fileURL, ofType: "sch")
             Swift.print("iCloud cache opened")
@@ -60,12 +60,12 @@ class CloudLibrary: SchematicDocument
     }
     
     func didModify(forceWrite: Bool = false) {
-        if let fileURL = fileURL where forceWrite {
+        if let fileURL = fileURL, forceWrite {
             _ = try? write(to: fileURL, ofType: "sch")
         } else if self.undoManager?.canUndo ?? false {
             self.undoManager?.undo()
         } else {
-            self.undoManager?.registerUndoWithTarget(self, handler: {_ in })
+            self.undoManager?.registerUndo(withTarget: self, handler: {_ in })
         }
         notifyChange()
     }
@@ -82,8 +82,7 @@ class CloudLibrary: SchematicDocument
     func pageFor(record: CKRecord, create: Bool = true) -> SchematicPage? {
         if let page = pageFor(recordID: record.recordID) {
             let newParent = parentPage(record: record)
-            if let newName = record["name"] as? String
-            where newParent != page.parentPage || page.name != newName {
+            if let newName = record["name"] as? String, newParent != page.parentPage || page.name != newName {
                 page.parentPage = newParent
                 page.name = newName
                 page.record = record
@@ -173,9 +172,9 @@ class CloudLibrary: SchematicDocument
             var records: [CKRecord] = []
             for comp in components {
                 let record = CKRecord(recordType: "Component")
-                record["name"] = comp.package?.partNumber ?? comp.value ?? "UNNAMED"
+                record["name"] = (comp.package?.partNumber ?? comp.value ?? "UNNAMED") as CKRecordValue
                 comp.record = nil       // don't save the record in the archive to go to the server
-                record["data"] = NSKeyedArchiver.archivedData(withRootObject: comp)
+                record["data"] = NSKeyedArchiver.archivedData(withRootObject: comp) as CKRecordValue
                 record["owner"] = CKReference(record: parentRecord, action: .deleteSelf)
                 comp.record = record
                 records.append(record)
@@ -209,7 +208,7 @@ class CloudLibrary: SchematicDocument
     
     func createCategory(name: String, subs: [String], owner: CKRecord?) {
         let category = CKRecord(recordType: "Category")
-        category["name"] = name
+        category["name"] = name as CKRecordValue
         if let owner = owner {
             category["owner"] = CKReference(record: owner, action: .deleteSelf)
         }
@@ -232,11 +231,11 @@ class CloudLibrary: SchematicDocument
             if let error = error {
                 Swift.print("Error creating default categories: \(error)")
             } else {
-                Swift.print("\(saved?.count) Default categories created, deleted = \(deleted?.count)")
+                Swift.print("\(String(describing: saved?.count)) Default categories created, deleted = \(String(describing: deleted?.count))")
             }
-            DispatchQueue.main.after(when: DispatchTime.now() + 2.0, execute: {
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now()) {
                 self.syncCategoriesFromCloud()
-            })
+            }
         }
         cloudDatabase.add(op)
     }
@@ -258,7 +257,7 @@ class CloudLibrary: SchematicDocument
     
     override func add(page: SchematicPage, to parent: SchematicPage?) {
         let record = CKRecord(recordType: "Category")
-        record["name"] = page.name
+        record["name"] = page.name as CKRecordValue
         if let parentRecord = parent?.record {
             record["owner"] = CKReference(record: parentRecord, action: .deleteSelf)
         }
@@ -267,7 +266,7 @@ class CloudLibrary: SchematicDocument
         op.qualityOfService = .userInitiated
         op.modifyRecordsCompletionBlock = { (saved, deleted, error) in
             if let error = error {
-                Swift.print("Error creating category \(page.name) as child of \(parent?.name): \(error)")
+                Swift.print("Error creating category \(page.name) as child of \(String(describing: parent?.name)): \(error)")
             } else {
                 page.record = record
                 super.add(page: page, to: parent)
@@ -357,7 +356,7 @@ class CloudLibrary: SchematicDocument
     }
     
     func fetchAllComponents() {
-        let fetch = CKQuery(recordType: "Component", predicate: Predicate(value: true))
+        let fetch = CKQuery(recordType: "Component", predicate: NSPredicate(value: true))
         cloudDatabase.perform(fetch, inZoneWith: nil) { (records, error) in
             if let error = error {
                 Swift.print("Error fetching components: \(error)")
@@ -406,10 +405,10 @@ class CloudLibrary: SchematicDocument
     }
     
     func syncCategoriesFromCloud() {
-        let query = CKQuery(recordType: "Category", predicate: Predicate(value: true))
+        let query = CKQuery(recordType: "Category", predicate: NSPredicate(value: true))
         cloudDatabase.perform(query, inZoneWith: nil) { (records, error) in
             if let error = error {
-                switch error.code {
+                switch error._code {
                 default:
                     Swift.print("Unknown error in syncFromCloud: \(error)")
                 }
@@ -439,12 +438,12 @@ class CloudLibrary: SchematicDocument
         info.shouldSendContentAvailable = false
         info.alertBody = ""
         info.soundName = ""
-        let categorySubscription = CKSubscription(recordType: "Category", predicate: Predicate(value: true), options: all)
+        let categorySubscription = CKSubscription(recordType: "Category", predicate: NSPredicate(value: true), options: all)
         categorySubscription.notificationInfo = info
         cloudDatabase.save(categorySubscription) { subscription, error in
             if let error = error {
-                switch (error.domain, error.code) {
-                case (CKErrorDomain, CKErrorCode.serverRejectedRequest.rawValue):
+                switch (error._domain, error._code) {
+                case (CKErrorDomain, CKError.serverRejectedRequest.rawValue):
                     // ignore this since it is probably just a duplicate subscription
                     break
                 default:
@@ -455,12 +454,12 @@ class CloudLibrary: SchematicDocument
             }
         }
         
-        let componentSubscription = CKSubscription(recordType: "Component", predicate: Predicate(value: true), options: all)
+        let componentSubscription = CKSubscription(recordType: "Component", predicate: NSPredicate(value: true), options: all)
         componentSubscription.notificationInfo = info
         cloudDatabase.save(componentSubscription) { subscription, error in
             if let error = error {
-                switch (error.domain, error.code) {
-                case (CKErrorDomain, CKErrorCode.serverRejectedRequest.rawValue):
+                switch (error._domain, error._code) {
+                case (CKErrorDomain, CKError.serverRejectedRequest.rawValue):
                     // ignore this since it is probably just a duplicate subscription
                     break
                 default:

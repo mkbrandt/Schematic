@@ -36,6 +36,8 @@ class GroupState: GraphicState {
 
 class GroupGraphic: Graphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     override var origin: CGPoint {
         get { return bounds.origin }
         set { fatalError("GroupGraphic.setOrigin not implemented") }
@@ -43,10 +45,10 @@ class GroupGraphic: Graphic
     var contents: Set<Graphic>
     
     var boundingRect: RectGraphic       { return RectGraphic(rect: bounds) }
-    var allPoints: [CGPoint]            { return contents.reduce([], combine: { $0 + $1.points }) }
+    var allPoints: [CGPoint]            { return contents.reduce([], { $0 + $1.points }) }
 
-    override var bounds: CGRect         { return contents.reduce(CGRect(), combine: { $0 + $1.bounds }) }
-    override var centerPoint: CGPoint   { return contents.reduce(CGPoint(), combine: { $0 + $1.centerPoint }) / CGFloat(contents.count) }
+    override var bounds: CGRect         { return contents.reduce(CGRect(), { $0 + $1.bounds }) }
+    override var centerPoint: CGPoint   { return contents.reduce(CGPoint(), { $0 + $1.centerPoint }) / CGFloat(contents.count) }
     override var points: [CGPoint]      { return boundingRect.points }
     
     override var state: GraphicState {
@@ -76,12 +78,12 @@ class GroupGraphic: Graphic
         super.init(origin: CGPoint(x: 0, y: 0))
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
     required init?(coder decoder: NSCoder) {
-        contents = decoder.decodeObject(forKey: "contents") as? Set<Graphic> ?? []
+        contents = decoder.decodeObject(of: [NSSet.self, Graphic.self], forKey: "contents") as? Set<Graphic> ?? []
         super.init(coder: decoder)
     }
     

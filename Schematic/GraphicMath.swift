@@ -9,7 +9,7 @@
 import Foundation
 
 let IOTA: CGFloat = 0.000000001
-let PI: CGFloat = CGFloat(M_PI)
+let PI: CGFloat = .pi
 
 // MARK: Point Math
 

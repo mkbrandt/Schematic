@@ -18,7 +18,7 @@ class Schematic: NSObject, NSCoding
     var pages: [SchematicPage] = [SchematicPage()]
     var currentPage: Int = 0
     var openLibraries: [Data] = []
-    var printInfoDict: [String: AnyObject] = [:]
+    var printInfoDict: [NSPrintInfo.AttributeKey: Any] = [:]
     var savedScale: CGFloat?
     var centeredPoint = CGPoint()
     
@@ -27,15 +27,15 @@ class Schematic: NSObject, NSCoding
     }
     
     required init?(coder decoder: NSCoder) {
-        pages = decoder.decodeObject(forKey: "pages") as? [SchematicPage] ?? [SchematicPage()]
+        pages = decoder.decodeObject(of: NSArray.self, forKey: "pages") as? [SchematicPage] ?? [SchematicPage()]
         currentPage = decoder.decodeInteger(forKey: "currentPage")
-        if let libs = decoder.decodeObject(forKey: "libraries") as? [Data] {
+        if let libs = decoder.decodeObject(of: NSArray.self, forKey: "libraries") as? [Data] {
             openLibraries = libs
         }
-        if let printInfo = decoder.decodeObject(forKey: "printInfo") as? [String: AnyObject] {
+        if let printInfo = decoder.decodeObject(of: NSDictionary.self, forKey: "printInfo") as? [NSPrintInfo.AttributeKey: Any] {
             printInfoDict = printInfo
         }
-        if let scale = decoder.decodeObject(forKey: "savedScale") {
+        if let scale = decoder.decodeObject(of: NSNumber.self, forKey: "savedScale") {
             centeredPoint = decoder.decodePoint(forKey: "centeredPoint")
             savedScale = CGFloat(scale.doubleValue)
         }
@@ -106,12 +106,12 @@ class SchematicDocument: NSDocument
         super.init()
     }
     
-    override class func autosavesInPlace() -> Bool {
+    override class var autosavesInPlace: Bool {
         return true
     }
 
-    override var windowNibName: String? {
-        return "SchematicDocument"
+    override var windowNibName: NSNib.Name? {
+        return NSNib.Name("SchematicDocument")
     }
     
     override func data(ofType typeName: String) throws -> Data
@@ -162,38 +162,38 @@ class SchematicDocument: NSDocument
     
     // MARK: Printing
     
-    override func runPageLayout(_ sender: AnyObject?) {
+    override func runPageLayout(_ sender: Any?) {
         runModalPageLayout(with: printInfo, delegate: self, didRun: #selector(SchematicDocument.pageLayoutDone), contextInfo: nil)
     }
     
-    func pageLayoutDone(_ context: AnyObject?) {
-        if let matchButton = pageLayoutAccessory?.matchDrawingPageToLayout where matchButton.state == NSOnState {
+    @objc func pageLayoutDone(_ context: AnyObject?) {
+        if let matchButton = pageLayoutAccessory?.matchDrawingPageToLayout, matchButton.state == NSControl.StateValue.on {
             page.pageSize = printInfo.imageablePageBounds.size * (100.0 / 72.0)
         }
-        if let dict = (printInfo.dictionary() as NSDictionary) as? [String: AnyObject] {
+        if let dict = (printInfo.dictionary() as NSDictionary) as? [NSPrintInfo.AttributeKey: Any] {
             schematic.printInfoDict = dict
-            printInColor = (pageLayoutAccessory?.printInColor?.state ?? NSOffState) == NSOnState
+            printInColor = (pageLayoutAccessory?.printInColor?.state ?? NSControl.StateValue.off) == NSControl.StateValue.on
             Defaults.set(printInColor, forKey: "printColor")
         }
     }
     
     override func preparePageLayout(_ pageLayout: NSPageLayout) -> Bool {
         if let pageLayoutAccessory = pageLayoutAccessory {
-            pageLayoutAccessory.printInColor?.state = Defaults.bool(forKey: "printColor") ? NSOnState : NSOffState
-            pageLayoutAccessory.matchDrawingPageToLayout?.state = NSOffState
+            pageLayoutAccessory.printInColor?.state = Defaults.bool(forKey: "printColor") ? NSControl.StateValue.on : NSControl.StateValue.off
+            pageLayoutAccessory.matchDrawingPageToLayout?.state = NSControl.StateValue.off
             pageLayout.addAccessoryController(pageLayoutAccessory)
         }
         return true
     }
     
-    enum PrinterError: ErrorProtocol {
+    enum PrinterError: Error {
         case noViewError
     }
     
     var printSaveZoomState = ZoomState(scale: 1, centerPoint: CGPoint())
     var printSavePageNumber = 0
     
-    override func printOperation(withSettings printSettings: [String : AnyObject]) throws -> NSPrintOperation {
+    override func printOperation(withSettings printSettings: [NSPrintInfo.AttributeKey : Any]) throws -> NSPrintOperation {
         if let drawingView = drawingView {
             let operation = NSPrintOperation(view: drawingView, printInfo: printInfo)
             return operation
@@ -202,14 +202,14 @@ class SchematicDocument: NSDocument
         }
     }
     
-    func document(_ document: NSDocument, didPrintSuccessfully: Bool,  contextInfo: UnsafeMutablePointer<Void>) {
+    @objc func document(_ document: NSDocument, didPrintSuccessfully: Bool,  contextInfo: UnsafeMutableRawPointer) {
         currentPage = printSavePageNumber
         drawingView?.zoomState = printSaveZoomState
         drawingView?.constrainViewToSuperview = true
         drawingView?.needsDisplay = true
     }
     
-    override func print(_ sender: AnyObject?) {
+    override func printDocument(_ sender: Any?) {
         if let drawingView = drawingView {
             printSavePageNumber = currentPage
             drawingView.constrainViewToSuperview = false        // allow random zooming
@@ -282,12 +282,21 @@ class SchematicDocument: NSDocument
         return unplacedComponents
     }
     
+    override func value(forKey key: String) -> Any? {
+        switch key {
+        case "unplacedComponents":
+            return unplacedComponents
+        default:
+            return super.value(forKey: key)
+        }
+    }
+    
     // MARK: Actions
     
     @IBAction func newPage(_ sender: AnyObject) {
         newPageDialog?.nameField.stringValue = "Page_\(pageSeq)"
         drawingView?.window?.beginSheet(newPageDialog!) { response in
-            if response != NSModalResponseOK {
+            if response != NSApplication.ModalResponse.OK {
                 return
             } else {
                 let newPage = SchematicPage()
@@ -335,7 +344,7 @@ class SchematicDocument: NSDocument
             if let window = drawingView?.window {
                 alert.beginSheetModal(for: window) { (response) in
                     alert.window.orderOut(self)
-                    if response == NSAlertFirstButtonReturn {
+                    if response == NSApplication.ModalResponse.alertFirstButtonReturn {
                         self.libraryManager?.currentLib?.delete(page: category)
                     }
                 }
@@ -353,7 +362,7 @@ class SchematicDocument: NSDocument
             if let window = drawingView?.window {
                 alert.beginSheetModal(for: window) { (response) in
                     alert.window.orderOut(self)
-                    if response == NSAlertFirstButtonReturn {
+                    if response == NSApplication.ModalResponse.alertFirstButtonReturn {
                         self.libraryManager?.currentLib?.delete(component: component)
                     }
                 }
@@ -371,7 +380,7 @@ class SchematicDocument: NSDocument
     }
     
     @IBAction func populatePartParameters(_ sender: AnyObject) {
-        if let selection = drawingView?.selection, let component = selection.first as? Component where selection.count == 1 {
+        if let selection = drawingView?.selection, let component = selection.first as? Component, selection.count == 1 {
             octopartWindow?.orderFront(self)
             octopartWindow?.prepopulateWithComponent(component)
         }
@@ -393,12 +402,12 @@ class NewPageDialog: NSWindow
     }
     
     @IBAction func ok(_ sender: AnyObject?) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseOK)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.OK)
         orderOut(self)
     }
     
     @IBAction func cancel(_ sender: AnyObject?) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseCancel)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.cancel)
         orderOut(self)
     }
 }

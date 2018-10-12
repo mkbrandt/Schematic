@@ -9,7 +9,9 @@
 import Cocoa
 
 class AttributedGraphic: Graphic
-{
+{    
+    override class var supportsSecureCoding: Bool { return true }
+    
     var _attributeTexts: Set<AttributeText> = []
     var attributeTexts: Set<AttributeText> {
         get { return _attributeTexts }
@@ -39,7 +41,7 @@ class AttributedGraphic: Graphic
         if let bounds = cachedBounds {
             return bounds
         } else {
-            let bounds = attributeTexts.reduce(CGRect(), combine: { $0 + $1.bounds })
+            let bounds = attributeTexts.reduce(CGRect(), { $0 + $1.bounds })
             //cachedBounds = bounds
             return bounds
         }
@@ -52,8 +54,8 @@ class AttributedGraphic: Graphic
     }
     
     required init?(coder decoder: NSCoder) {
-        _attributeTexts = decoder.decodeObject(forKey: "attributeTexts") as? Set<AttributeText> ?? []
-        attributes = decoder.decodeObject(forKey: "attributes") as? [String : String] ?? [:]
+        _attributeTexts = decoder.decodeObject(of: [NSSet.self, AttributeText.self], forKey: "attributeTexts") as? Set<AttributeText> ?? []
+        attributes = decoder.decodeObject(of: NSDictionary.self, forKey: "attributes") as? [String : String] ?? [:]
         super.init(coder: decoder)
         _attributeTexts.forEach { $0._owner = self }
     }
@@ -67,7 +69,7 @@ class AttributedGraphic: Graphic
     override var inspectionName: String         { return "AttributedGraphic" }
     override var inspectables: [Inspectable]    { return [] }
 
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         return nil
     }
     

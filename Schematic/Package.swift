@@ -6,11 +6,13 @@
 //  Copyright © 2016 Walkingdog. All rights reserved.
 //
 
-import Foundation
+import AppKit
 
 class Package: AttributedGraphic
 {
-    var prefix: String {
+    override class var supportsSecureCoding: Bool { return true }
+    
+   var prefix: String {
         get { return attributes["prefix"] ?? "U" }
         set { attributes["prefix"] = newValue }
     }
@@ -96,9 +98,8 @@ class Package: AttributedGraphic
 
     required init?(coder decoder: NSCoder) {
         super.init(coder: decoder)
-        components = decoder.decodeObject(forKey: "components") as? Set<Component> ?? []
-        primaryComponent = components.first
-        primaryComponent = decoder.decodeObject(forKey: "primaryComponent") as? Component
+        components = decoder.decodeObject(of: [NSSet.self, Component.self], forKey: "components") as? Set<Component> ?? []
+        primaryComponent = decoder.decodeObject(of: Component.self, forKey: "primaryComponent") ?? components.first
     }
     
     override init(json: JSON) {
@@ -107,7 +108,7 @@ class Package: AttributedGraphic
         components.forEach { $0.package = self }
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -119,7 +120,7 @@ class Package: AttributedGraphic
     func assignReference(_ document: SchematicDocument) {
         let allGraphics = document.pages.reduce([]) { $0 + $1.displayList }
         let components = allGraphics.filter { $0 is Component } as! [Component]
-        let designators = Set(components.flatMap { $0.refDes })
+        let designators = Set(components.map { $0.refDes })
         var index = 0
         var des = ""
         repeat {

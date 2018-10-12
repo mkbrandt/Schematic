@@ -14,7 +14,9 @@ let testComponent = "left{ CLOCK:5, -, DATA0: 4, DATA1: 3, DATA2: 2, DATA3: 1}" 
 
 class AutoComponent: Component
 {
-    var text: String {
+    override class var supportsSecureCoding: Bool { return true }
+    
+   var text: String {
         didSet { rejigger() }
     }
     
@@ -25,11 +27,11 @@ class AutoComponent: Component
     }
     
     required init?(coder decoder: NSCoder) {
-        text = decoder.decodeObject(forKey: "text") as? String ?? ""
+        text = decoder.decodeObject(of: NSString.self, forKey: "text") as String? ?? ""
         super.init(coder: decoder)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -78,10 +80,10 @@ class AutoComponent: Component
         let topPins = topPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .top) }
         let bottomPins = bottomPinInfo.map { Pin(origin: CGPoint(x: 0, y: 0), component: self, name: $0.0, number: $0.1, orientation: .bottom) }
         
-        let leftWidth = ceil(leftPins.reduce(0.0, combine: { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
-        let rightWidth = ceil(rightPins.reduce(0.0, combine: { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
-        let topWidth = ceil(topPins.reduce(0.0, combine: { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
-        let bottomWidth = ceil(bottomPins.reduce(0.0, combine: { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
+        let leftWidth = ceil(leftPins.reduce(0.0, { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
+        let rightWidth = ceil(rightPins.reduce(0.0, { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
+        let topWidth = ceil(topPins.reduce(0.0, { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
+        let bottomWidth = ceil(bottomPins.reduce(0.0, { max($0, $1.pinNameText?.size.width ?? 0)}) / GridSize) * GridSize
         
         let vertCount = max(leftPinInfo.count, rightPinInfo.count)
         let horizCount = max(topPinInfo.count, bottomPinInfo.count)

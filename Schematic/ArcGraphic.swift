@@ -23,6 +23,8 @@ class ArcState: CircleState {
 
 class ArcGraphic: CircleGraphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var startAngle: CGFloat
     var endAngle: CGFloat
     var clockwise: Bool
@@ -125,7 +127,7 @@ class ArcGraphic: CircleGraphic
         super.init(json: json)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         return nil
     }
     
@@ -170,10 +172,10 @@ class ArcGraphic: CircleGraphic
     }
     
     override func draw() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
         context?.beginPath()
-        context?.addArc(centerX: origin.x, y: origin.y, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: clockwise ? 1 : 0)
+        context?.__addArc(centerX: origin.x, y: origin.y, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: clockwise ? 1 : 0)
         context?.strokePath()
     }
     

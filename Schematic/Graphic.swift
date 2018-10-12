@@ -43,8 +43,10 @@ class GraphicState {
 var _NextGraphicID = 0
 var nextGraphicID: Int { _NextGraphicID += 1; return _NextGraphicID }
 
-class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
+class Graphic: NSObject, NSSecureCoding, NSPasteboardReading, NSPasteboardWriting
 {
+    class var supportsSecureCoding: Bool { return true }
+    
     var graphicID: Int
     
     var origin: CGPoint
@@ -75,6 +77,10 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         set { origin = newValue.origin }
     }
     
+    class func supporteSecureCoding() -> Bool {
+        return true
+    }
+    
     init(origin: CGPoint) {
         self.origin = origin
         graphicID = nextGraphicID
@@ -97,27 +103,27 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         coder.encode(origin, forKey: "origin")
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("fuck me")
     }
     
-    static func readableTypes(for pasteboard: NSPasteboard) -> [String] {
-        return [SchematicElementUTI]
+    static func readableTypes(for pasteboard: NSPasteboard) -> [NSPasteboard.PasteboardType] {
+        return [NSPasteboard.PasteboardType(rawValue: SchematicElementUTI)]
     }
     
-    func writableTypes(for pasteboard: NSPasteboard) -> [String] {
-        return [SchematicElementUTI]
+    func writableTypes(for pasteboard: NSPasteboard) -> [NSPasteboard.PasteboardType] {
+        return [NSPasteboard.PasteboardType(rawValue: SchematicElementUTI)]
     }
     
-    func pasteboardPropertyList(forType type: String) -> AnyObject? {
-        return NSKeyedArchiver.archivedData(withRootObject: self)
+    func pasteboardPropertyList(forType type: NSPasteboard.PasteboardType) -> Any? {
+        return NSKeyedArchiver.archivedData(withRootObject: self) as AnyObject
     }
     
-    static func readingOptions(forType type: String, pasteboard: NSPasteboard) -> NSPasteboardReadingOptions {
-        return NSPasteboardReadingOptions.asKeyedArchive
+    static func readingOptions(forType type: NSPasteboard.PasteboardType, pasteboard: NSPasteboard) -> NSPasteboard.ReadingOptions {
+        return NSPasteboard.ReadingOptions.asKeyedArchive
     }
     
-    override func value(forUndefinedKey key: String) -> AnyObject? {
+    override func value(forUndefinedKey key: String) -> Any? {
         switch key {
         case "inspectables": return inspectables
         default: return nil
@@ -139,7 +145,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     func setPoint(_ point: CGPoint, index: Int, view: SchematicView) {
         let p = points[index]
         setPoint(point, index: index)
-        view.undoManager?.registerUndoWithTarget(self) { (g) in
+        view.undoManager?.registerUndo(withTarget: self) { (g) in
             g.setPoint(p, index: index, view: view)
             view.needsDisplay = true
         }
@@ -208,7 +214,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
         let oldState = self.state
         self.state = state
-        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+        view.undoManager?.registerUndo(withTarget: self, handler: { (_) in
             self.restoreUndo(state: oldState, view: view)
         })
         view.setNeedsDisplay(bounds.insetBy(dx: -5, dy: -5))
@@ -216,7 +222,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
 
     func saveUndoState(view: SchematicView) {
         let state = self.state
-        view.undoManager?.registerUndoWithTarget(self, handler: { (_) in
+        view.undoManager?.registerUndo(withTarget: self, handler: { (_) in
             self.restoreUndo(state: state, view: view)
         })
     }
@@ -280,7 +286,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     }
     
     func drawPoint(_ point: CGPoint, color: NSColor) {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         let unit = context?.convertToDeviceSpace(CGSize(width: 1, height: 1))
         let hsize = 8.0 / (unit?.width)!
         let isize = 6.0 / (unit?.width)!
@@ -288,8 +294,8 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
         let irect = CGRect(x: point.x - isize / 2, y: point.y - isize / 2, width: isize, height: isize)
         
         context?.saveGState()
-        if unit?.width > 1 {
-            NSColor.white().set()
+        if let unit = unit, unit.width > 1 {
+            NSColor.white.set()
             context?.fill(rect)
             setDrawingColor(color)
             context?.fill(irect)
@@ -302,7 +308,7 @@ class Graphic: NSObject, NSCoding, NSPasteboardReading, NSPasteboardWriting
     
     func showHandles() {
         points.forEach {
-            drawPoint($0, color: NSColor.black())
+            drawPoint($0, color: NSColor.black)
         }
     }
 }

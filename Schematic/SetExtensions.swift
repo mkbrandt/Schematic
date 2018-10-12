@@ -23,25 +23,25 @@ public func +<T>(a: [T], b: Set<T>) -> Set<T> {
 var ActionBlockKey: UInt8 = 0
 
 // a type for our action block closure
-typealias BlockButtonActionBlock = (sender: AnyObject?) -> Void
+typealias BlockButtonActionBlock = (_ sender: AnyObject?) -> Void
 
 class ActionBlockWrapper : NSObject {
     var block : BlockButtonActionBlock
-    init(block: BlockButtonActionBlock) {
+    init(block: @escaping BlockButtonActionBlock) {
         self.block = block
     }
 }
 
 extension NSControl {
-    func block_setAction(_ block: BlockButtonActionBlock) {
+    func block_setAction(_ block: @escaping BlockButtonActionBlock) {
         objc_setAssociatedObject(self, &ActionBlockKey, ActionBlockWrapper(block: block), objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         self.target = self
         self.action = #selector(block_handleAction)
     }
     
-    func block_handleAction(_ sender: NSControl) {
+    @objc func block_handleAction(_ sender: NSControl) {
         if let wrapper = objc_getAssociatedObject(self, &ActionBlockKey) as? ActionBlockWrapper {
-            wrapper.block(sender: sender)
+            wrapper.block(sender)
         }
     }
 }

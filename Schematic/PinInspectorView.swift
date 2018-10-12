@@ -47,7 +47,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     
     var trailingNumberRE = RegularExpression(pattern: "([[:digit:]]+)$")
     
-    override func observeValue(forKeyPath keyPath: String?, of object: AnyObject?, change: [NSKeyValueChangeKey : AnyObject]?, context: UnsafeMutablePointer<Void>?) {
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if drawingView.selection.count == 1 {
             if let pin = drawingView.selection.first as? Pin {
                 self.pin = pin
@@ -61,9 +61,9 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     func loadPinValues() {
         pinNameField.stringValue = pin.pinName
         pinNumberField.stringValue = pin.pinNumber
-        bubbleCheckBox.state = pin.hasBubble ? NSOnState : NSOffState
-        overbarCheckBox.state = pin.pinNameText?.overbar ?? false ? NSOnState : NSOffState
-        clockCheckBox.state = pin.hasClockFlag ? NSOnState : NSOffState
+        bubbleCheckBox.state = pin.hasBubble ? NSControl.StateValue.on : NSControl.StateValue.off
+        overbarCheckBox.state = pin.pinNameText?.overbar ?? false ? NSControl.StateValue.on : NSControl.StateValue.off
+        clockCheckBox.state = pin.hasClockFlag ? NSControl.StateValue.on : NSControl.StateValue.off
         switch pin.orientation {
         case .right: orientationButton.selectItem(at: 0)
         case .left: orientationButton.selectItem(at: 1)
@@ -107,28 +107,28 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
         pin?.orientation = orientation
         pin?.pinName = pinNameField.stringValue
         pin?.pinNumber = pinNumberField.stringValue
-        pin?.pinNameText?.overbar = overbarCheckBox.state == NSOnState
-        pin?.hasBubble = bubbleCheckBox.state == NSOnState
-        pin?.hasClockFlag = clockCheckBox.state == NSOnState
+        pin?.pinNameText?.overbar = overbarCheckBox.state == NSControl.StateValue.on
+        pin?.hasBubble = bubbleCheckBox.state == NSControl.StateValue.on
+        pin?.hasClockFlag = clockCheckBox.state == NSControl.StateValue.on
         pin?.placeAttributes()
         needsDisplay = true
         drawingView.needsDisplay = true
     }
     
     override func draw(_ dirtyRect: NSRect) {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
-        NSColor.white().set()
+        NSColor.white.set()
         context?.fill(bounds)
-        NSColor.black().set()
+        NSColor.black.set()
         context?.beginPath()
         switch pin.orientation {
         case .right, .left:
-            context?.moveTo(x: pin.origin.x, y: bounds.top)
-            context?.addLineTo(x: pin.origin.x, y: bounds.bottom)
+            context?.__moveTo(x: pin.origin.x, y: bounds.top)
+            context?.__addLineTo(x: pin.origin.x, y: bounds.bottom)
         case .top, .bottom:
-            context?.moveTo(x: bounds.left, y: pin.origin.y)
-            context?.addLineTo(x: bounds.right, y: pin.origin.y)
+            context?.__moveTo(x: bounds.left, y: pin.origin.y)
+            context?.__addLineTo(x: bounds.right, y: pin.origin.y)
         }
         context?.strokePath()
         pin?.drawInRect(bounds)
@@ -137,8 +137,8 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     var pinImage: NSImage {
         let image = NSImage(size: pin.bounds.size)
         image.lockFocus()
-        let context = NSGraphicsContext.current()?.cgContext
-        context?.translate(x: -pin.bounds.origin.x, y: -pin.bounds.origin.y)
+        let context = NSGraphicsContext.current?.cgContext
+        context?.translateBy(x: -pin.bounds.origin.x, y: -pin.bounds.origin.y)
         pin.drawInRect(pin.bounds)
         image.unlockFocus()
         return image
@@ -146,7 +146,7 @@ class PinInspectorPreview: NSBox, NSDraggingSource, NSTextFieldDelegate
     
     // Pin Dragging
     
-    override func mouseDown(_ theEvent: NSEvent) {
+    override func mouseDown(with theEvent: NSEvent) {
         let item = NSDraggingItem(pasteboardWriter: pin)
         item.setDraggingFrame(pin.bounds, contents: pinImage)
         beginDraggingSession(with: [item], event: theEvent, source: self)

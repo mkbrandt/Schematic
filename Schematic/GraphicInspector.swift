@@ -32,7 +32,7 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
             }
             inspectionFields = []
             for (f, s) in fieldBindings {
-                f.unbind(s)
+                f.unbind(NSBindingName(rawValue: s))
             }
             fieldBindings = []
         }
@@ -42,7 +42,7 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
         }
     }
     
-    override func observeValue(forKeyPath keyPath: String?, of object: AnyObject?, change: [NSKeyValueChangeKey : AnyObject]?, context: UnsafeMutablePointer<Void>?) {
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         if drawingView.selection.count == 1 {
             inspectee = drawingView.selection.first
         } else {
@@ -51,10 +51,10 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
     }
     
     @IBAction func switchValueChanged(_ sender: NSButton) {
-        if let info = sender.infoForBinding("state") {
-            if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
+        if let info = sender.infoForBinding(NSBindingName(rawValue: "state")) {
+            if let key = info[NSBindingInfoKey.observedKeyPath] as? String, let target = info[NSBindingInfoKey.observedObject] as? Graphic {
                 if target.isSettable(key) {
-                    target.setValue(sender.state == NSOnState, forKey: key)
+                    target.setValue(sender.state == NSControl.StateValue.on, forKey: key)
                 }
             }
         }
@@ -62,8 +62,8 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
     }
     
     @IBAction func stringValueChanged(_ sender: NSTextField) {
-        if let info = sender.infoForBinding("stringValue") {
-            if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
+        if let info = sender.infoForBinding(NSBindingName(rawValue: "stringValue")) {
+            if let key = info[NSBindingInfoKey.observedKeyPath] as? String, let target = info[NSBindingInfoKey.observedObject] as? Graphic {
                 if target.isSettable(key) {
                     target.setValue(sender.stringValue, forKey: key)
                 }
@@ -73,8 +73,8 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
     }
     
     @IBAction func doubleValueChanged(_ sender: NSTextField) {
-        if let info = sender.infoForBinding("doubleValue") {
-            if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
+        if let info = sender.infoForBinding(NSBindingName(rawValue: "doubleValue")) {
+            if let key = info[NSBindingInfoKey.observedKeyPath] as? String, let target = info[NSBindingInfoKey.observedObject] as? Graphic {
                 if target.isSettable(key) {
                     target.setValue(sender.doubleValue, forKey: key)
                 }
@@ -84,8 +84,8 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
     }
     
     @IBAction func colorValueChanged(_ sender: NSColorWell) {
-        if let info = sender.infoForBinding("color") {
-            if let key = info[NSObservedKeyPathKey] as? String, let target = info[NSObservedObjectKey] as? Graphic {
+        if let info = sender.infoForBinding(NSBindingName(rawValue: "color")) {
+            if let key = info[NSBindingInfoKey.observedKeyPath] as? String, let target = info[NSBindingInfoKey.observedObject] as? Graphic {
                 if target.isSettable(key) {
                     target.setValue(sender.color, forKey: key)
                 }
@@ -132,28 +132,28 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
                 case .bool:
                     let button = NSButton(frame: CGRect())
                     control = button
-                    button.setButtonType(.switchButton)
+                    button.setButtonType(.switch)
                     button.title = ""
-                    button.bind("state", to: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
+                    button.bind(NSBindingName(rawValue: "state"), to: inspectee, withKeyPath: info.name, options: [NSBindingOption.continuouslyUpdatesValue: true])
                     button.action = #selector(switchValueChanged)
                     fieldBindings.append((button, "state"))
                     //needsName = false
                 case .float, .int, .angle:
                     let textField = NSTextField(frame: CGRect())
                     control = textField
-                    textField.bind("doubleValue", to: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
+                    textField.bind(NSBindingName(rawValue: "doubleValue"), to: inspectee, withKeyPath: info.name, options: [NSBindingOption.continuouslyUpdatesValue: true])
                     textField.action = #selector(doubleValueChanged)
                     fieldBindings.append((textField, "doubleValue"))
                 case .string:
                     let textField = NSTextField(frame: CGRect())
                     control = textField
-                    textField.bind("stringValue", to: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
+                    textField.bind(NSBindingName(rawValue: "stringValue"), to: inspectee, withKeyPath: info.name, options: [NSBindingOption.continuouslyUpdatesValue: true])
                     textField.action = #selector(stringValueChanged)
                     fieldBindings.append((textField, "stringValue"))
                case .color:
                     let colorWell = NSColorWell(frame: CGRect())
                     control = colorWell
-                    colorWell.bind("color", to: inspectee, withKeyPath: info.name, options: [NSContinuouslyUpdatesValueBindingOption: true])
+                    colorWell.bind(NSBindingName(rawValue: "color"), to: inspectee, withKeyPath: info.name, options: [NSBindingOption.continuouslyUpdatesValue: true])
                     fieldConstraints.append(NSLayoutConstraint(item: colorWell, attribute: .height, relatedBy: .equal, toItem: nil, attribute: .height, multiplier: 0, constant: 32))
                     colorWell.action = #selector(colorValueChanged)
                     fieldBindings.append((colorWell, "colorValue"))
@@ -212,15 +212,15 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
         return 0
     }
     
-    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any? {
         if let inspectee = inspectee as? AttributedGraphic {
             if let id = tableColumn?.identifier {
                 switch id {
-                case "Name":
-                    return inspectee.attributeNames[row]
-                case "Value":
+                case NSUserInterfaceItemIdentifier("Name"):
+                    return inspectee.attributeNames[row] as AnyObject
+                case NSUserInterfaceItemIdentifier("Value"):
                     let key = inspectee.attributeNames[row]
-                    return inspectee.attributeValue(key)
+                    return inspectee.attributeValue(key) as AnyObject
                 default: break
                 }
             }
@@ -231,7 +231,7 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
     
     @IBAction func attributeChanged(_ sender: AnyObject) {
         let row = tableView.selectedRow
-        if let g = inspectee as? AttributedGraphic where row >= 0 && row <= g.attributeNames.count {
+        if let g = inspectee as? AttributedGraphic, row >= 0 && row <= g.attributeNames.count {
             drawingView.setNeedsDisplay(g.bounds)
             g.setAttribute(sender.stringValue, name: g.attributeNames[row])
             drawingView.setNeedsDisplay(g.bounds)
@@ -241,7 +241,7 @@ class GraphicInspector: NSView, NSTextFieldDelegate, NSTableViewDataSource, NSTa
     
     @IBAction func attributeNameChanged(_ sender: AnyObject) {
         let row = tableView.selectedRow
-        if let g = inspectee as? AttributedGraphic where row >= 0 && row <= g.attributeNames.count {
+        if let g = inspectee as? AttributedGraphic, row >= 0 && row <= g.attributeNames.count {
             drawingView.setNeedsDisplay(g.bounds)
             let oldName = g.attributeNames[row]
             let newName: String = sender.stringValue

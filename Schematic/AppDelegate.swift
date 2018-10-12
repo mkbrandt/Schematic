@@ -16,10 +16,10 @@ var icloudUserRecord: CKRecord?
 class AppDelegate: NSObject, NSApplicationDelegate
 {    
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        Defaults.register(initialUserDefaults)
+        Defaults.register(defaults: initialUserDefaults)
         SchematicDocument.installScripts()
         
-        NSApp.registerForRemoteNotifications(matching: [.none])
+        NSApp.registerForRemoteNotifications(matching: [])
         
         CKContainer.default().accountStatus { (status, error) in
             if status == CKAccountStatus.noAccount {
@@ -40,7 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate
                     print("Error retrieving user ID: \(error)")
                 }
                 icloudUser = recordID
-                print("iCloud user is: \(icloudUser?.recordName)")
+                print("iCloud user is: \(String(describing: icloudUser?.recordName))")
                 if let user = icloudUser {
                     cloudDatabase.fetch(withRecordID: user, completionHandler: { (userRecord, error) in
                         if let error = error {
@@ -49,9 +49,9 @@ class AppDelegate: NSObject, NSApplicationDelegate
                         if let userRecord = userRecord {
                             icloudUserRecord = userRecord
                             if let launchCount = userRecord["launches"] as? Int {
-                                userRecord["launches"] = launchCount + 1
+                                userRecord["launches"] = launchCount + 1 as CKRecordValue
                             } else {
-                                userRecord["launches"] = 1
+                                userRecord["launches"] = 1 as CKRecordValue
                             }
                             let op = CKModifyRecordsOperation(recordsToSave: [userRecord], recordIDsToDelete: [])
                             cloudDatabase.add(op)
@@ -66,14 +66,14 @@ class AppDelegate: NSObject, NSApplicationDelegate
         print("did register")
     }
     
-    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: NSError) {
+    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         print("failed to register: \(error)")
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
     }
     
-    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String : AnyObject]) {
+    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String : Any]) {
         print("Received notification: \(userInfo)")
         if let userInfo = userInfo as? [String: NSObject] {
             let notification = CKNotification(fromRemoteNotificationDictionary: userInfo)

@@ -19,7 +19,7 @@ class UnplacedcomponentsTableViewDataSource: NSObject, NSTableViewDataSource
         document.addObserver(self, forKeyPath: "unplacedComponents", options: .new, context: nil)
     }
     
-    override func observeValue(forKeyPath keyPath: String?, of object: AnyObject?, change: [NSKeyValueChangeKey : AnyObject]?, context: UnsafeMutablePointer<Void>?) {
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
         tableView?.reloadData()
     }
     
@@ -27,7 +27,7 @@ class UnplacedcomponentsTableViewDataSource: NSObject, NSTableViewDataSource
         return document.unplacedComponents.count
     }
     
-    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any? {
         let components = document.unplacedComponents.sorted { $0.partNumber < $1.partNumber }
         
         return components[row]

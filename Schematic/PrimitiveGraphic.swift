@@ -9,10 +9,12 @@
 import Cocoa
 
 class PrimitiveGraphic: Graphic
-{
-    var color: NSColor = NSColor.black()
+{    
+    override class var supportsSecureCoding: Bool { return true }
+    
+   var color: NSColor = NSColor.black
     var lineWeight: CGFloat = 1.0
-
+    
     override var inspectables: [Inspectable] {
         return [
             Inspectable(name: "color", type: .color),
@@ -35,7 +37,7 @@ class PrimitiveGraphic: Graphic
     }
     
     required init?(coder decoder: NSCoder) {
-        color = decoder.decodeObject(forKey: "color") as? NSColor ?? NSColor.black()
+        color = decoder.decodeObject(of: NSColor.self, forKey: "color") ?? NSColor.black
         lineWeight = decoder.decodeCGFloatForKey("lineWeight")
         super.init(coder: decoder)
     }
@@ -48,19 +50,19 @@ class PrimitiveGraphic: Graphic
     
     override var json: JSON {
         var json = super.json
-        let color = self.color.usingColorSpace(NSColorSpace.deviceRGB())!
+        let color = self.color.usingColorSpace(NSColorSpace.deviceRGB)!
         json["color"] = JSON(["r": color.redComponent, "g": color.greenComponent, "b": color.blueComponent])
         json["lineWeight"] = JSON(lineWeight)
         return json
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("fuck me")
     }
 
     override func drawInRect(_ rect: CGRect) {
         if intersectsRect(rect) {
-            let context = NSGraphicsContext.current()?.cgContext
+            let context = NSGraphicsContext.current?.cgContext
             
             context?.saveGState()
             context?.setLineWidth(lineWeight)

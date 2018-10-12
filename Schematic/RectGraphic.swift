@@ -19,7 +19,9 @@ class RectState: GraphicState {
 
 class RectGraphic: PrimitiveGraphic
 {
-    var size: CGSize {
+    override class var supportsSecureCoding: Bool { return true }
+    
+   var size: CGSize {
         willSet {
             willChangeValue(forKey: "width")
             willChangeValue(forKey: "height")
@@ -96,7 +98,7 @@ class RectGraphic: PrimitiveGraphic
         super.init(json: json)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -150,7 +152,7 @@ class RectGraphic: PrimitiveGraphic
     }
     
     override func draw() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
         context?.stroke(rect)
     }

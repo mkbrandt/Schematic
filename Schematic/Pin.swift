@@ -14,6 +14,8 @@ enum PinOrientation: Int {
 
 class Pin: AttributedGraphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     weak var component: Component? {
         didSet {
             if let component = component {
@@ -26,7 +28,7 @@ class Pin: AttributedGraphic
     
     var node: Node?
     var hasConnection: Bool {
-        if let node = node where node.attachments.count > 0 {
+        if let node = node, node.attachments.count > 0 {
             return true
         }
         return false
@@ -102,8 +104,8 @@ class Pin: AttributedGraphic
         
         let pinNameText = AttributeText(origin: CGPoint(), format: "=pinName", angle: 0, owner: nil)
         let pinNumberText = AttributeText(origin: CGPoint(), format: "=pinNumber", angle: 0, owner: nil)
-        pinNameText.color = NSColor.blue()
-        pinNumberText.color = NSColor.red()
+        pinNameText.color = NSColor.blue
+        pinNumberText.color = NSColor.red
         attributeTexts.insert(pinNameText)
         attributeTexts.insert(pinNumberText)
         
@@ -117,7 +119,7 @@ class Pin: AttributedGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        self.component = decoder.decodeObject(forKey: "component") as? Component
+        self.component = decoder.decodeObject(of: Component.self, forKey: "component")
         orientation = PinOrientation(rawValue: decoder.decodeInteger(forKey: "orientation")) ?? .right
         hasBubble = decoder.decodeBool(forKey: "bubble")
         hasClockFlag = decoder.decodeBool(forKey: "clock")
@@ -131,7 +133,7 @@ class Pin: AttributedGraphic
         super.init(json: json)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -238,12 +240,12 @@ class Pin: AttributedGraphic
     }
     
     override func drawInRect(_ rect: CGRect) {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
 
-        NSColor.black().set()
+        NSColor.black.set()
         context?.setLineWidth(1)
         context?.beginPath()
-        context?.moveTo(x: origin.x, y: origin.y)
+        context?.__moveTo(x: origin.x, y: origin.y)
         if hasBubble {
             let bsize = GridSize / 2
             var bubbleRect: CGRect
@@ -254,15 +256,15 @@ class Pin: AttributedGraphic
             case .bottom:   bubbleRect = CGRect(x: origin.x - bsize / 2, y: origin.y - bsize, width: bsize, height: bsize)
             }
             context?.strokeEllipse(in: bubbleRect)
-            context?.moveTo(x: (origin.x + endPoint.x) / 2, y: (origin.y + endPoint.y) / 2)
+            context?.__moveTo(x: (origin.x + endPoint.x) / 2, y: (origin.y + endPoint.y) / 2)
         }
-        context?.addLineTo(x: endPoint.x, y: endPoint.y)
+        context?.__addLineTo(x: endPoint.x, y: endPoint.y)
         context?.strokePath()
         if !hasConnection {
             context?.beginPath()
-            context?.addArc(centerX: endPoint.x, y: endPoint.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.__addArc(centerX: endPoint.x, y: endPoint.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
             context?.setLineWidth(0.2)
-            setDrawingColor(NSColor.red())
+            setDrawingColor(NSColor.red)
             context?.strokePath()
         }
         super.drawInRect(rect)

@@ -33,7 +33,7 @@ class NetConstructor: Graphic
         self.wayPoints = wayPoints
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -59,16 +59,16 @@ class NetConstructor: Graphic
     }
     
     override func draw() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         var sp = origin
-        NSColor.black().set()
+        NSColor.black.set()
         context?.setLineWidth(1)
         context?.beginPath()
-        context?.moveTo(x: sp.x, y: sp.y)
+        context?.__moveTo(x: sp.x, y: sp.y)
         for wp in wayPoints {
             let delta = wp - sp
             if delta.x == 0 || delta.y == 0 {
-                context?.addLineTo(x: wp.x, y: wp.y)
+                context?.__addLineTo(x: wp.x, y: wp.y)
             } else {
                 if abs(delta.x) < TiltThreshold {
                     if preferHorizontal && wayPoints.count > 1 {
@@ -86,13 +86,13 @@ class NetConstructor: Graphic
                 }
                 
                 if preferHorizontal || !preferVertical && abs(delta.x) > abs(delta.y) {
-                    context?.addLineTo(x: wp.x, y: sp.y)
+                    context?.__addLineTo(x: wp.x, y: sp.y)
                     if !preferHorizontal {
                         //print("prefer horizontal")
                         preferHorizontal = true
                     }
                 } else {
-                    context?.addLineTo(x: sp.x, y: wp.y)
+                    context?.__addLineTo(x: sp.x, y: wp.y)
                     if !preferVertical {
                         //print("prefer vertical")
                         preferVertical = true
@@ -100,7 +100,7 @@ class NetConstructor: Graphic
                 }
                 
                 if wp != sp {
-                    context?.addLineTo(x: wp.x, y: wp.y)
+                    context?.__addLineTo(x: wp.x, y: wp.y)
                 }
             }
             sp = wp
@@ -151,7 +151,7 @@ class NetTool: Tool
 {
     
     override func keyDown(_ theEvent: NSEvent, view: SchematicView) {
-        if let netcon = view.construction as? NetConstructor where theEvent.characters == "a" {
+        if let netcon = view.construction as? NetConstructor, theEvent.characters == "a" {
             view.construction = nil // add new nets here
             netcon.makeNetInView(view)
             view.needsDisplay = true

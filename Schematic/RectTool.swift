@@ -24,7 +24,7 @@ class RectTool: Tool
     }
     
     override func mouseUp(_ location: CGPoint, view: SchematicView) {
-        if let rect = view.construction as? RectGraphic where rect.size.width > 0 && rect.size.height > 0 {
+        if let rect = view.construction as? RectGraphic, rect.size.width > 0 && rect.size.height > 0 {
             view.addConstruction()
         } else {
             view.construction = nil

@@ -125,7 +125,7 @@ extension SchematicDocument
             for pin in nlist.pins {
                 let refDes = pin.component?.refDes
                 let pinNumber = pin.pinNumber
-                if let refDes = refDes where pin.component?.package != nil {
+                if let refDes = refDes, pin.component?.package != nil {
                     if pinNumber == "" {
                         errors.append("unnamed pin on net \(nlist.name) component \(refDes)")
                     }
@@ -207,7 +207,7 @@ extension SchematicDocument
         let savePanel = NSSavePanel()
         savePanel.accessoryView = netlistAccessory
         netlistChooser?.removeAllItems()
-        let netlisterFileNames = netlisters.flatMap { $0.lastPathComponent }
+        let netlisterFileNames = netlisters.map { $0.lastPathComponent }
         let netlisterExtensions = netlisterFileNames.map { $0.components(separatedBy: ".").last ?? "" }
         let netListerNames = netlisterFileNames.map { $0.components(separatedBy: ".").first ?? "--error--" }
         netlistChooser?.addItems(withTitles: netListerNames)
@@ -219,7 +219,7 @@ extension SchematicDocument
         }
         savePanel.allowedFileTypes = netlisterExtensions
         savePanel.allowsOtherFileTypes = true
-        if savePanel.runModal() == NSFileHandlingPanelOKButton {
+        if savePanel.runModal().rawValue == NSFileHandlingPanelOKButton {
             let netlister = netlisters[netlistChooser?.indexOfSelectedItem ?? 0]
             if let url = savePanel.url {
                 if let netlist = runNetlister(netlister) {
@@ -249,7 +249,7 @@ extension SchematicDocument
             let savePanel = NSSavePanel()
             savePanel.allowedFileTypes = ["json"]
             savePanel.allowsOtherFileTypes = true
-            if savePanel.runModal() == NSFileHandlingPanelOKButton {
+            if savePanel.runModal().rawValue == NSFileHandlingPanelOKButton {
                 if let url = savePanel.url {
                     if let json = netlist.rawString() {
                         _ = try? json.write(to: url, atomically: true, encoding: String.Encoding.utf8)
@@ -266,7 +266,7 @@ extension SchematicDocument
         let savePanel = NSSavePanel()
         savePanel.allowedFileTypes = ["net"]
         savePanel.allowsOtherFileTypes = true
-        if savePanel.runModal() == NSFileHandlingPanelOKButton {
+        if savePanel.runModal().rawValue == NSFileHandlingPanelOKButton {
             if let url = savePanel.url {
                 _ = try? netlist.write(to: url, atomically: true, encoding: String.Encoding.utf8)
             }
@@ -274,18 +274,18 @@ extension SchematicDocument
     }
     
     var netlisters: [URL] {
-        let fileManager = FileManager.default()
-        let libURLs = fileManager.urlsForDirectory(.applicationScriptsDirectory, inDomains: .userDomainMask)
+        let fileManager = FileManager.default
+        let libURLs = fileManager.urls(for: .applicationScriptsDirectory, in: .userDomainMask)
         
         var netlisters: [URL] = []
         for url in libURLs {
             do {
-                let fileManager = FileManager.default()
-                let contents = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: [URLResourceKey.isExecutableKey.rawValue], options: [])
+                let fileManager = FileManager.default
+                let contents = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: [URLResourceKey(rawValue: URLResourceKey.isExecutableKey.rawValue)], options: [])
                 for item in contents {
                     var exec: AnyObject? = nil
                     try (item as NSURL).getResourceValue(&exec, forKey: URLResourceKey.isExecutableKey)
-                    if let exec = exec as? NSNumber where exec.boolValue == true {
+                    if let exec = exec as? NSNumber, exec.boolValue == true {
                         netlisters.append(item)
                     }
                 }
@@ -324,11 +324,11 @@ extension SchematicDocument
     }
     
     class func installScripts() {
-        let fileManager = FileManager.default()
-        let scriptDirURLs = fileManager.urlsForDirectory(.applicationScriptsDirectory, inDomains: .userDomainMask)
+        let fileManager = FileManager.default
+        let scriptDirURLs = fileManager.urls(for: .applicationScriptsDirectory, in: .userDomainMask)
         
         if let scriptDirURL = scriptDirURLs.first {
-            if let contents = try?fileManager.contentsOfDirectory(at: scriptDirURL, includingPropertiesForKeys: nil, options: .skipsHiddenFiles) where contents.count > 0 {
+            if let contents = try?fileManager.contentsOfDirectory(at: scriptDirURL, includingPropertiesForKeys: nil, options: .skipsHiddenFiles), contents.count > 0 {
                 return
             }
             do {
@@ -341,17 +341,16 @@ extension SchematicDocument
                 panel.title = "Allow access to Script Directory"
                 panel.prompt = "Allow"
                 panel.message = "I need to copy some things to the script directory to complete installation"
-                if panel.runModal() != NSFileHandlingPanelOKButton {
+                if panel.runModal() != .OK {
                     return
                 }
-                if let bookmark = try (panel.url as NSURL?)?.bookmarkData(.withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil) {
-                    if let srcURLs = Bundle.main().urlsForResources(withExtension: "netlister", subdirectory: nil) {
+                if let bookmark = try (panel.url as NSURL?)?.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil) {
+                    if let srcURLs = Bundle.main.urls(forResourcesWithExtension: "netlister", subdirectory: nil) {
                         for srcURL in srcURLs {
-                            if let baseName = srcURL.lastPathComponent?.replacingOccurrences(of: ".netlister", with: "") {
-                                var stale: ObjCBool = false
-                                let destURL = try (NSURL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &stale) as URL).appendingPathComponent(baseName)
-                                try fileManager.copyItem(at: srcURL, to: destURL)
-                            }
+                            let baseName = srcURL.lastPathComponent.replacingOccurrences(of: ".netlister", with: "")
+                            var stale: ObjCBool = false
+                            let destURL = try (NSURL(resolvingBookmarkData: bookmark, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &stale) as URL).appendingPathComponent(baseName)
+                            try fileManager.copyItem(at: srcURL, to: destURL)
                         }
                     }
                 }

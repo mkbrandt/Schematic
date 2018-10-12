@@ -19,6 +19,8 @@ class CircleState: GraphicState {
 
 class CircleGraphic: PrimitiveGraphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var radius: CGFloat {
         willSet { willChangeValue(forKey: "radius") }
         didSet { didChangeValue(forKey: "radius") }
@@ -66,7 +68,7 @@ class CircleGraphic: PrimitiveGraphic
         super.init(json: json)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -133,11 +135,11 @@ class CircleGraphic: PrimitiveGraphic
     }
     
     override func intersectsRect(_ rect: CGRect) -> Bool {
-        return rect.contains(bounds) || rect.lines.reduce(false, combine: { $0 || intersectsLine($1) })
+        return rect.contains(bounds) || rect.lines.reduce(false, { $0 || intersectsLine($1) })
     }
     
     override func draw() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
         context?.strokeEllipse(in: bounds)
     }

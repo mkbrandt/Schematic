@@ -18,7 +18,7 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
         return document.pages.count
     }
     
-    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> AnyObject? {
+    func tableView(_ tableView: NSTableView, objectValueFor tableColumn: NSTableColumn?, row: Int) -> Any? {
         let page = document.pages[row]
         
         return page.name
@@ -43,7 +43,7 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
     
     func deletePageAtIndex(_ index: Int) {
         let page = document.pages[index]
-        document.undoManager?.registerUndoWithTarget(self, handler: { _ in
+        document.undoManager?.registerUndo(withTarget: self, handler: { _ in
             self.insertPage(page, index: index)
         })
         if document.pages.count > 1 {
@@ -60,7 +60,7 @@ class PageInspector: NSView, NSTableViewDataSource, NSTableViewDelegate
         if index <= document.pages.count {
             document.pages.insert(page, at: index)
             schematic.needsDisplay = true
-            document.undoManager?.registerUndoWithTarget(self, handler: { _ in
+            document.undoManager?.registerUndo(withTarget: self, handler: { _ in
                 self.deletePageAtIndex(index)
             })
         }

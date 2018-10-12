@@ -25,6 +25,8 @@ class NodeState: GraphicState {
 
 class Node: AttributedGraphic
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var pin: Pin? {
         willSet { pin?.node = nil }
         didSet  { pin?.node = self }
@@ -63,8 +65,8 @@ class Node: AttributedGraphic
     }
     
     required init?(coder decoder: NSCoder) {
-        pin = decoder.decodeObject(forKey: "pin") as? Pin
-        if let attachments = decoder.decodeObject(forKey: "attachments") as? Set<Net> {
+        pin = decoder.decodeObject(of: Pin.self, forKey: "pin")
+        if let attachments = decoder.decodeObject(of: NSSet.self, forKey: "attachments") as? Set<Net> {
             self.attachments = attachments
         }
         super.init(coder: decoder)
@@ -73,7 +75,7 @@ class Node: AttributedGraphic
         }
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         fatalError("init(pasteboardPropertyList:ofType:) has not been implemented")
     }
     
@@ -128,7 +130,7 @@ class Node: AttributedGraphic
     }
     
     func constrainedX(_ exclude: Set<Net> = []) -> Bool {
-        if let comp = pin?.component where !comp.selected {
+        if let comp = pin?.component, !comp.selected {
             return true
         }
         let verticalNets = attachments.filter { $0.orientation == .vertical && !exclude.contains($0) }
@@ -137,7 +139,7 @@ class Node: AttributedGraphic
     }
     
     func constrainedY(_ exclude: Set<Net> = []) -> Bool {
-        if let comp = pin?.component where !comp.selected {
+        if let comp = pin?.component, !comp.selected {
             return true
         }
         let horizontalNets = attachments.filter { $0.orientation == .horizontal && !exclude.contains($0) }
@@ -332,21 +334,21 @@ class Node: AttributedGraphic
     }
     
     override func drawInRect(_ rect: CGRect) {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         if pin == nil && attachments.count > 2 {
-            NSColor.black().set()
+            NSColor.black.set()
             context?.beginPath()
-            context?.addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.__addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
             context?.fillPath()
         } else if pin == nil && attachments.count == 1 {
-            setDrawingColor(NSColor.red())
+            setDrawingColor(NSColor.red)
             context?.beginPath()
-            context?.addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.__addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
             context?.fillPath()
         } else if attachments.count == 0 {
-            setDrawingColor(NSColor.red())
+            setDrawingColor(NSColor.red)
             context?.beginPath()
-            context?.addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
+            context?.__addArc(centerX: origin.x, y: origin.y, radius: 2, startAngle: 0, endAngle: 2 * PI, clockwise: 1)
             context?.strokePath()
         }
     }

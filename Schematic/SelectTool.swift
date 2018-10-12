@@ -10,7 +10,7 @@ import Cocoa
 
 class Tool: NSObject
 {
-    var cursor: NSCursor { return NSCursor.crosshair() }
+    var cursor: NSCursor { return NSCursor.crosshair }
     
     func keyDown(_ theEvent: NSEvent, view: SchematicView) {
     }
@@ -47,7 +47,7 @@ class SelectTool: Tool
     var mode = SelectMode.select
     var shouldSaveUndo = false
     
-    override var cursor: NSCursor { return NSCursor.arrow() }
+    override var cursor: NSCursor { return NSCursor.arrow }
     
     func redrawSelection(_ view: SchematicView) {
         let rect = view.selection.reduce(CGRect()) { $0 + $1.bounds.insetBy(dx: -view.selectRadius, dy: -view.selectRadius) }
@@ -66,7 +66,7 @@ class SelectTool: Tool
         }
         
         for g in group {
-            if let net = g as? Net where !netsGathered.contains(net) {
+            if let net = g as? Net, !netsGathered.contains(net) {
                 newGroup.insert(net)
                 let physicalNet = net.physicallyConnectedNets([])
                 netsGathered.formUnion(physicalNet)
@@ -84,17 +84,17 @@ class SelectTool: Tool
             var nets: Set<Net> = []
             for g in group {
                 if let comp = g as? Component {
-                    rect.formUnion(comp.bounds)
+                    rect = rect.union(comp.bounds)
                     nets.formUnion(comp.connectedNets)
                 } else if let net = g as? Net {
                     nets.insert(net)
                 } else {
-                    rect.formUnion(g.bounds)
+                    rect = rect.union(g.bounds)
                 }
             }
             var phyNets: Set<Net> = []
             nets.forEach { phyNets.formUnion($0.physicallyConnectedNets([])) }
-            phyNets.forEach { rect.formUnion($0.bounds) }
+            phyNets.forEach { rect = rect.union($0.bounds) }
             view.setNeedsDisplay(rect.insetBy(dx: -5, dy: -5))
         }
     }
@@ -126,7 +126,7 @@ class SelectTool: Tool
                         mode = .moveGroup(selection)
                     case .hitsPoint(let gr, let h):
                         let p = gr.points[h]
-                        view.undoManager?.registerUndoWithTarget(gr, handler: { (gg) in
+                        view.undoManager?.registerUndo(withTarget: gr, handler: { (gg) in
                             gg.setPoint(p, index: h, view: view)
                             view.needsDisplay = true
                         })
@@ -153,7 +153,7 @@ class SelectTool: Tool
             redrawSelection(view)
             let rect = rectContainingPoints([location, startPoint])
             let rg = RectGraphic(origin: rect.origin, size: rect.size)
-            rg.color = NSColor.red()
+            rg.color = NSColor.red
             rg.lineWeight = 0.5
             view.construction = rg
             view.selectInRect(rect)
@@ -188,7 +188,7 @@ class SelectTool: Tool
     }
     
     override func mouseUp(_ location: CGPoint, view: SchematicView) {
-        if view.undoManager?.groupingLevel > 0 {
+        if let level = view.undoManager?.groupingLevel, level > 0 {
             view.undoManager?.endUndoGrouping()
         }
         view.construction = nil

@@ -14,11 +14,11 @@ class ComponentSheet: NSWindow
     @IBOutlet var packageSingleCheckbox: NSButton!
     
     @IBAction func ok(_ sender: AnyObject) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseOK)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.OK)
     }
     
     @IBAction func cancel(_ sender: AnyObject) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseCancel)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.cancel)
     }
 }
 
@@ -30,11 +30,11 @@ class PackagingSheet: NSWindow
     @IBOutlet var vendorField: NSTextField!
     
     @IBAction func ok(_ sender: AnyObject) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseOK)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.OK)
     }
     
     @IBAction func cancel(_ sender: AnyObject) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseCancel)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.cancel)
     }
 }
 
@@ -45,25 +45,25 @@ class QandASheet: NSWindow
     @IBOutlet var okButton: NSButton!
     @IBOutlet var cancelButton: NSButton!
     
-    func askQuestion(question: String, in window: NSWindow?, completion: (answer: String?) -> ()) {
+    func askQuestion(question: String, in window: NSWindow?, completion: @escaping (_ answer: String?) -> ()) {
         questionField.stringValue = question
 
         window?.beginSheet(self) { response in
             self.orderOut(self)
-            if response != NSModalResponseOK {
-                completion(answer: nil)
+            if response != NSApplication.ModalResponse.OK {
+                completion(nil)
             } else {
-                completion(answer: self.answerField.stringValue)
+                completion(self.answerField.stringValue)
             }
         }
     }
     
     @IBAction func ok(_ sender: AnyObject) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseOK)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.OK)
     }
     
     @IBAction func cancel(_ sender: AnyObject) {
-        sheetParent?.endSheet(self, returnCode: NSModalResponseCancel)
+        sheetParent?.endSheet(self, returnCode: NSApplication.ModalResponse.cancel)
     }
     
 }

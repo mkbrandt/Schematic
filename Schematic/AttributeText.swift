@@ -12,6 +12,8 @@ let AttributeFont =  NSFont(name: "Geneva", size: GridSize - 3) ?? NSFont.system
 
 class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
 {
+    override class var supportsSecureCoding: Bool { return true }
+    
     var _owner: AttributedGraphic?
     var owner: AttributedGraphic? {
         get { return _owner }
@@ -48,11 +50,11 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         return json
     }
     
-    var textAttributes: [String: AnyObject] {
+    var textAttributes: [NSAttributedStringKey : Any]? {
         if printInColor || NSGraphicsContext.currentContextDrawingToScreen() {
-            return [NSForegroundColorAttributeName: color, NSFontAttributeName: font]
+            return [NSAttributedStringKey(rawValue: NSAttributedStringKey.foregroundColor.rawValue): color, NSAttributedStringKey(rawValue: NSAttributedStringKey.font.rawValue): font]
         } else {
-            return [NSFontAttributeName: font]
+            return [NSAttributedStringKey(rawValue: NSAttributedStringKey.font.rawValue): font]
         }
     }
     
@@ -74,9 +76,9 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     var string: NSString {
         get {
             if let owner = owner {
-                return owner.formatAttribute(format)
+                return owner.formatAttribute(format) as NSString
             }
-            return format
+            return format as NSString
         }
         set {
             invalidateDrawing()
@@ -102,7 +104,7 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
     
     override var bounds: CGRect     {
-        if let owner = owner where selected {
+        if let owner = owner, selected {
             return textBounds + owner.graphicBounds
         }
         return textBounds
@@ -115,7 +117,7 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     
     override var selected: Bool {
         didSet {
-            NSFontPanel.shared().setPanelFont(font, isMultiple: false)
+            NSFontPanel.shared.setPanelFont(font, isMultiple: false)
         }
     }
     
@@ -131,16 +133,16 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
         self.init(origin: CGPoint(x: 0, y: 0), format: format, owner: nil)
     }
     
-    required init?(pasteboardPropertyList propertyList: AnyObject, ofType type: String) {
+    required init?(pasteboardPropertyList propertyList: Any, ofType type: NSPasteboard.PasteboardType) {
         return nil
     }
     
     required init?(coder decoder: NSCoder) {
-        format = decoder.decodeObject(forKey: "format") as? String ?? ""
+        format = decoder.decodeObject(of: NSString.self, forKey: "format") as String? ?? ""
         angle = decoder.decodeCGFloatForKey("angle")
-        _owner = decoder.decodeObject(forKey: "owner") as? AttributedGraphic
+        _owner = decoder.decodeObject(of: AttributedGraphic.self, forKey: "owner")
         overbar = decoder.decodeBool(forKey: "overbar")
-        if let fontName = decoder.decodeObject(forKey: "fontName") as? String {
+        if let fontName = decoder.decodeObject(of: NSString.self, forKey: "fontName") as String? {
             self.fontSize = decoder.decodeCGFloatForKey("fontSize")
             self.fontName = fontName
         }
@@ -215,24 +217,24 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
     }
         
     override func showHandles() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         
         context?.saveGState()
         context?.setLineWidth(0.1)
-        setDrawingColor(NSColor.red())
+        setDrawingColor(NSColor.red)
         context?.stroke(textBounds)
         if let owner = owner {
             let cp = owner.graphicBounds.center
             context?.beginPath()
-            context?.moveTo(x: centerPoint.x, y: centerPoint.y)
-            context?.addLineTo(x: cp.x, y: cp.y)
+            context?.__moveTo(x: centerPoint.x, y: centerPoint.y)
+            context?.__addLineTo(x: cp.x, y: cp.y)
             context?.strokePath()
         }
         context?.restoreGState()
     }
     
     override func draw() {
-        let context = NSGraphicsContext.current()?.cgContext
+        let context = NSGraphicsContext.current?.cgContext
         let size = string.size(withAttributes: textAttributes)
         if angle == 0 {                                                     // this really didn't seem to do much...
             string.draw(at: origin, withAttributes: textAttributes)
@@ -240,14 +242,14 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
                 let l = bounds.topLeft
                 let r = bounds.topRight
                 context?.beginPath()
-                context?.moveTo(x: l.x, y: l.y)
-                context?.addLineTo(x: r.x, y: r.y)
+                context?.__moveTo(x: l.x, y: l.y)
+                context?.__addLineTo(x: r.x, y: r.y)
                 context?.strokePath()
             }
         } else {
             context?.saveGState()
-            context?.translate(x: origin.x, y: origin.y)
-            context?.rotate(byAngle: angle)
+            context?.translateBy(x: origin.x, y: origin.y)
+            context?.rotate(by: angle)
 
             string.draw(at: CGPoint(), withAttributes: textAttributes)
             
@@ -255,8 +257,8 @@ class AttributeText: PrimitiveGraphic, NSTextFieldDelegate
                 
                 context?.beginPath()
                 context?.setLineWidth(1.0)
-                context?.moveTo(x: 0, y: size.height)
-                context?.addLineTo(x: size.width, y: size.height)
+                context?.__moveTo(x: 0, y: size.height)
+                context?.__addLineTo(x: size.width, y: size.height)
                 context?.strokePath()
             }
             context?.restoreGState()

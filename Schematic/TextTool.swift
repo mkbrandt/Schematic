@@ -13,7 +13,7 @@ class TextTool: Tool, NSTextFieldDelegate
     var activeEditor: NSTextField?
     var currentAttribute: AttributeText?
     
-    override var cursor: NSCursor   { return NSCursor.iBeam() }
+    override var cursor: NSCursor   { return NSCursor.iBeam }
     
     func editAttribute(_ attribute: AttributeText, view: SchematicView) {
         clearEditing()
@@ -21,7 +21,7 @@ class TextTool: Tool, NSTextFieldDelegate
         let extra: NSString = "WW"
         let font = attribute.font
         var size = attribute.string.size(withAttributes: attribute.textAttributes)
-        size.width += extra.size(withAttributes: [NSFontAttributeName: font]).width
+        size.width += extra.size(withAttributes: [NSAttributedStringKey.font: font]).width
         let editor = NSTextField(frame: CGRect(origin: attribute.origin - CGPoint(length: 2, angle: attribute.angle), size: size))
         editor.font = font
         editor.isBezeled = false
@@ -38,7 +38,7 @@ class TextTool: Tool, NSTextFieldDelegate
         menu.addItem(mi)
         let fieldEditor = view.window?.fieldEditor(true, for: editor)
         fieldEditor?.menu = menu
-        NSFontPanel.shared().setPanelFont(attribute.font, isMultiple: false)
+        NSFontPanel.shared.setPanelFont(attribute.font, isMultiple: false)
     }
     
     override func controlTextDidChange(_ obj: Notification) {
@@ -47,8 +47,8 @@ class TextTool: Tool, NSTextFieldDelegate
             let text = editor.stringValue
             if let attr = currentAttribute {
                 //attr.string = text
-                var size = text.size(withAttributes: [NSFontAttributeName: attr.font])
-                size.width += extra.size(withAttributes: [NSFontAttributeName: attr.font]).width
+                var size = text.size(withAttributes: [NSAttributedStringKey.font: attr.font])
+                size.width += extra.size(withAttributes: [NSAttributedStringKey.font: attr.font]).width
                 var frame = editor.frame
                 size.width = max(frame.size.width, size.width)
                 frame.size = size
@@ -61,9 +61,9 @@ class TextTool: Tool, NSTextFieldDelegate
     }
     
     func control(_ control: NSControl, textView: NSTextView, completions words: [String], forPartialWordRange charRange: NSRange, indexOfSelectedItem index: UnsafeMutablePointer<Int>) -> [String] {
-        if let attr = currentAttribute, let owner = attr.owner where control.stringValue.hasPrefix("=") {
+        if let attr = currentAttribute, let owner = attr.owner, control.stringValue.hasPrefix("=") {
             let curval = owner.stripPrefix(control.stringValue)
-            let possible = owner.attributeNames.sorted(isOrderedBefore: { $0 < $1 }).filter { $0.hasPrefix(curval) }
+            let possible = owner.attributeNames.sorted().filter { $0.hasPrefix(curval) }
             return possible
         }
         return words
@@ -78,7 +78,7 @@ class TextTool: Tool, NSTextFieldDelegate
             if editor.stringValue.hasPrefix("=") {
                 currentAttribute?.format = editor.stringValue
             } else {
-                currentAttribute?.string = editor.stringValue
+                currentAttribute?.string = editor.stringValue as NSString
             }
             editor.delegate = nil
             if let view = editor.superview as? SchematicView {

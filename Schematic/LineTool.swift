@@ -25,7 +25,7 @@ class LineTool: Tool
     }
     
     override func mouseUp(_ location: CGPoint, view: SchematicView) {
-        if let line = view.construction as? LineGraphic where line.origin != line.endPoint {
+        if let line = view.construction as? LineGraphic, line.origin != line.endPoint {
             view.addConstruction()
         } else {
             view.construction = nil

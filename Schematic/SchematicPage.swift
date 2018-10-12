@@ -40,17 +40,13 @@ class SchematicPage: NSObject, NSCoding
     }
     
     required init?(coder decoder: NSCoder) {
-        name = decoder.decodeObject(forKey: "name") as? String ?? "unnamed"
+        name = decoder.decodeObject(of: NSString.self, forKey: "name") as String? ?? "unnamed"
         pageSize = decoder.decodeSize(forKey: "pageSize")
-        parentPage = decoder.decodeObject(forKey: "parentPage") as? SchematicPage
-        if let displayList = decoder.decodeObject(forKey: "displayList") {
-            if let displayList = displayList as? Set<Graphic> {
-                self.displayList = displayList
-            } else if let displayList = displayList as? [Graphic] {         // backward compatibility
-                self.displayList = Set(displayList)
-            }
+        parentPage = decoder.decodeObject(of: SchematicPage.self, forKey: "parentPage")
+        if let displayList = decoder.decodeObject(of: NSSet.self, forKey: "displayList") as? Set<Graphic> {
+            self.displayList = displayList
         }
-        record = decoder.decodeObject(forKey: "record") as? CKRecord
+        record = decoder.decodeObject(of: CKRecord.self, forKey: "record")
         super.init()
         if let parent = parentPage {
             parent.childPages.append(self)
